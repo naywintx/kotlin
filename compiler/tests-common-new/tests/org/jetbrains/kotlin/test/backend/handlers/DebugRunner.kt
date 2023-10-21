@@ -24,7 +24,8 @@ abstract class DebugRunner(testServices: TestServices) : JvmBoxRunner(testServic
         val BOX_MAIN_FILE_CLASS_NAME = BOX_MAIN_FILE_NAME.replace(".kt", "Kt")
     }
 
-    private lateinit var wholeFile: File
+    private var wholeFile: File? = null
+    private var originalSource = ""
     private lateinit var backend: TargetBackend
     private lateinit var frontend: FrontendKind<*>
 
@@ -39,7 +40,11 @@ abstract class DebugRunner(testServices: TestServices) : JvmBoxRunner(testServic
         // Extract target backend, frontend, and the full test file used to extract test expectations.
         backend = module.targetBackend ?: backend
         frontend = module.frontendKind
-        wholeFile = module.files.single { it.name == "test.kt" }.originalFile
+
+        module.files.single { it.name == "test.kt" }.let {
+            wholeFile = it.originalFile
+            originalSource = it.originalContent
+        }
 
         // Setup the java process to suspend waiting for debugging connection on a free port.
         val command = listOfNotNull(
@@ -155,7 +160,10 @@ abstract class DebugRunner(testServices: TestServices) : JvmBoxRunner(testServic
             }
             eventSet.resume()
         }
-        checkSteppingTestResult(frontend, backend, wholeFile, loggedItems)
+        when (val file = wholeFile) {
+            null -> checkSteppingTestResult(frontend, backend, originalSource, loggedItems)
+            else -> checkSteppingTestResult(frontend, backend, file, loggedItems)
+        }
         virtualMachine.resume()
     }
 
