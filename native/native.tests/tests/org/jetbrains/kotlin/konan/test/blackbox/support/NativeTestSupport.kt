@@ -130,7 +130,7 @@ internal object NativeTestSupport {
         fun Long.toMBs() = (this / 1024 / 1024)
 
         // Set up memory tracking and reporting:
-        MemoryTracker.startTracking(intervalMillis = 1000) { memoryMark ->
+        MemoryTracker.startTracking(intervalMillis = 30000) { memoryMark ->
             TestLogger.log(
                 buildString {
                     append(memoryMark.timestamp).append(' ').append(gradleTaskName)
@@ -211,6 +211,7 @@ internal object NativeTestSupport {
         output += computeCompilerOutputInterceptor(enforcedProperties)
         output += computeBinaryLibraryKind(enforcedProperties)
         output += computeCInterfaceMode(enforcedProperties)
+        output += computeXCTestRunner(enforcedProperties, nativeTargets)
 
         return nativeTargets
     }
@@ -346,6 +347,15 @@ internal object NativeTestSupport {
         )
         return Timeouts(executionTimeout)
     }
+
+    private fun computeXCTestRunner(enforcedProperties: EnforcedProperties, nativeTargets: KotlinNativeTargets) = XCTestRunner(
+        ClassLevelProperty.XCTEST_FRAMEWORK.readValue(
+            enforcedProperties,
+            String::toBooleanStrictOrNull,
+            default = false
+        ),
+        nativeTargets
+    )
 
     /*************** Test class settings (for black box tests only) ***************/
 
