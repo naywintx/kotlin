@@ -236,13 +236,17 @@ extern "C" const TypeInfo* Kotlin_ObjCInterop_getTypeInfoForProtocol(Protocol* p
 static const TypeInfo* getOrCreateTypeInfo(Class clazz);
 
 extern "C" void Kotlin_ObjCExport_initializeClass(Class clazz) {
+  if (kotlin::mm::IsCurrentThreadRegistered()) {
+    // ObjC runtime might have taken a lock in Runnable context on the way here. Safe-points are unwelcome in the code below.
+    // We can't make it all the way in a Runnable state as well, because some of the operations below might take a while.
+    AssertThreadState(ThreadState::kNative);
+  }
+
   const ObjCTypeAdapter* typeAdapter = findClassAdapter(clazz);
   if (typeAdapter == nullptr) {
     getOrCreateTypeInfo(clazz);
     return;
   }
-
-  kotlin::NativeOrUnregisteredThreadGuard threadStateGuard(/* reentrant = */ true);
 
   const TypeInfo* typeInfo = typeAdapter->kotlinTypeInfo;
   bool isClassForPackage = typeInfo == nullptr;
@@ -460,6 +464,14 @@ static ALWAYS_INLINE id Kotlin_ObjCExport_refToObjCImpl(ObjHeader* obj) {
   // TODO: propagate [retainAutorelease] to the code below.
 
   convertReferenceToRetainedObjC convertToRetained = (convertReferenceToRetainedObjC)obj->type_info()->writableInfo_->objCExport.convertToRetained;
+
+  {
+    // ObjC runtime calls +initialize under a global lock on the first access to an object.
+    // Let's force this initialization process here in a native state.
+    kotlin::NativeOrUnregisteredThreadGuard threadStateGuard(true);
+    Class cls = getOrCreateClass(obj->type_info());
+    [cls self];
+  }
 
   id retainedResult;
   if (convertToRetained != nullptr) {
