@@ -40816,6 +40816,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         public void testScriptPropFromAnotherModuleK2() throws Exception {
             runTest("compiler/testData/codegen/box/script/scriptPropFromAnotherModuleK2.kt");
         }
+
+        @TestMetadata("syntheticJavaPropertyInScript.kt")
+        public void testSyntheticJavaPropertyInScript() throws Exception {
+            runTest("compiler/testData/codegen/box/script/syntheticJavaPropertyInScript.kt");
+        }
     }
 
     @TestMetadata("compiler/testData/codegen/box/sealed")
