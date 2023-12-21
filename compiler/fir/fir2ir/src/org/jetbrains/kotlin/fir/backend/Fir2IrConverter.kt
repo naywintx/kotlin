@@ -508,6 +508,7 @@ class Fir2IrConverter(
         }
 
         val isInLocalClass = containingClass != null && (containingClass !is FirRegularClass || containingClass.isLocal)
+        val isScriptDeclaration = parent is IrScript
         when (declaration) {
             is FirRegularClass -> {
                 val irClass = classifierStorage.getCachedIrClass(declaration)!!
@@ -538,7 +539,7 @@ class Fir2IrConverter(
                 }
             }
             is FirSimpleFunction -> {
-                declarationStorage.createAndCacheIrFunction(declaration, parent, isLocal = isInLocalClass)
+                declarationStorage.createAndCacheIrFunction(declaration, parent, isLocal = isInLocalClass || isScriptDeclaration)
             }
             is FirProperty -> {
                 if (
@@ -548,7 +549,7 @@ class Fir2IrConverter(
                 ) {
                     // Note: we have to do it, because backend without the feature
                     // cannot process Enum.entries properly
-                    val irProperty = declarationStorage.createAndCacheIrProperty(declaration, parent)
+                    val irProperty = declarationStorage.createAndCacheIrProperty(declaration, parent, isLocal = isScriptDeclaration)
                     delegateFieldToPropertyMap?.remove(declaration)?.let { delegateFields ->
                         val backingField = irProperty.backingField!!
                         for (delegateField in delegateFields) {
