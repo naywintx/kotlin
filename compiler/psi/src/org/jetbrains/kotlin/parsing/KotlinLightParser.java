@@ -8,11 +8,21 @@ package org.jetbrains.kotlin.parsing;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
+import org.jetbrains.annotations.NotNull;
 
 public class KotlinLightParser {
     public static FlyweightCapableTreeStructure<LighterASTNode> parse(PsiBuilder builder) {
+        return parseFileOrScript(builder, false);
+    }
+
+    @NotNull
+    public static FlyweightCapableTreeStructure<LighterASTNode> parseFileOrScript(PsiBuilder builder, Boolean parseAsScript) {
         KotlinParsing ktParsing = KotlinParsing.createForTopLevelNonLazy(new SemanticWhitespaceAwarePsiBuilderImpl(builder));
-        ktParsing.parseFile();
+        if (parseAsScript) {
+            ktParsing.parseScript();
+        } else {
+            ktParsing.parseFile();
+        }
 
         return builder.getLightTree();
     }

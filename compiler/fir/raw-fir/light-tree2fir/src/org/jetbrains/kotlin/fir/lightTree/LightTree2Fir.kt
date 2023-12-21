@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.lightTree.converter.LightTreeRawFirDeclarationBuilder
 import org.jetbrains.kotlin.fir.scopes.FirScopeProvider
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.lexer.KotlinLexer
 import org.jetbrains.kotlin.parsing.KotlinLightParser
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
@@ -39,9 +40,10 @@ class LightTree2Fir(
         fun buildLightTree(
             code: CharSequence,
             errorListener: LightTreeParsingErrorListener?,
+            parseAsScript: Boolean = false,
         ): FlyweightCapableTreeStructure<LighterASTNode> {
             val builder = PsiBuilderFactory.getInstance().createBuilder(parserDefinition, makeLexer(), code)
-            return KotlinLightParser.parse(builder).also {
+            return KotlinLightParser.parseFileOrScript(builder, parseAsScript).also {
                 if (errorListener != null) reportErrors(it.root, it, errorListener)
             }
         }
@@ -93,12 +95,20 @@ class LightTree2Fir(
 
     fun buildFirFile(code: CharSequence, sourceFile: KtSourceFile, linesMapping: KtSourceFileLinesMapping): FirFile {
         val errorListener = makeErrorListener(sourceFile)
-        val lightTree = buildLightTree(code, errorListener)
+        val lightTree = buildLightTree(code, errorListener, canBeScript(sourceFile))
         return buildFirFile(lightTree, sourceFile, linesMapping)
     }
 
     private fun makeErrorListener(sourceFile: KtSourceFile): LightTreeParsingErrorListener? {
         val diagnosticsReporter = diagnosticsReporter ?: return null
         return diagnosticsReporter.toKotlinParsingErrorListener(sourceFile, session.languageVersionSettings)
+    }
+
+    private fun canBeScript(sourceFile: KtSourceFile): Boolean {
+        // repeating the logic from KotlinParser.parse as much as possible
+        return sourceFile.path?.let {
+            val extension = File(it).extension
+            extension.isNotEmpty() && extension != KotlinFileType.EXTENSION
+        } ?: true
     }
 }
