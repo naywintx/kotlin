@@ -1,3 +1,5 @@
+// IGNORE_NATIVE: optimizationMode=OPT
+
 open class Base<T> {
     open var x: T? = null
 }

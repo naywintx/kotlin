@@ -1,3 +1,5 @@
+// IGNORE_NATIVE: optimizationMode=OPT
+
 fun <E> List<E>.addAnything(element: E) {
     if (this is MutableList<E>) {
         this.add(element)

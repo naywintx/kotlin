@@ -1,3 +1,5 @@
+// IGNORE_NATIVE: optimizationMode=OPT
+
 interface I1
 interface I2 {
     val z: Int

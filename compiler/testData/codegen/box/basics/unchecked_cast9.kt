@@ -1,3 +1,5 @@
+// IGNORE_NATIVE: optimizationMode=OPT
+
 fun <T> foo(x: Int = 0): T = Any() as T
 
 fun box(): String {

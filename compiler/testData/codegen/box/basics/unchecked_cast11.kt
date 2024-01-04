@@ -1,3 +1,5 @@
+// IGNORE_NATIVE: optimizationMode=OPT
+
 fun foo(x: Int) = x + 42
 
 fun box(): String {

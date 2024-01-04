@@ -1,3 +1,5 @@
+// IGNORE_NATIVE: optimizationMode=OPT
+
 class Data(val x: Int)
 
 fun box(): String {

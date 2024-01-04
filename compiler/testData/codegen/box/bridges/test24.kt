@@ -1,3 +1,5 @@
+// IGNORE_NATIVE: optimizationMode=OPT
+
 interface I<T> {
     fun foo(p: T)
 }

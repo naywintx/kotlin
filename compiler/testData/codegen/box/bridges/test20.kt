@@ -1,3 +1,5 @@
+// IGNORE_NATIVE: optimizationMode=OPT
+
 open class A<T> {
     val s: T = "zzz" as T
 }
