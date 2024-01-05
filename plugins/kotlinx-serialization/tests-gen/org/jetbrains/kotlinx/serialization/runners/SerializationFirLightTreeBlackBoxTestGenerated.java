@@ -184,6 +184,12 @@ public class SerializationFirLightTreeBlackBoxTestGenerated extends AbstractSeri
         }
 
         @Test
+        @TestMetadata("intrinsicsPolymorphicPriority.kt")
+        public void testIntrinsicsPolymorphicPriority() throws Exception {
+            runTest("plugins/kotlinx-serialization/testData/boxIr/intrinsicsPolymorphicPriority.kt");
+        }
+
+        @Test
         @TestMetadata("intrinsicsStarProjections.kt")
         public void testIntrinsicsStarProjections() throws Exception {
             runTest("plugins/kotlinx-serialization/testData/boxIr/intrinsicsStarProjections.kt");
