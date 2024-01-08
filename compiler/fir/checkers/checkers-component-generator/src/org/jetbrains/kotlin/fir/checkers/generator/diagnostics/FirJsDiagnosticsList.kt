@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir.checkers.generator.diagnostics
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory0
 import org.jetbrains.kotlin.util.PrivateForInline
 import org.jetbrains.kotlin.fir.checkers.generator.diagnostics.model.DiagnosticList
 import org.jetbrains.kotlin.fir.checkers.generator.diagnostics.model.PositioningStrategy
@@ -123,5 +124,12 @@ object JS_DIAGNOSTICS_LIST : DiagnosticList("FirJsErrors") {
         val WRONG_OPERATION_WITH_DYNAMIC by error<KtElement> {
             parameter<String>("operation")
         }
+    }
+
+    val STATIC by object : DiagnosticGroup("Static") {
+        val JS_STATIC_IN_NOT_CLASS_COMPANION by error<PsiElement>(PositioningStrategy.DECLARATION_SIGNATURE)
+        val JS_STATIC_ON_NON_PUBLIC_MEMBER by error<PsiElement>(PositioningStrategy.DECLARATION_SIGNATURE)
+        val JS_STATIC_ON_CONST by error<PsiElement>(PositioningStrategy.DECLARATION_SIGNATURE)
+        val OVERRIDE_CANNOT_BE_JS_STATIC by error<PsiElement>(PositioningStrategy.DECLARATION_SIGNATURE)
     }
 }

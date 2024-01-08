@@ -3085,6 +3085,12 @@ public class FirPsiJsBoxTestGenerated extends AbstractFirPsiJsBoxTest {
     }
 
     @Test
+    @TestMetadata("exportWithJsStatic.kt")
+    public void testExportWithJsStatic() {
+      runTest("js/js.translator/testData/box/export/exportWithJsStatic.kt");
+    }
+
+    @Test
     @TestMetadata("nonIndetifierModuleName.kt")
     public void testNonIndetifierModuleName() {
       runTest("js/js.translator/testData/box/export/nonIndetifierModuleName.kt");

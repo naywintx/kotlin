@@ -5797,6 +5797,30 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirJsErrors.JS_STATIC_IN_NOT_CLASS_COMPANION) { firDiagnostic ->
+        JsStaticInNotClassCompanionImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJsErrors.JS_STATIC_ON_NON_PUBLIC_MEMBER) { firDiagnostic ->
+        JsStaticOnNonPublicMemberImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJsErrors.JS_STATIC_ON_CONST) { firDiagnostic ->
+        JsStaticOnConstImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJsErrors.OVERRIDE_CANNOT_BE_JS_STATIC) { firDiagnostic ->
+        OverrideCannotBeJsStaticImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirSyntaxErrors.SYNTAX) { firDiagnostic ->
         SyntaxImpl(
             firDiagnostic.a,
