@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyGetter
 import org.jetbrains.kotlin.fir.declarations.primaryConstructorIfAny
 import org.jetbrains.kotlin.fir.declarations.utils.SCRIPT_SPECIAL_NAME_STRING
 import org.jetbrains.kotlin.fir.expressions.*
-import org.jetbrains.kotlin.fir.expressions.builder.buildLazyExpression
 import org.jetbrains.kotlin.fir.expressions.impl.FirSingleExpressionBlock
 import org.jetbrains.kotlin.fir.moduleData
 import org.jetbrains.kotlin.fir.resolve.providers.dependenciesSymbolProvider
@@ -197,7 +196,7 @@ class FirScriptConfiguratorExtensionImpl(
 
     private fun buildContextReceiverWithFqName(classFqn: FqName, customName: Name? = null) =
         buildContextReceiver {
-            typeRef = buildUserTypeRef {
+            val userTypeRef = buildUserTypeRef {
                 isMarkedNullable = false
                 qualifier.addAll(
                     classFqn.pathSegments().map {
@@ -205,9 +204,9 @@ class FirScriptConfiguratorExtensionImpl(
                     }
                 )
             }
-            if (customName != null) {
-                customLabelName = customName
-            }
+            typeRef = userTypeRef
+            labelNameFromTypeRef = userTypeRef.qualifier.lastOrNull()?.name
+            customLabelName = customName
         }
 
     private val _knownAnnotationsForSamWithReceiver = hashSetOf<String>()
