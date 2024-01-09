@@ -330,6 +330,13 @@ public final annotation class JsQualifier : kotlin.Annotation {
     public final val value: kotlin.String { get; }
 }
 
+@kotlin.annotation.Retention(value = AnnotationRetention.BINARY)
+@kotlin.annotation.Target(allowedTargets = {AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER})
+@kotlin.annotation.MustBeDocumented
+public final annotation class JsStatic : kotlin.Annotation {
+    public constructor JsStatic()
+}
+
 public external interface Json {
     public abstract operator fun get(propertyName: kotlin.String): kotlin.Any?
 

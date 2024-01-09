@@ -5797,8 +5797,8 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirJsErrors.JS_STATIC_IN_NOT_CLASS_COMPANION) { firDiagnostic ->
-        JsStaticInNotClassCompanionImpl(
+    add(FirJsErrors.JS_STATIC_NOT_IN_CLASS_COMPANION) { firDiagnostic ->
+        JsStaticNotInClassCompanionImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

@@ -73,25 +73,17 @@ object FirJsStaticChecker : FirBasicDeclarationChecker(MppCheckerKind.Common) {
         }
 
         val container = context.getContainerAt(0) ?: return
-        val containerIsAnonymous = container.classId.shortClassName == SpecialNames.ANONYMOUS
 
-        if (
-            container.classKind != ClassKind.OBJECT ||
-            !container.isCompanion() && containerIsAnonymous
-        ) {
-            reporter.reportOn(targetSource, FirJsErrors.JS_STATIC_IN_NOT_CLASS_COMPANION, context)
-        } else if (
-            container.isCompanion() &&
-            context.containerIsInterface(1)
-        ) {
-            reporter.reportOn(targetSource, FirJsErrors.JS_STATIC_IN_NOT_CLASS_COMPANION, context)
+        if (!container.isCompanion() || context.containerIsInterface(1)) {
+            reporter.reportOn(targetSource, FirJsErrors.JS_STATIC_NOT_IN_CLASS_COMPANION, context)
         }
 
         checkOverrideCannotBeStatic(declaration, context, reporter, targetSource, outerProperty)
         checkStaticOnConst(declaration, context, reporter, targetSource)
+        checkVisibility(declaration, context, reporter, targetSource)
     }
 
-    private fun checkForInterface(
+    private fun checkVisibility(
         declaration: FirDeclaration,
         context: CheckerContext,
         reporter: DiagnosticReporter,
@@ -142,13 +134,9 @@ object FirJsStaticChecker : FirBasicDeclarationChecker(MppCheckerKind.Common) {
         targetSource: KtSourceElement?,
         outerProperty: FirProperty? = null,
     ) {
-        val isOverride = outerProperty?.isOverride ?: declaration.isOverride
-
-        if (!isOverride || !context.containerIsNonCompanionObject(0)) {
-            return
+        if (outerProperty?.isOverride == true || declaration.isOverride) {
+            reporter.reportOn(targetSource, FirJsErrors.OVERRIDE_CANNOT_BE_JS_STATIC, context)
         }
-
-        reporter.reportOn(targetSource, FirJsErrors.OVERRIDE_CANNOT_BE_JS_STATIC, context)
     }
 
     private fun checkStaticOnConst(

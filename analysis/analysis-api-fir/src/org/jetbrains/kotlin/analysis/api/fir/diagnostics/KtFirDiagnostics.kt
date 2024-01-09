@@ -4036,8 +4036,8 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         val operation: String
     }
 
-    interface JsStaticInNotClassCompanion : KtFirDiagnostic<PsiElement> {
-        override val diagnosticClass get() = JsStaticInNotClassCompanion::class
+    interface JsStaticNotInClassCompanion : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = JsStaticNotInClassCompanion::class
     }
 
     interface JsStaticOnNonPublicMember : KtFirDiagnostic<PsiElement> {

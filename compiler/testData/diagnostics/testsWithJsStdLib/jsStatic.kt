@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // IGNORE_BACKEND_K1: JS_IR, JS_IR_ES6
 // !DIAGNOSTICS: -UNUSED_VARIABLE
 class A {
@@ -10,11 +11,11 @@ class A {
 
         }
 
-        <!JS_STATIC_ON_NON_PUBLIC_MEMBER!>@JvmStatic private fun a2()<!> {
+        <!JS_STATIC_ON_NON_PUBLIC_MEMBER!>@JsStatic private fun a2()<!> {
 
         }
 
-        <!JS_STATIC_ON_NON_PUBLIC_MEMBER!>@JvmStatic internal fun a3()<!> {
+        <!JS_STATIC_ON_NON_PUBLIC_MEMBER!>@JsStatic internal fun a3()<!> {
 
         }
 
