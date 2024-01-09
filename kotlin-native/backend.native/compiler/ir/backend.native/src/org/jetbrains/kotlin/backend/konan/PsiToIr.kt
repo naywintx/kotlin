@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.ir.objcinterop.IrObjCOverridabilityCondition
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
+import org.jetbrains.kotlin.library.isHeader
 import org.jetbrains.kotlin.library.metadata.DeserializedKlibModuleOrigin
 import org.jetbrains.kotlin.library.metadata.KlibModuleOrigin
 import org.jetbrains.kotlin.library.metadata.isFromInteropLibrary
@@ -178,6 +179,8 @@ internal fun PsiToIrContext.psiToIr(
 
                 for (dependency in sortDependencies(dependencies).filter { it != moduleDescriptor }) {
                     val kotlinLibrary = (dependency.getCapability(KlibModuleOrigin.CAPABILITY) as? DeserializedKlibModuleOrigin)?.library
+                    if (kotlinLibrary?.isHeader == true)
+                        linker.deserializeHeadersWithInlineBodies(dependency, kotlinLibrary)
                     val isFullyCachedLibrary = kotlinLibrary != null &&
                             config.cachedLibraries.isLibraryCached(kotlinLibrary) && kotlinLibrary != config.libraryToCache?.klib
                     if (isProducingLibrary || isFullyCachedLibrary)
