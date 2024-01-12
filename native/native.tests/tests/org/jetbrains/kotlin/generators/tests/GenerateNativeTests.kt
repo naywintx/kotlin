@@ -158,6 +158,23 @@ fun main() {
             }
         }
 
+        // Klib Compatibility tests.
+        testGroup("native/native.tests/tests-gen", "compiler/testData") {
+            testClass<AbstractNativeKlibCompatibilityTest>(
+                suiteTestClassName = "NativeKlibCompatibilityGenerated"
+            ) {
+                model("klib/versionCompatibility/", pattern = "^([^_](.+))$", recursive = false)
+            }
+            testClass<AbstractNativeKlibCompatibilityTest>(
+                suiteTestClassName = "FirNativeKlibCompatibilityGenerated",
+                annotations = listOf(
+                    *frontendFir()
+                )
+            ) {
+                model("klib/versionCompatibility/", pattern = "^([^_](.+))$", recursive = false)
+            }
+        }
+
         // KLIB evolution tests.
         testGroup("native/native.tests/tests-gen", "compiler/testData") {
             testClass<AbstractNativeKlibEvolutionTest>(
