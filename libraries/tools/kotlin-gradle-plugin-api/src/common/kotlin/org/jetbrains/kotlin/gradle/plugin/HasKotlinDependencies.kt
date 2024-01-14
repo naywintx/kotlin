@@ -192,13 +192,58 @@ interface KotlinDependencyHandler {
     ): Dependency
 }
 
+/**
+ * Represents a Kotlin DSL entity having configurable Kotlin dependencies.
+ */
 interface HasKotlinDependencies {
+
+    /**
+     * Configure dependencies for this entity.
+     */
     fun dependencies(configure: KotlinDependencyHandler.() -> Unit)
+
+    /**
+     * Configure dependencies for this entity.
+     */
     fun dependencies(configure: Action<KotlinDependencyHandler>)
 
+    /**
+     * The name of the API Gradle configuration for this entity.
+     *
+     * The API configuration contains dependencies which are exported by this entity, and is not transitive by default.
+     *
+     * This configuration is not meant to be resolved.
+     */
     val apiConfigurationName: String
+
+    /**
+     * The name of the implementation Gradle configuration for this entity.
+     *
+     * The implementation configuration should contain dependencies which are specific to the implementation of the component
+     * (internal APIs).
+     *
+     * This configuration is not meant to be resolved.
+     */
     val implementationConfigurationName: String
+
+    /**
+     * The name of the compile-only Gradle configuration for this entity.
+     *
+     * The compile-only configuration contains dependencies which are participating in compilation,
+     * but should be added explicitly in the runtime.
+     *
+     * This configuration is not meant to be resolved.
+     */
     val compileOnlyConfigurationName: String
+
+    /**
+     * The name of the runtime-only Gradle configuration for this entity.
+     *
+     * The runtime-only configuration contains dependencies which are not participating in the compilation,
+     * but added in the runtime.
+     *
+     * This configuration is not meant to be resolved.
+     */
     val runtimeOnlyConfigurationName: String
 }
 
