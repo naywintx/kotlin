@@ -22,6 +22,8 @@ struct DefaultIntrusiveForwardListTraits {
     static void setNext(T& value, T* next) noexcept { value.setNext(next); }
 
     static bool trySetNext(T& value, T* next) noexcept { return value.trySetNext(next); }
+
+    static T createFakeNode() noexcept { return T(); }
 };
 
 // Intrusive variant of `std::forward_list`.
@@ -370,7 +372,7 @@ private:
     pointer head() noexcept { return &head_; }
     const_pointer head() const noexcept { return &head_; }
 
-    static pointer tail() noexcept { return reinterpret_cast<pointer>(tailStorage_); }
+    static pointer tail() noexcept { return &tail_; }
 
     // TODO: Consider making public.
     std::optional<iterator> try_insert_after(iterator pos, reference value) noexcept {
@@ -383,11 +385,8 @@ private:
         return iterator(&value);
     }
 
-    union {
-        value_type head_; // for debugger
-        alignas(value_type) char headStorage_[sizeof(value_type)] = {0};
-    };
-    alignas(value_type) static inline char tailStorage_[sizeof(value_type)] = {0};
+    value_type head_ = Traits::createFakeNode();
+    static inline value_type tail_ = Traits::createFakeNode();
 };
 
 template <typename InputIt>
