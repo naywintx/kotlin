@@ -8,6 +8,9 @@ package org.jetbrains.kotlin.gradle.plugin
 import org.gradle.api.Action
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerOptions
 
+/**
+ * @suppress TODO: KT-58858 add documentation
+ */
 interface HasCompilerOptions<out CO : KotlinCommonCompilerOptions> {
     val options: CO
 
