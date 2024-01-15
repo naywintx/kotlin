@@ -8,5 +8,6 @@ package org.jetbrains.kotlin.android.synthetic.test
 import org.jetbrains.kotlin.test.TargetBackend
 
 abstract class AbstractAndroidIrBoxTest : AbstractAndroidBoxTest() {
-    override val backend = TargetBackend.JVM_IR
+    override val backend
+        get() = TargetBackend.JVM_IR
 }

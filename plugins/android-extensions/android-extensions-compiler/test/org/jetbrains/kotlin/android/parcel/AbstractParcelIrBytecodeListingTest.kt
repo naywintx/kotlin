@@ -9,7 +9,8 @@ import org.jetbrains.kotlin.test.TargetBackend
 import java.io.File
 
 abstract class AbstractParcelIrBytecodeListingTest : AbstractParcelBytecodeListingTest() {
-    override val backend = TargetBackend.JVM_IR
+    override val backend
+        get() = TargetBackend.JVM_IR
 
     override fun getExpectedTextFileName(wholeFile: File): String {
         return wholeFile.nameWithoutExtension + ".ir.txt"

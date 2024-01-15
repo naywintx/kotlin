@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedClassDescriptor
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedMemberDescriptor
 import org.jetbrains.kotlin.test.TestCaseWithTmpdir
+import org.jetbrains.kotlin.test.testFramework.IrFirConfigurableTestCase
 import java.io.File
 
 abstract class AbstractVersionRequirementTest : TestCaseWithTmpdir() {

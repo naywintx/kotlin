@@ -123,8 +123,7 @@ public class KotlinSyntheticClassAnnotationTest extends CodegenTestCase {
     private void doTest(@NotNull String code, @NotNull String classFilePart) {
         loadText("package " + PACKAGE_NAME + "\n\n" + code);
         List<OutputFile> output = generateClassesInFile().asList();
-        Collection<OutputFile> files = CollectionsKt.filter(output, file -> file.getRelativePath().contains(classFilePart));
-        assertFalse("No files with \"" + classFilePart + "\" in the name are found: " + output, files.isEmpty());
+        Collection<OutputFile> files = CollectionsKt.filter(output, file -> file.getRelativePath().contains(classFilePart));assertFalse("No files with \"" + classFilePart + "\" in the name are found: " + output, files.isEmpty());
         assertEquals("Exactly one file with \"" + classFilePart + "\" in the name should be found: " + files, 1, files.size());
 
         String path = files.iterator().next().getRelativePath();

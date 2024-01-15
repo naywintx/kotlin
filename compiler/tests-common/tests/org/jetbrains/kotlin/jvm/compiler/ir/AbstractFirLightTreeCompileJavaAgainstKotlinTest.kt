@@ -5,6 +5,12 @@
 
 package org.jetbrains.kotlin.jvm.compiler.ir
 
-import org.jetbrains.kotlin.jvm.compiler.AbstractFirCompileJavaAgainstKotlinTest
+import org.jetbrains.kotlin.test.FirParser
 
-abstract class AbstractFirLightTreeCompileJavaAgainstKotlinTest : AbstractFirCompileJavaAgainstKotlinTest(true)
+abstract class AbstractFirLightTreeCompileJavaAgainstKotlinTest : AbstractIrCompileJavaAgainstKotlinTest() {
+    override val useFir: Boolean
+        get() = true
+
+    override val firParser: FirParser
+        get() = FirParser.LightTree
+}
