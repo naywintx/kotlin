@@ -135,7 +135,7 @@ object FirJsStaticChecker : FirBasicDeclarationChecker(MppCheckerKind.Common) {
         outerProperty: FirProperty? = null,
     ) {
         if (outerProperty?.isOverride == true || declaration.isOverride) {
-            reporter.reportOn(targetSource, FirJsErrors.OVERRIDE_CANNOT_BE_JS_STATIC, context)
+            reporter.reportOn(targetSource, FirJsErrors.JS_STATIC_ON_OVERRIDE, context)
         }
     }
 

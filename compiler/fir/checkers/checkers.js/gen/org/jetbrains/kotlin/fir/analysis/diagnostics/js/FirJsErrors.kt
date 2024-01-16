@@ -90,7 +90,7 @@ object FirJsErrors {
     val JS_STATIC_NOT_IN_CLASS_COMPANION: KtDiagnosticFactory0 by error0<PsiElement>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE)
     val JS_STATIC_ON_NON_PUBLIC_MEMBER: KtDiagnosticFactory0 by error0<PsiElement>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE)
     val JS_STATIC_ON_CONST: KtDiagnosticFactory0 by error0<PsiElement>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE)
-    val OVERRIDE_CANNOT_BE_JS_STATIC: KtDiagnosticFactory0 by error0<PsiElement>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE)
+    val JS_STATIC_ON_OVERRIDE: KtDiagnosticFactory0 by error0<PsiElement>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE)
 
     init {
         RootDiagnosticRendererFactory.registerFactory(FirJsErrorsDefaultMessages)
