@@ -4888,10 +4888,10 @@ internal class JsStaticOnConstImpl(
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.JsStaticOnConst
 
-internal class OverrideCannotBeJsStaticImpl(
+internal class JsStaticOnOverrideImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
-) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.OverrideCannotBeJsStatic
+) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.JsStaticOnOverride
 
 internal class SyntaxImpl(
     override val message: String,

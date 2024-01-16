@@ -4048,8 +4048,8 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = JsStaticOnConst::class
     }
 
-    interface OverrideCannotBeJsStatic : KtFirDiagnostic<PsiElement> {
-        override val diagnosticClass get() = OverrideCannotBeJsStatic::class
+    interface JsStaticOnOverride : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = JsStaticOnOverride::class
     }
 
     interface Syntax : KtFirDiagnostic<PsiElement> {
