@@ -105,6 +105,7 @@ class KotlinCoreApplicationEnvironment private constructor(
             parentDisposable: Disposable,
             environmentMode: KotlinCoreApplicationEnvironmentMode,
         ): KotlinCoreApplicationEnvironment {
+            System.setProperty("idea.config.path", "some/non/existent/path")
             val environment = KotlinCoreApplicationEnvironment(parentDisposable, environmentMode)
             registerExtensionPoints()
             return environment
