@@ -160,7 +160,6 @@ dependencies {
         kotlin_reflect_jar commonDependency("org.jetbrains.kotlin:kotlin-reflect")
         compilerApi(commonDependency("org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil")) { setTransitive(false) }
         compilerApi(commonDependency("org.jetbrains.intellij.deps:log4j")) { setTransitive(false) }
-        compilerApi(commonDependency("org.jetbrains.intellij.deps:jdom"))
         compilerApi(commonDependency("com.fasterxml:aalto-xml")) { setTransitive(false) }
         compilerApi(commonDependency("org.codehaus.woodstox:stax2-api")) { setTransitive(false) }
     }
@@ -190,6 +189,7 @@ dependencies {
     compilerApi project(":compiler:fir:native")
     compilerApi project(":compiler:ir.psi2ir")
     use(IntellijDependenciesKt) {
+        compilerApi(intellijJDom())
         compilerApi(intellijCore())
         compileOnly(jpsModel())
     }
