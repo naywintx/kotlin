@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.analysis.low.level.api.fir.caches
 
+import org.jetbrains.kotlin.analysis.test.framework.utils.withDummyApplication
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -175,6 +176,25 @@ class CleanableSoftValueCacheTest {
         assertSame(value2, currentValue2)
         assertFalse(value2.isCleanedUp)
         assertFalse(valueReplacement2.isCleanedUp)
+    }
+
+    @Test
+    fun clearCleansUpValues() {
+        val value1 = ValueWithCleanup("v1")
+        val value2 = ValueWithCleanup("v2")
+        val value3 = ValueWithCleanup("v3")
+
+        val cache = setUpCache(value1, value2, value3)
+
+        // We need an application so that `clear` can assert write access.
+        withDummyApplication {
+            cache.clear()
+        }
+
+        assertTrue(cache.isEmpty())
+        assertTrue(value1.isCleanedUp)
+        assertTrue(value2.isCleanedUp)
+        assertTrue(value3.isCleanedUp)
     }
 
     class ValueWithCleanup(val name: String) {
