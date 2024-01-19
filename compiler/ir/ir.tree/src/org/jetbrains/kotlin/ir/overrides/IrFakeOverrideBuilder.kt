@@ -291,9 +291,42 @@ class IrFakeOverrideBuilder(
         }
 
         val realOverrides = members
-            .map { it.original }
-            .collectAndFilterRealOverrides()
+            .map { it.original as IrOverridableDeclaration<*> }
+            .removeInvalidOverridesOfMethodsFromAny()
+            .removeEachOthersOverrides()
         return getMinimalModality(realOverrides, transformAbstractToClassModality, current.modality)
+    }
+
+    private fun Collection<IrOverridableDeclaration<*>>.removeInvalidOverridesOfMethodsFromAny(): Collection<IrOverridableDeclaration<*>> {
+        val first = first()
+        if (first is IrFunction && first.isMethodOfAny()) {
+            // The only way to override methods of kotlin.Any (equals, hashCode, toString) in an interface is to declare them as abstract,
+            // otherwise an error is reported. This implies that if a method of Any in an interface is open, it must be a fake override
+            // (final is prohibited in interfaces altogether).
+            return this.filterNot { it.modality == Modality.OPEN && it.parentAsClass.isInterface }
+        }
+        return this
+    }
+
+    private fun Collection<IrOverridableDeclaration<*>>.removeEachOthersOverrides(): Set<IrOverridableDeclaration<*>> {
+        val visited = mutableSetOf<IrOverridableDeclaration<*>>()
+        val result = this.toMutableSet()
+
+        fun excludeOverridden(member: IrOverridableDeclaration<*>) {
+            if (!visited.add(member)) return
+
+            for (overridden in member.overriddenSymbols) {
+                val owner = overridden.owner as IrOverridableDeclaration<*>
+                result.remove(owner)
+                excludeOverridden(owner)
+            }
+        }
+
+        for (override in this) {
+            excludeOverridden(override)
+        }
+
+        return result
     }
 
     private fun getMinimalModality(

@@ -8130,6 +8130,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
         }
 
         @Test
+        @TestMetadata("irrelevantImplCharSequenceWithExtraSupertype.kt")
+        public void testIrrelevantImplCharSequenceWithExtraSupertype() throws Exception {
+            runTest("compiler/testData/codegen/box/collections/irrelevantImplCharSequenceWithExtraSupertype.kt");
+        }
+
+        @Test
         @TestMetadata("irrelevantImplMutableList.kt")
         public void testIrrelevantImplMutableList() throws Exception {
             runTest("compiler/testData/codegen/box/collections/irrelevantImplMutableList.kt");

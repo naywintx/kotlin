@@ -7110,6 +7110,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/collections/irrelevantImplCharSequenceKotlin.kt");
         }
 
+        @TestMetadata("irrelevantImplCharSequenceWithExtraSupertype.kt")
+        public void testIrrelevantImplCharSequenceWithExtraSupertype() throws Exception {
+            runTest("compiler/testData/codegen/box/collections/irrelevantImplCharSequenceWithExtraSupertype.kt");
+        }
+
         @TestMetadata("irrelevantImplMutableList.kt")
         public void testIrrelevantImplMutableList() throws Exception {
             runTest("compiler/testData/codegen/box/collections/irrelevantImplMutableList.kt");

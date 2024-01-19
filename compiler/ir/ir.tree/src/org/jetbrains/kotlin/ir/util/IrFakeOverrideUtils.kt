@@ -40,9 +40,9 @@ fun <S : IrSymbol, T : IrOverridableDeclaration<S>> T.collectRealOverrides(
         .collectAndFilterRealOverrides(toSkip, filter)
 }
 
-fun <S : IrSymbol, T : IrOverridableDeclaration<S>> Collection<T>.collectAndFilterRealOverrides(
-    toSkip: (T) -> Boolean = { false },
-    filter: (T) -> Boolean = { false }
+private fun <S : IrSymbol, T : IrOverridableDeclaration<S>> Collection<T>.collectAndFilterRealOverrides(
+    toSkip: (T) -> Boolean,
+    filter: (T) -> Boolean,
 ): Set<T> {
     val visited = mutableSetOf<T>()
     val realOverrides = mutableMapOf<Any, T>()
@@ -84,13 +84,6 @@ fun <S : IrSymbol, T : IrOverridableDeclaration<S>> Collection<T>.collectAndFilt
     }
 
     return realOverrides.values.toSet()
-}
-
-@Suppress("UNCHECKED_CAST")
-fun Collection<IrOverridableMember>.collectAndFilterRealOverrides(): Set<IrOverridableMember> = when {
-    all { it is IrSimpleFunction } -> (this as Collection<IrSimpleFunction>).collectAndFilterRealOverrides()
-    all { it is IrProperty } -> (this as Collection<IrProperty>).collectAndFilterRealOverrides()
-    else -> error("all members should be of the same kind, got ${map { it.render() }}")
 }
 
 fun <S : IrSymbol, T : IrOverridableDeclaration<S>> T.resolveFakeOverrideMaybeAbstractOrFail(): T =
