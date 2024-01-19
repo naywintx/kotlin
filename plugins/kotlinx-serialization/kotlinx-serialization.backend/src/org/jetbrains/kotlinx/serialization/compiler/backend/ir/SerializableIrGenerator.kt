@@ -131,7 +131,7 @@ class SerializableIrGenerator(
             }
             when {
                 superClass.symbol == compilerContext.irBuiltIns.anyClass -> generateAnySuperConstructorCall(toBuilder = this@addFunctionBody)
-                superClass.isInternalSerializable -> {
+                superClass.shouldHaveGeneratedMethods -> {
                     startPropOffset = generateSuperSerializableCall(superClass, ctor.valueParameters, seenVarsOffset)
                 }
                 else -> generateSuperNonSerializableCall(superClass)
@@ -276,7 +276,7 @@ class SerializableIrGenerator(
         allValueParameters: List<IrValueParameter>,
         propertiesStart: Int
     ): Int {
-        check(superClass.isInternalSerializable)
+        check(superClass.shouldHaveGeneratedMethods)
         val superCtorRef = superClass.findSerializableSyntheticConstructor()
             ?: error("Class serializable internally should have special constructor with marker")
         val superProperties = serializablePropertiesForIrBackend(superClass).serializableProperties
@@ -373,7 +373,7 @@ class SerializableIrGenerator(
     }
 
     private fun generateSyntheticInternalConstructor() {
-        val serializerDescriptor = irClass.classSerializer(compilerContext)?.owner ?: return
+        val serializerDescriptor = irClass.findSerializerForGeneratedMethods(compilerContext)?.owner ?: return
         if (irClass.shouldHaveSpecificSyntheticMethods { serializerDescriptor.findPluginGeneratedMethod(LOAD, compilerContext.afterK2) }) {
             val constrDesc = irClass.constructors.find(IrConstructor::isSerializationCtor) ?: return
             generateInternalConstructor(constrDesc)
@@ -381,7 +381,7 @@ class SerializableIrGenerator(
     }
 
     private fun generateSyntheticMethods() {
-        val serializerDescriptor = irClass.classSerializer(compilerContext)?.owner ?: return
+        val serializerDescriptor = irClass.findSerializerForGeneratedMethods(compilerContext)?.owner ?: return
         if (irClass.shouldHaveSpecificSyntheticMethods { serializerDescriptor.findPluginGeneratedMethod(SAVE, compilerContext.afterK2) }) {
             val func = irClass.findWriteSelfMethod() ?: return
             func.origin = SERIALIZATION_PLUGIN_ORIGIN
@@ -395,7 +395,7 @@ class SerializableIrGenerator(
             irClass: IrClass,
             context: SerializationPluginContext,
         ) {
-            if (irClass.isInternalSerializable) {
+            if (irClass.shouldHaveGeneratedMethods) {
                 SerializableIrGenerator(irClass, context).generate()
                 irClass.patchDeclarationParents(irClass.parent)
             } else {

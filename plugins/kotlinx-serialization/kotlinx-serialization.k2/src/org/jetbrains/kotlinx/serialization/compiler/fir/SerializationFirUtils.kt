@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirConstructorSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.platform.isWasm
@@ -36,6 +37,7 @@ import org.jetbrains.kotlinx.serialization.compiler.fir.services.dependencySeria
 import org.jetbrains.kotlinx.serialization.compiler.resolve.SerialEntityNames
 import org.jetbrains.kotlinx.serialization.compiler.resolve.SerializationAnnotations
 import org.jetbrains.kotlinx.serialization.compiler.resolve.SerializationAnnotations.inheritableSerialInfoClassId
+import org.jetbrains.kotlinx.serialization.compiler.resolve.SerializationAnnotations.keepGeneratedSerializerAnnotationClassId
 import org.jetbrains.kotlinx.serialization.compiler.resolve.SerializationAnnotations.metaSerializableAnnotationClassId
 import org.jetbrains.kotlinx.serialization.compiler.resolve.SerializationAnnotations.serialInfoClassId
 import org.jetbrains.kotlinx.serialization.compiler.resolve.SerializationAnnotations.serialNameAnnotationClassId
@@ -182,6 +184,24 @@ internal val FirClassSymbol<*>.isInternalSerializable: Boolean
     }
 
 context(FirSession)
+internal val FirClassSymbol<*>.shouldHaveGeneratedMethods: Boolean
+    get() {
+        return isInternalSerializable
+                // in the version with the `keepGeneratedSerializer` annotation the enum factory is already present therefore
+                // there is no need to generate additional methods
+                || (keepGeneratedSerializer && !classKind.isEnumClass)
+    }
+
+context(FirSession)
+internal val FirClassSymbol<*>.keepGeneratedSerializer: Boolean
+    get() {
+        return annotations.getAnnotationByClassId(
+            keepGeneratedSerializerAnnotationClassId,
+            this@FirSession
+        ) != null
+    }
+
+context(FirSession)
 val FirClassSymbol<*>.hasSerializableOrMetaAnnotationWithoutArgs: Boolean
     get() = hasSerializableAnnotationWithoutArgs(this@FirSession) ||
             (!hasSerializableAnnotation && hasMetaSerializableAnnotation)
@@ -209,7 +229,10 @@ val FirClassSymbol<*>.isEnumWithLegacyGeneratedSerializer: Boolean
 
 context(FirSession)
 val FirClassSymbol<*>.shouldHaveGeneratedSerializer: Boolean
-    get() = (isInternalSerializable && isFinalOrOpen()) || isEnumWithLegacyGeneratedSerializer
+    get() = (isInternalSerializable && isFinalOrOpen())
+            || isEnumWithLegacyGeneratedSerializer
+            // enum factory must be used for enums
+            || (keepGeneratedSerializer && !classKind.isEnumClass)
 
 // ---------------------- type utils ----------------------
 

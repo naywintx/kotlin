@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.analysis.checkers.getContainingClassSymbol
 import org.jetbrains.kotlin.fir.containingClassForStaticMemberAttr
 import org.jetbrains.kotlin.fir.copy
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
@@ -89,6 +90,11 @@ class SerializationFirResolveExtension(session: FirSession) : FirDeclarationGene
         when {
             classSymbol.isCompanion && !isExternalSerializer -> {
                 result += SerialEntityNames.SERIALIZER_PROVIDER_NAME
+
+                val containingClassSymbol = classSymbol.getContainingClassSymbol(session) as? FirClassSymbol
+                if (containingClassSymbol != null && with(session) { containingClassSymbol.keepGeneratedSerializer }) {
+                    result += SerialEntityNames.GENERATED_SERIALIZER_PROVIDER_NAME
+                }
                 val origin = classSymbol.origin as? FirDeclarationOrigin.Plugin
                 if (origin?.key == SerializationPluginKey) {
                     result += SpecialNames.INIT
@@ -119,7 +125,12 @@ class SerializationFirResolveExtension(session: FirSession) : FirDeclarationGene
                     result += SerialEntityNames.SERIAL_DESC_FIELD_NAME
                 }
 
-                if (classSymbol.isCompanion) result += SerialEntityNames.SERIALIZER_PROVIDER_NAME
+                if (classSymbol.isCompanion) {
+                    result += SerialEntityNames.SERIALIZER_PROVIDER_NAME
+                    if (with(session) { classSymbol.keepGeneratedSerializer }) {
+                        result += SerialEntityNames.GENERATED_SERIALIZER_PROVIDER_NAME
+                    }
+                }
 
                 if (classSymbol.declarationSymbols.filterIsInstance<FirNamedFunctionSymbol>()
                         .none { it.name == SerialEntityNames.SAVE_NAME }
@@ -133,7 +144,12 @@ class SerializationFirResolveExtension(session: FirSession) : FirDeclarationGene
                 }
             }
 
-            with(session) { classSymbol.isSerializableObject } -> result += SerialEntityNames.SERIALIZER_PROVIDER_NAME
+            with(session) { classSymbol.isSerializableObject } -> {
+                result += SerialEntityNames.SERIALIZER_PROVIDER_NAME
+                if (with(session) { classSymbol.keepGeneratedSerializer }) {
+                    result += SerialEntityNames.GENERATED_SERIALIZER_PROVIDER_NAME
+                }
+            }
         }
         return result
     }
@@ -153,7 +169,7 @@ class SerializationFirResolveExtension(session: FirSession) : FirDeclarationGene
     @OptIn(SymbolInternals::class)
     override fun generateFunctions(callableId: CallableId, context: MemberGenerationContext?): List<FirNamedFunctionSymbol> {
         val owner = context?.owner ?: return emptyList()
-        if (callableId.callableName == SerialEntityNames.SERIALIZER_PROVIDER_NAME) {
+        if (callableId.callableName == SerialEntityNames.SERIALIZER_PROVIDER_NAME || callableId.callableName == SerialEntityNames.GENERATED_SERIALIZER_PROVIDER_NAME) {
             val serializableClass = if (owner.isCompanion) {
                 val containingSymbol = owner.getContainingDeclaration(session) as? FirClassSymbol<*> ?: return emptyList()
                 if (with(session) { containingSymbol.shouldHaveGeneratedMethodsInCompanion }) containingSymbol else null
@@ -163,10 +179,11 @@ class SerializationFirResolveExtension(session: FirSession) : FirDeclarationGene
 
             if (serializableClass == null) return emptyList()
             val serializableGetterInCompanion = generateSerializerGetterInCompanion(owner, serializableClass, callableId)
-            val serializableGetterFromFactory = runIf (with(session) { serializableClass.companionNeedsSerializerFactory }) {
-                val original = getFromSupertype(callableId, owner) { it.getFunctions(callableId.callableName) }.fir
-                generateSerializerFactoryVararg(owner, callableId, original)
-            }
+            val serializableGetterFromFactory =
+                runIf(with(session) { serializableClass.companionNeedsSerializerFactory } && callableId.callableName == SerialEntityNames.SERIALIZER_PROVIDER_NAME) {
+                    val original = getFromSupertype(callableId, owner) { it.getFunctions(callableId.callableName) }.fir
+                    generateSerializerFactoryVararg(owner, callableId, original)
+                }
             return listOfNotNull(serializableGetterInCompanion, serializableGetterFromFactory)
         }
         if (!owner.isSerializer) return emptyList()
