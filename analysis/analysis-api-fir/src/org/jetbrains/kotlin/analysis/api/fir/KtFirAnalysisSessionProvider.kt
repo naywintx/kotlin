@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.analysis.project.structure.KtDanglingFileModule
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.analysis.project.structure.isStable
-import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
 import org.jetbrains.kotlin.psi.KtElement
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -46,7 +45,7 @@ class KtFirAnalysisSessionProvider(project: Project) : KtAnalysisSessionProvider
     override fun getAnalysisSessionByUseSiteKtModule(useSiteKtModule: KtModule): KtAnalysisSession {
         if (useSiteKtModule is KtDanglingFileModule && !useSiteKtModule.isStable) {
             val firResolveSession = useSiteKtModule.getFirResolveSession(project)
-            val validityToken = tokenFactory.create(project)
+            val validityToken = tokenFactory.create(project, firResolveSession.useSiteFirSession.createValidityTracker())
             return KtFirAnalysisSession.createAnalysisSessionByFirResolveSession(firResolveSession, validityToken)
         }
 
@@ -56,12 +55,12 @@ class KtFirAnalysisSessionProvider(project: Project) : KtAnalysisSessionProvider
         return cache.computeIfAbsent(useSiteKtModule) {
             CachedValuesManager.getManager(project).createCachedValue {
                 val firResolveSession = useSiteKtModule.getFirResolveSession(project)
-                val validityToken = tokenFactory.create(project)
+                val validityTracker = firResolveSession.useSiteFirSession.createValidityTracker()
+                val validityToken = tokenFactory.create(project, validityTracker)
 
                 CachedValueProvider.Result(
                     KtFirAnalysisSession.createAnalysisSessionByFirResolveSession(firResolveSession, validityToken),
-                    firResolveSession.useSiteFirSession.createValidityTracker(),
-                    project.createProjectWideOutOfBlockModificationTracker(),
+                    validityTracker,
                 )
             }
         }.value
