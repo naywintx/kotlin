@@ -32,7 +32,7 @@ import kotlin.reflect.KClass
 
 @OptIn(KtAnalysisApiInternals::class)
 class KtFirAnalysisSessionProvider(project: Project) : KtAnalysisSessionProvider(project) {
-    private val cache: ConcurrentMap<Pair<KtModule, KClass<out KtLifetimeToken>>, CachedValue<KtAnalysisSession>> = ConcurrentHashMap()
+    private val cache: ConcurrentMap<KtModule, CachedValue<KtAnalysisSession>> = ConcurrentHashMap()
 
     init {
         LowMemoryWatcher.register(::clearCaches, project)
@@ -53,8 +53,7 @@ class KtFirAnalysisSessionProvider(project: Project) : KtAnalysisSessionProvider
         val identifier = tokenFactory.identifier
         identifier.flushPendingChanges(project)
 
-        val key = Pair(useSiteKtModule, identifier)
-        return cache.computeIfAbsent(key) {
+        return cache.computeIfAbsent(useSiteKtModule) {
             CachedValuesManager.getManager(project).createCachedValue {
                 val firResolveSession = useSiteKtModule.getFirResolveSession(project)
                 val validityToken = tokenFactory.create(project)
