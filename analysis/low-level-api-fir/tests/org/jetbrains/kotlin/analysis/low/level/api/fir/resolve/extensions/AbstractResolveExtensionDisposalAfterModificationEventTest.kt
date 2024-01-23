@@ -13,10 +13,10 @@ import org.jetbrains.kotlin.analysis.api.resolve.extensions.KtResolveExtension
 import org.jetbrains.kotlin.analysis.api.resolve.extensions.KtResolveExtensionFile
 import org.jetbrains.kotlin.analysis.api.resolve.extensions.KtResolveExtensionProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionCache
-import org.jetbrains.kotlin.analysis.low.level.api.fir.test.base.AbstractLowLevelApiSingleFileTest
 import org.jetbrains.kotlin.analysis.low.level.api.fir.test.configurators.AnalysisApiFirSourceTestConfigurator
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
+import org.jetbrains.kotlin.analysis.test.framework.base.AbstractAnalysisApiBasedTest
 import org.jetbrains.kotlin.analysis.test.framework.directives.ModificationEventDirectives
 import org.jetbrains.kotlin.analysis.test.framework.directives.publishModificationEventByDirective
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisApiTestConfigurator
@@ -24,21 +24,21 @@ import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisA
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
-import org.jetbrains.kotlin.test.services.TestModuleStructure
+import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.assertions
 
 /**
  * A simple test which detects when resolve extension disposal after modification events/session invalidation doesn't work *at all*.
  */
-abstract class AbstractResolveExtensionDisposalAfterModificationEventTest : AbstractLowLevelApiSingleFileTest() {
-    override fun doTestByFileStructure(
-        ktFile: KtFile,
-        moduleStructure: TestModuleStructure,
+abstract class AbstractResolveExtensionDisposalAfterModificationEventTest : AbstractAnalysisApiBasedTest() {
+    override fun doTestByMainFile(
+        mainFile: KtFile,
+        mainModule: TestModule,
         testServices: TestServices,
     ) {
-        val project = ktFile.project
-        val module = ProjectStructureProvider.getModule(project, ktFile, null)
+        val project = mainFile.project
+        val module = ProjectStructureProvider.getModule(project, mainFile, contextualModule = null)
         val session = LLFirSessionCache.getInstance(project).getSession(module)
         val resolveExtension = session.llResolveExtensionTool!!.extensions.single() as KtResolveExtensionWithDisposalTracker
 
@@ -46,7 +46,7 @@ abstract class AbstractResolveExtensionDisposalAfterModificationEventTest : Abst
             "The resolve extension should not be disposed before the modification event is published."
         }
 
-        moduleStructure.publishModificationEventByDirective(project, module)
+        mainModule.publishModificationEventByDirective(project, module)
 
         testServices.assertions.assertTrue(resolveExtension.isDisposed) {
             "The resolve extension should be disposed after the modification event has been published."
