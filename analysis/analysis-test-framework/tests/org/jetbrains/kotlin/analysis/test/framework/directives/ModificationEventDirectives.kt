@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.providers.topics.KotlinModuleStateModificat
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
 import org.jetbrains.kotlin.test.directives.model.SimpleDirectivesContainer
 import org.jetbrains.kotlin.test.directives.model.singleValue
-import org.jetbrains.kotlin.test.services.TestModuleStructure
+import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.testFramework.runWriteAction
 
 object ModificationEventDirectives : SimpleDirectivesContainer() {
@@ -38,8 +38,8 @@ enum class ModificationEventKind {
  * @param module The module for which module-level modification events should be published, or `null` if only global modification events
  *  should be published. (Specifying a module-level modification event kind then raises an error.)
  */
-fun TestModuleStructure.publishModificationEventByDirective(project: Project, module: KtModule?) {
-    val modificationEventKind = allDirectives.singleValue(ModificationEventDirectives.MODIFICATION_EVENT)
+fun TestModule.publishModificationEventByDirective(project: Project, module: KtModule?) {
+    val modificationEventKind = directives.singleValue(ModificationEventDirectives.MODIFICATION_EVENT)
 
     publishModificationEventByKind(modificationEventKind, project, module)
 }
