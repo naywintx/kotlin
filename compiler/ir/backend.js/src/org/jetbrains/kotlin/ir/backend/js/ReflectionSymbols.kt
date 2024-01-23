@@ -20,6 +20,5 @@ interface ReflectionSymbols {
     val createCovariantKTypeProjection: IrSimpleFunctionSymbol?
     val createInvariantKTypeProjection: IrSimpleFunctionSymbol?
     val createContravariantKTypeProjection: IrSimpleFunctionSymbol?
-    val primitiveClassesObject: IrClassSymbol
     val kTypeClass: IrClassSymbol
 }
