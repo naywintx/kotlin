@@ -305,6 +305,7 @@ public annotation class JsExternalArgument
  * Specifies that an additional static method needs to be generated from this element if it's a function.
  * If this element is a property, additional static getter/setter methods should be generated.
  */
+@ExperimentalJsStatic
 @Retention(AnnotationRetention.BINARY)
 @Target(FUNCTION, PROPERTY, PROPERTY_GETTER, PROPERTY_SETTER)
 @MustBeDocumented

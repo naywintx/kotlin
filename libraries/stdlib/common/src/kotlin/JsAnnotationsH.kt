@@ -171,4 +171,4 @@ public annotation class ExperimentalJsCollectionsApi
 @Target(FUNCTION, PROPERTY, PROPERTY_GETTER, PROPERTY_SETTER)
 @MustBeDocumented
 @OptionalExpectation
-public expect annotation class JsStatic()
+public expect annotation class JsStatic
