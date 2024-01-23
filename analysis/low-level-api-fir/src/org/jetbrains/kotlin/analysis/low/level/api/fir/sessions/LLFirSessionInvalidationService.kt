@@ -117,10 +117,14 @@ class LLFirSessionInvalidationService(private val project: Project) : Disposable
     }
 
     private fun invalidateContextualDanglingFileSessions(contextModule: KtModule) {
+        ApplicationManager.getApplication().assertWriteAccessAllowed()
+
         sessionCache.removeContextualDanglingFileSessions(contextModule)
     }
 
     private fun invalidateUnstableDanglingFileSessions() {
+        ApplicationManager.getApplication().assertWriteAccessAllowed()
+
         sessionCache.removeUnstableDanglingFileSessions()
     }
 
