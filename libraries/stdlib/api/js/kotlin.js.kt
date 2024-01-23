@@ -338,7 +338,7 @@ public final annotation class JsQualifier : kotlin.Annotation {
     public final val value: kotlin.String { get; }
 }
 
-@kotlin.ExperimentalJsStatic
+@kotlin.js.ExperimentalJsStatic
 @kotlin.annotation.Retention(value = AnnotationRetention.BINARY)
 @kotlin.annotation.Target(allowedTargets = {AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER})
 @kotlin.annotation.MustBeDocumented
