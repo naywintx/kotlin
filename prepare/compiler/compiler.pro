@@ -4,15 +4,25 @@
 -dontwarn org.fusesource.**
 -dontwarn org.imgscalr.Scalr**
 -dontwarn org.xerial.snappy.SnappyBundleActivator
+-dontwarn com.intellij.diagnostic.*
+-dontwarn com.intellij.ide.plugins.*
+-dontwarn com.intellij.util.io.BlockingKt
 -dontwarn com.intellij.util.CompressionUtil
 -dontwarn com.intellij.util.SnappyInitializer
 -dontwarn com.intellij.util.SVGLoader
 -dontwarn com.intellij.util.SVGLoader$MyTranscoder
 -dontwarn com.intellij.util.ImageLoader$ImageDesc
+-dontwarn com.intellij.util.EnvironmentUtil
 -dontwarn com.intellij.util.ui.**
 -dontwarn com.intellij.ui.**
+-dontwarn com.intellij.java.frontback.**
+-dontwarn com.intellij.openapi.editor.impl.**
+-dontwarn com.intellij.openapi.progress.**
+-dontwarn com.intellij.openapi.vfs.VirtualFileUtil
 -dontwarn com.intellij.util.IconUtil
 -dontwarn com.intellij.util.ImageLoader
+-dontwarn com.intellij.util.lang.*
+-dontwarn com.intellij.util.progress.*
 -dontwarn net.sf.cglib.**
 -dontwarn org.objectweb.asm.** # this is ASM3, the old version that we do not use
 -dontwarn com.sun.jna.NativeString
