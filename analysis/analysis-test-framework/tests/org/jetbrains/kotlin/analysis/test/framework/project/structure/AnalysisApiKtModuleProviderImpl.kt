@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.test.services.moduleStructure
 
 abstract class AnalysisApiKtModuleProvider : TestService {
     protected abstract val testServices: TestServices
+
     abstract fun getModule(moduleName: String): KtModule
 
     abstract fun getModuleFiles(module: TestModule): List<PsiFile>
@@ -55,6 +56,8 @@ fun AnalysisApiKtModuleProvider.getKtFiles(module: TestModule): List<KtFile> = g
 fun TestServices.allKtFiles(): List<KtFile> = moduleStructure.modules.flatMap(ktModuleProvider::getKtFiles)
 
 val TestServices.ktModuleProvider: AnalysisApiKtModuleProvider by TestServices.testServiceAccessor()
+
+fun TestModule.getKtModule(testServices: TestServices): KtModule = testServices.ktModuleProvider.getModule(name)
 
 fun List<KtModuleWithFiles>.associateByName(): Map<String, KtModuleWithFiles> {
     return associateBy { (ktModule, _) ->
