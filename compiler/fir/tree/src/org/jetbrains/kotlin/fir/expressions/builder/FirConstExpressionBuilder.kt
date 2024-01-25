@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.expressions.builder
 import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.fir.builder.toMutableOrEmpty
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
+import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirLiteralExpression
 import org.jetbrains.kotlin.fir.expressions.UnresolvedExpressionTypeAccess
 import org.jetbrains.kotlin.fir.expressions.impl.FirLiteralExpressionImpl
@@ -21,9 +22,10 @@ fun <T> buildLiteralExpression(
     kind: ConstantValueKind<T>,
     value: T,
     annotations: MutableList<FirAnnotation> = mutableListOf(),
-    setType: Boolean
+    setType: Boolean,
+    originalExpression: FirExpression? = null
 ): FirLiteralExpression<T> {
-    return FirLiteralExpressionImpl(source, null, annotations.toMutableOrEmpty(), kind, value).also {
+    return FirLiteralExpressionImpl(source, null, annotations.toMutableOrEmpty(), kind, value, originalExpression).also {
         if (setType) {
             when (kind) {
                 ConstantValueKind.Boolean -> it.coneTypeOrNull = StandardClassIds.Boolean.constructClassLikeType()

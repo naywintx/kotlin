@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.fir.MutableOrEmptyList
 import org.jetbrains.kotlin.fir.builder.toMutableOrEmpty
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
+import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirLiteralExpression
 import org.jetbrains.kotlin.fir.expressions.UnresolvedExpressionTypeAccess
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
@@ -30,14 +31,17 @@ internal class FirLiteralExpressionImpl<T> (
     override var annotations: MutableOrEmptyList<FirAnnotation>,
     override var kind: ConstantValueKind<T>,
     override val value: T,
+    override var originalExpression: FirExpression?,
 ) : FirLiteralExpression<T>() {
 
     override fun <R, D> acceptChildren(visitor: FirVisitor<R, D>, data: D) {
         annotations.forEach { it.accept(visitor, data) }
+        originalExpression?.accept(visitor, data)
     }
 
     override fun <D> transformChildren(transformer: FirTransformer<D>, data: D): FirLiteralExpressionImpl<T> {
         transformAnnotations(transformer, data)
+        originalExpression = originalExpression?.transform(transformer, data)
         return this
     }
 
