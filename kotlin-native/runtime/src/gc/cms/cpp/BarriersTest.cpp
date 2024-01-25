@@ -49,9 +49,13 @@ public:
         mm::GlobalData::Instance().allocator().clearForTests();
     }
 
-    void initMutatorMarkQueue(mm::ThreadData& thread) {
+    auto withMutatorQueue(mm::ThreadData& thread) {
         auto& markData = thread.gc().impl().gc().mark();
-        markData.markQueue().construct(parProc_);
+        return ScopeGuard{[&]{
+            markData.markQueue().construct(parProc_);
+        }, [&]{
+            markData.markQueue().destroy();
+        }};
     }
 
 private:
@@ -62,7 +66,7 @@ private:
 
 TEST_F(BarriersTest, Deletion) {
     RunInNewThread([this](mm::ThreadData& threadData) {
-        initMutatorMarkQueue(threadData);
+        auto queueScope = withMutatorQueue(threadData);
         auto& prevObj = AllocateObject(threadData);
         auto& newObj = AllocateObject(threadData);
 
@@ -93,7 +97,7 @@ TEST_F(BarriersTest, AllocationDuringMarkBarreirs) {
     gc::barriers::enableBarriers(gcHandle.getEpoch());
 
     RunInNewThread([this](mm::ThreadData& threadData) {
-        initMutatorMarkQueue(threadData);
+        auto queueScope = withMutatorQueue(threadData);
         auto& obj = AllocateObject(threadData);
         EXPECT_THAT(gc::isMarked(obj.header()), true);
     });
@@ -125,7 +129,7 @@ TEST_F(BarriersTest, ConcurrentDeletion) {
         threads.emplace_back([&]() noexcept {
             ScopedMemoryInit memory;
             mm::ThreadData& threadData = *memory.memoryState()->GetThreadData();
-            initMutatorMarkQueue(threadData);
+            auto queueScope = withMutatorQueue(threadData);
 
             while (!canStart.load()) std::this_thread::yield();
 
