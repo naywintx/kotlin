@@ -334,7 +334,12 @@ fun FirLiteralExpression<*>.getIrConstKind(): IrConstKind<*> = when (kind) {
     else -> kind.toIrConstKind()
 }
 
-fun <T> FirLiteralExpression<T>.toIrConst(irType: IrType): IrConst<T> {
+context(Fir2IrComponents)
+fun <T> FirLiteralExpression<T>.toIrConst(irType: IrType): IrExpression {
+    this.originalExpression?.let { original ->
+        return original.asCompileTimeIrInitializer(this@Fir2IrComponents).expression
+    }
+
     return convertWithOffsets { startOffset, endOffset ->
         @Suppress("UNCHECKED_CAST")
         val kind = getIrConstKind() as IrConstKind<T>
