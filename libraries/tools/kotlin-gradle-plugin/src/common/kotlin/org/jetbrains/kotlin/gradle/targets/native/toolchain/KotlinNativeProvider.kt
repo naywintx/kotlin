@@ -25,6 +25,9 @@ import org.jetbrains.kotlin.konan.properties.KonanPropertiesLoader
 import org.jetbrains.kotlin.konan.target.Distribution
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.konan.target.loadConfigurables
+import java.io.File
+import java.nio.file.Files
+import java.security.MessageDigest
 
 /**
  * This is a nested provider for all native tasks
