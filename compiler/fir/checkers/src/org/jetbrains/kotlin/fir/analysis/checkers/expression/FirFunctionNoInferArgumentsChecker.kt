@@ -19,12 +19,33 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 
+/**
+ * This checker is needed because of the nature of @NoInfer.
+ * [org.jetbrains.kotlin.resolve.calls.inference.components.TypeCheckerStateForConstraintSystem.addSubtypeConstraint] returns `true`
+ * if `subType` or `superType` contains `@NoInfer` annotation.
+ * It implies that `addSubtypeConstraintIfCompatible` in [org.jetbrains.kotlin.fir.resolve.calls.checkApplicabilityForArgumentType]
+ * also returns `true` and `ArgumentTypeMismatch` diagnostics is not reported at the arguments resolving phase.
+ * At the checkers phase all types are resolved, and it's possible to find missing mismatches using `isSubtypeOf` function and calculated substitution
+ *
+ * Given the following example:
+ *
+ * ```kt
+ * fun <T> test1(t1: T, t2: @kotlin.internal.NoInfer T): T = t1
+ * ...
+ * test1(1, <!ARGUMENT_TYPE_MISMATCH("Int; String")!>"312"<!>)
+ * ```
+ *
+ * The second argument is not participated in the inference process, and `T` is captured by the type of the first argument.
+ * It causes type mismatch error on the second argument.
+ */
 object FirFunctionNoInferArgumentsChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
     override fun check(expression: FirFunctionCall, context: CheckerContext, reporter: DiagnosticReporter) {
         val mapping = (expression.argumentList as? FirResolvedArgumentList)?.mapping ?: return
 
-        if (mapping.none { (_, valueParameter) ->
-                valueParameter.returnTypeRef.coneType.contains { it.attributes.contains(CompilerConeAttributes.NoInfer) }
+        fun ConeKotlinType.containsNoInferAttribute(): Boolean = contains { it.attributes.contains(CompilerConeAttributes.NoInfer) }
+
+        if (mapping.none { (argument, valueParameter) ->
+                argument.resolvedType.containsNoInferAttribute() || valueParameter.returnTypeRef.coneType.containsNoInferAttribute()
             }
         ) {
             // Optimization: don't allocate anything if there is no `@NoInfer` type parameter (most common case)
@@ -57,7 +78,7 @@ object FirFunctionNoInferArgumentsChecker : FirFunctionCallChecker(MppCheckerKin
         }
 
         fun checkNoInferMismatch(argumentExpression: FirExpression, parameterType: ConeKotlinType) {
-            if (parameterType.contains { it.attributes.contains(CompilerConeAttributes.NoInfer) }) {
+            if (argumentExpression.resolvedType.containsNoInferAttribute() || parameterType.containsNoInferAttribute()) {
                 val argumentType = argumentExpression.resolvedType
                 val substitutedType = substitutor.substituteOrSelf(parameterType)
                 if (!AbstractTypeChecker.isSubtypeOf(context.session.typeContext, argumentType, substitutedType)) {

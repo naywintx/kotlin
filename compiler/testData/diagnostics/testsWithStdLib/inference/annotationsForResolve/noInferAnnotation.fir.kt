@@ -12,11 +12,21 @@ fun <T> test3(t1: @kotlin.internal.NoInfer T): T = t1
 @Suppress("INVISIBLE_MEMBER", <!ERROR_SUPPRESSION!>"INVISIBLE_REFERENCE"<!>)
 fun <T> test4(t1: T, t2: List<@kotlin.internal.NoInfer T>): T = t1
 
-fun usage() {
+class In<in T>
+@Suppress("INVISIBLE_MEMBER", <!ERROR_SUPPRESSION!>"INVISIBLE_REFERENCE"<!>)
+fun <E> id(e: E): In<@kotlin.internal.NoInfer E> = TODO()
+
+fun test5(x: In<String>) {}
+fun In<String>.test6() {}
+
+fun usage(y: Int) {
     test1(1, <!ARGUMENT_TYPE_MISMATCH("kotlin.Int; kotlin.String")!>"312"<!>)
     1.test2("")
     <!NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>test3<!>("")
     test4(1, <!ARGUMENT_TYPE_MISMATCH("kotlin.collections.List<kotlin.Int>; kotlin.collections.List<kotlin.String>")!>listOf("a")<!>)
+    val x: In<String> = <!INITIALIZER_TYPE_MISMATCH!>id(y)<!>
+    test5(<!ARGUMENT_TYPE_MISMATCH!>id(y)<!>)
+    id(y).<!UNRESOLVED_REFERENCE_WRONG_RECEIVER!>test6<!>()
 }
 
 @Suppress("INVISIBLE_MEMBER", <!ERROR_SUPPRESSION!>"INVISIBLE_REFERENCE"<!>)
