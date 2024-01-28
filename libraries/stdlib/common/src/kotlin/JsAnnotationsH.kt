@@ -58,7 +58,7 @@ public expect annotation class JsFileName(val name: String)
 public annotation class ExperimentalJsExport
 
 /**
- * Marks experimental JsStatic annotation.
+ * Marks the experimental JsStatic annotation.
  *
  * Note that behavior of these annotations will likely be changed in the future.
  *
