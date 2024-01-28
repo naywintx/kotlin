@@ -163,8 +163,8 @@ public annotation class ExperimentalJsReflectionCreateInstance
 public annotation class ExperimentalJsCollectionsApi
 
 /**
- * Specifies that an additional static method needs to be generated from this element if it's a function.
- * If this element is a property, additional static getter/setter methods should be generated.
+ * Specifies that an additional static method is generated from the annotated member if it's a function.
+ * If the member is a property, additional static getter/setter methods are generated.
  */
 @ExperimentalJsStatic
 @Retention(AnnotationRetention.BINARY)
