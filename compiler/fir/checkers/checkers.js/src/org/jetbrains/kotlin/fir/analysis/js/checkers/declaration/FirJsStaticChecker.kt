@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.fir.analysis.checkers.classKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirBasicDeclarationChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.fullyExpandedClassId
+import org.jetbrains.kotlin.fir.analysis.checkers.getContainingClassSymbol
 import org.jetbrains.kotlin.fir.analysis.diagnostics.js.FirJsErrors
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.*
@@ -71,9 +72,9 @@ object FirJsStaticChecker : FirBasicDeclarationChecker(MppCheckerKind.Common) {
             return
         }
 
-        val container = context.getContainerAt(0) ?: return
+        val container = declaration.getContainingClassSymbol(context.session) ?: return
 
-        if (!container.isCompanion() || context.containerIsInterface(1)) {
+        if (!container.isCompanion() || container.containerIsInterface(context)) {
             reporter.reportOn(targetSource, FirJsErrors.JS_STATIC_NOT_IN_CLASS_COMPANION, context)
         }
 
@@ -148,31 +149,8 @@ object FirJsStaticChecker : FirBasicDeclarationChecker(MppCheckerKind.Common) {
         if (declaration.isConst) reporter.reportOn(targetSource, FirJsErrors.JS_STATIC_ON_CONST, context)
     }
 
-    private fun CheckerContext.containerIsInterface(outerLevel: Int): Boolean {
-        return this.getContainerAt(outerLevel)?.classKind?.isInterface == true
-    }
-
-    private fun CheckerContext.containerIsNonCompanionObject(outerLevel: Int): Boolean {
-        val containingClassSymbol = this.getContainerAt(outerLevel) ?: return false
-
-        @OptIn(SymbolInternals::class)
-        val containingClass = (containingClassSymbol.fir as? FirRegularClass) ?: return false
-
-        return containingClass.classKind == ClassKind.OBJECT && !containingClass.isCompanion
-    }
-
-    private fun CheckerContext.getContainerAt(outerLevel: Int): FirClassLikeSymbol<*>? {
-        val correction = if (this.containingDeclarations.lastOrNull() is FirProperty) {
-            1
-        } else {
-            0
-        }
-        val last = this.containingDeclarations.asReversed().getOrNull(outerLevel + correction)
-        return if (last is FirClassLikeDeclaration) {
-            last.symbol
-        } else {
-            null
-        }
+    private fun FirClassLikeSymbol<*>.containerIsInterface(context: CheckerContext): Boolean {
+        return getContainingClassSymbol(context.session)?.classKind?.isInterface == true
     }
 
     private fun FirClassLikeSymbol<*>.isCompanion() = (this as? FirRegularClassSymbol)?.isCompanion == true
