@@ -973,6 +973,11 @@ public class IncrementalK2PsiJvmCompilerRunnerTestGenerated extends AbstractIncr
             runTest("jps/jps-plugin/testData/incremental/inlineFunCallSite/primaryConstructorParameterDefaultValue/");
         }
 
+        @TestMetadata("publishedApi")
+        public void testPublishedApi() throws Exception {
+            runTest("jps/jps-plugin/testData/incremental/inlineFunCallSite/publishedApi/");
+        }
+
         @TestMetadata("superCall")
         public void testSuperCall() throws Exception {
             runTest("jps/jps-plugin/testData/incremental/inlineFunCallSite/superCall/");
@@ -1133,6 +1138,19 @@ public class IncrementalK2PsiJvmCompilerRunnerTestGenerated extends AbstractIncr
 
             public void testAllFilesPresentInPrimaryConstructorParameterDefaultValue() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("jps/jps-plugin/testData/incremental/inlineFunCallSite/primaryConstructorParameterDefaultValue"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JVM_IR, true);
+            }
+        }
+
+        @TestMetadata("jps/jps-plugin/testData/incremental/inlineFunCallSite/publishedApi")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class PublishedApi extends AbstractIncrementalK2PsiJvmCompilerRunnerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM_IR, testDataFilePath);
+            }
+
+            public void testAllFilesPresentInPublishedApi() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("jps/jps-plugin/testData/incremental/inlineFunCallSite/publishedApi"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JVM_IR, true);
             }
         }
 
