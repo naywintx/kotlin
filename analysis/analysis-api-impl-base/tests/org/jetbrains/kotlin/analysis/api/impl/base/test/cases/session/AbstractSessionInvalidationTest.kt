@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.test.framework.base.AbstractAnalysisApiBasedTest
 import org.jetbrains.kotlin.analysis.test.framework.directives.ModificationEventKind
 import org.jetbrains.kotlin.analysis.test.framework.directives.publishWildcardModificationEventsByDirective
-import org.jetbrains.kotlin.analysis.test.framework.project.structure.ktModuleProvider
+import org.jetbrains.kotlin.analysis.test.framework.project.structure.getKtModule
 import org.jetbrains.kotlin.test.services.TestModuleStructure
 import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.assertions
@@ -41,36 +41,31 @@ abstract class AbstractSessionInvalidationTest<SESSION> : AbstractAnalysisApiBas
     protected abstract fun isSessionValid(session: SESSION): Boolean
 
     override fun doTestByModuleStructure(moduleStructure: TestModuleStructure, testServices: TestServices) {
-        val allKtModules = testServices.ktModuleProvider.getModuleStructure().allKtModules()
+        // We should only check sessions for `KtModule`s associated with test modules, to avoid SDKs and libraries from the test
+        // infrastructure.
+        val ktModules = moduleStructure.modules.map { it.getKtModule(testServices) }
 
-        val sessionsBeforeModification = getSessions(allKtModules)
+        val sessionsBeforeModification = getSessions(ktModules)
         moduleStructure.publishWildcardModificationEventsByDirective(modificationEventKind, testServices)
-        val sessionsAfterModification = getSessions(allKtModules)
+        val sessionsAfterModification = getSessions(ktModules)
 
         val invalidatedSessions = buildSet {
             addAll(sessionsBeforeModification)
             removeAll(sessionsAfterModification)
         }
 
-        checkInvalidatedModules(moduleStructure, invalidatedSessions, testServices)
+        checkInvalidatedModules(invalidatedSessions, testServices)
         checkSessionsMarkedInvalid(invalidatedSessions, testServices)
     }
 
     private fun getSessions(modules: List<KtModule>): List<SESSION> = modules.map(::getSession)
 
     private fun checkInvalidatedModules(
-        testModuleStructure: TestModuleStructure,
         invalidatedSessions: Set<SESSION>,
         testServices: TestServices,
     ) {
-        val testModuleNames = testModuleStructure.modules.map { it.name }
-
         val invalidatedModuleDescriptions = invalidatedSessions
             .map { getSessionKtModule(it).toString() }
-            .filter {
-                // We only want to include test modules in the output. Otherwise, it might include libraries from the test infrastructure.
-                it in testModuleNames
-            }
             .distinct()
             .sorted()
 
