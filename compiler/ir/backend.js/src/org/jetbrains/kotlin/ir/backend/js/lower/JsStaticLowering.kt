@@ -74,11 +74,8 @@ class JsStaticLowering(private val context: JsIrBackendContext) : DeclarationTra
                         putValueArgument(i, irGet(valueParameter))
                     }
                 }
-                if (returnType.isUnit()) {
-                    +delegatingCall
-                } else {
-                    +irReturn(delegatingCall)
-                }
+
+                +irReturn(delegatingCall)
             }
         }
     }

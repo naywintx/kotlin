@@ -14,7 +14,8 @@ class Test {
     @JsExport.Ignore
     companion object {
         @JsStatic
-        fun bar(): String = hidden()
+        @JsName("bar")
+        fun pep(): String = hidden()
 
         fun hidden(): String = "BARRRR"
 
