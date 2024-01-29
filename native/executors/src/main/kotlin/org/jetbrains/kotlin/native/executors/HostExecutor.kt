@@ -142,8 +142,17 @@ private object ProcessKiller {
     fun deregister(process: Process) = processes.remove(process)
 }
 
+private object ProcessStartMutex
+
 private fun <T> ProcessBuilder.scoped(logger: Logger, block: suspend CoroutineScope.(Process) -> T): T {
-    val process = start()
+    val process = if (!HostManager.hostIsMingw) {
+        start()
+    } else {
+        // KT-65113: There might be a race wrt handles inheritance during child processes launch.
+        synchronized(ProcessStartMutex) {
+            start()
+        }
+    }
     // Make sure the process is killed even if the jvm process is being destroyed.
     // e.g. gradle --no-daemon task execution was cancelled by the user pressing ^C
     ProcessKiller.register(process)
