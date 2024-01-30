@@ -55,6 +55,7 @@ import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.typePro
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.typeProvider.AbstractTypeReferenceTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.references.*
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.references.AbstractReferenceImportAliasTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.session.AbstractCodeFragmentContextModificationAnalysisSessionInvalidationTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.session.AbstractGlobalModuleStateModificationAnalysisSessionInvalidationTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.session.AbstractGlobalSourceModuleStateModificationAnalysisSessionInvalidationTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.session.AbstractGlobalSourceOutOfBlockModificationAnalysisSessionInvalidationTest
@@ -266,6 +267,10 @@ private fun AnalysisApiTestGroup.generateAnalysisApiNonComponentsTests() {
         }
 
         test(AbstractGlobalSourceOutOfBlockModificationAnalysisSessionInvalidationTest::class) {
+            model("sessionInvalidation")
+        }
+
+        test(AbstractCodeFragmentContextModificationAnalysisSessionInvalidationTest::class) {
             model("sessionInvalidation")
         }
     }
