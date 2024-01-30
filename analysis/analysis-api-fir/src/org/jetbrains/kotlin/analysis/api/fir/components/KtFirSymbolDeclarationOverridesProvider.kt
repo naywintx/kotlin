@@ -103,10 +103,7 @@ internal class KtFirSymbolDeclarationOverridesProvider(
         else -> ProcessorAction.STOP
     }
 
-    private inline fun <T : KtSymbol> processOverrides(
-        callableSymbol: T,
-        crossinline process: (FirTypeScope, FirDeclaration) -> Unit
-    ) {
+    private fun <T : KtSymbol> processOverrides(callableSymbol: T, process: (FirTypeScope, FirDeclaration) -> Unit) {
         if (callableSymbol !is KtCallableSymbol) {
             return
         }
