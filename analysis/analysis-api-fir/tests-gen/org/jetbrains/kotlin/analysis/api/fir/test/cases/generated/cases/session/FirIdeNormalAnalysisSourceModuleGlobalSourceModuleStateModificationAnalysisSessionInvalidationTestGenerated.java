@@ -83,6 +83,18 @@ public class FirIdeNormalAnalysisSourceModuleGlobalSourceModuleStateModification
     }
 
     @Test
+    @TestMetadata("binaryTreeInvalidateLibrarySourceL1.kt")
+    public void testBinaryTreeInvalidateLibrarySourceL1() throws Exception {
+        runTest("analysis/analysis-api/testData/sessions/sessionInvalidation/binaryTreeInvalidateLibrarySourceL1.kt");
+    }
+
+    @Test
+    @TestMetadata("binaryTreeInvalidateLibrarySourceL2.kt")
+    public void testBinaryTreeInvalidateLibrarySourceL2() throws Exception {
+        runTest("analysis/analysis-api/testData/sessions/sessionInvalidation/binaryTreeInvalidateLibrarySourceL2.kt");
+    }
+
+    @Test
     @TestMetadata("binaryTreeInvalidateNone.kt")
     public void testBinaryTreeInvalidateNone() throws Exception {
         runTest("analysis/analysis-api/testData/sessions/sessionInvalidation/binaryTreeInvalidateNone.kt");
@@ -98,6 +110,12 @@ public class FirIdeNormalAnalysisSourceModuleGlobalSourceModuleStateModification
     @TestMetadata("linearInvalidateL1.kt")
     public void testLinearInvalidateL1() throws Exception {
         runTest("analysis/analysis-api/testData/sessions/sessionInvalidation/linearInvalidateL1.kt");
+    }
+
+    @Test
+    @TestMetadata("linearInvalidateLibrarySourceL1.kt")
+    public void testLinearInvalidateLibrarySourceL1() throws Exception {
+        runTest("analysis/analysis-api/testData/sessions/sessionInvalidation/linearInvalidateLibrarySourceL1.kt");
     }
 
     @Test
@@ -128,5 +146,17 @@ public class FirIdeNormalAnalysisSourceModuleGlobalSourceModuleStateModification
     @TestMetadata("rhombusInvalidateL2.kt")
     public void testRhombusInvalidateL2() throws Exception {
         runTest("analysis/analysis-api/testData/sessions/sessionInvalidation/rhombusInvalidateL2.kt");
+    }
+
+    @Test
+    @TestMetadata("rhombusInvalidateLibrarySourceL1.kt")
+    public void testRhombusInvalidateLibrarySourceL1() throws Exception {
+        runTest("analysis/analysis-api/testData/sessions/sessionInvalidation/rhombusInvalidateLibrarySourceL1.kt");
+    }
+
+    @Test
+    @TestMetadata("rhombusInvalidateLibrarySourceL2.kt")
+    public void testRhombusInvalidateLibrarySourceL2() throws Exception {
+        runTest("analysis/analysis-api/testData/sessions/sessionInvalidation/rhombusInvalidateLibrarySourceL2.kt");
     }
 }
