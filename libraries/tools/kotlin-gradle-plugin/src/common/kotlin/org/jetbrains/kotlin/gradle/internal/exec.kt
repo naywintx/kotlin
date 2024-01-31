@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.gradle.internal
 
-import org.gradle.internal.logging.progress.ProgressLogger
 import org.gradle.internal.service.ServiceRegistry
 import org.gradle.process.ExecResult
 import org.gradle.process.internal.ExecAction
@@ -64,23 +63,11 @@ internal fun ServiceRegistry.execWithProgress(description: String, readStdErr: B
     }
 }
 
-internal fun ServiceRegistry.execWithErrorLogger(
-    description: String,
-    body: (ExecAction, ProgressLogger) -> Pair<TeamCityMessageCommonClient, TeamCityMessageCommonClient>
+internal fun ServiceRegistry.exec(
+    body: (ExecAction) -> Unit,
 ): ExecResult {
     val exec = get(ExecActionFactory::class.java).newExecAction()
-    return operation(description) {
-        progress(description)
-        val (standardClient, errorClient) = body(exec, this)
-        exec.isIgnoreExitValue = true
-        val result = exec.execute()
-        if (result.exitValue != 0) {
-            error(
-                errorClient.testFailedMessage()
-                    ?: standardClient.testFailedMessage()
-                    ?: "Error occurred. See log for details."
-            )
-        }
-        result
-    }
+    body(exec)
+    val result = exec.execute()
+    return result
 }
