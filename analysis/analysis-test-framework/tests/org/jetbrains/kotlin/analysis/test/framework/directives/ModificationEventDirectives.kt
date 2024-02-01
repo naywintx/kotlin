@@ -10,6 +10,9 @@ import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.providers.analysisMessageBus
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinModuleStateModificationKind
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
+import org.jetbrains.kotlin.analysis.providers.topics.KotlinModificationEventKind
+import org.jetbrains.kotlin.analysis.providers.topics.isGlobalLevel
+import org.jetbrains.kotlin.analysis.providers.topics.isModuleLevel
 import org.jetbrains.kotlin.analysis.test.framework.project.structure.getKtModule
 import org.jetbrains.kotlin.analysis.test.framework.services.environmentManager
 import org.jetbrains.kotlin.test.directives.model.SimpleDirectivesContainer
@@ -26,7 +29,7 @@ import org.jetbrains.kotlin.test.testFramework.runWriteAction
  * the appropriate [TestModule]: [publishModificationEventByDirective] or [publishWildcardModificationEventByDirectiveIfPresent].
  */
 object ModificationEventDirectives : SimpleDirectivesContainer() {
-    val MODIFICATION_EVENT by enumDirective<ModificationEventKind>(
+    val MODIFICATION_EVENT by enumDirective<KotlinModificationEventKind>(
         description = "The modification event to be raised for the module or globally.",
     )
 
@@ -37,23 +40,6 @@ object ModificationEventDirectives : SimpleDirectivesContainer() {
         """.trimIndent()
     )
 }
-
-enum class ModificationEventKind {
-    MODULE_STATE_MODIFICATION,
-    MODULE_OUT_OF_BLOCK_MODIFICATION,
-    GLOBAL_MODULE_STATE_MODIFICATION,
-    GLOBAL_SOURCE_MODULE_STATE_MODIFICATION,
-    GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION,
-    CODE_FRAGMENT_CONTEXT_MODIFICATION,
-}
-
-val ModificationEventKind.isModuleLevel: Boolean
-    get() = this == ModificationEventKind.MODULE_STATE_MODIFICATION ||
-            this == ModificationEventKind.MODULE_OUT_OF_BLOCK_MODIFICATION ||
-            this == ModificationEventKind.CODE_FRAGMENT_CONTEXT_MODIFICATION
-
-val ModificationEventKind.isGlobalLevel: Boolean
-    get() = !isModuleLevel
 
 /**
  * Publishes a modification event as defined in [KotlinTopics][org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics] based on the
@@ -84,7 +70,7 @@ fun TestModule.publishModificationEventByDirective(testServices: TestServices, i
  * Module-level modification events will be published for the [TestModule]'s [KtModule].
  */
 fun TestModule.publishWildcardModificationEventByDirectiveIfPresent(
-    modificationEventKind: ModificationEventKind,
+    modificationEventKind: KotlinModificationEventKind,
     testServices: TestServices,
 ) {
     if (ModificationEventDirectives.WILDCARD_MODIFICATION_EVENT !in directives) {
@@ -103,7 +89,7 @@ fun TestModule.publishWildcardModificationEventByDirectiveIfPresent(
  * events).
  */
 fun TestModuleStructure.publishWildcardModificationEventsByDirective(
-    modificationEventKind: ModificationEventKind,
+    modificationEventKind: KotlinModificationEventKind,
     testServices: TestServices,
 ) {
     if (modificationEventKind.isModuleLevel) {
@@ -118,20 +104,20 @@ fun TestModuleStructure.publishWildcardModificationEventsByDirective(
     }
 }
 
-fun publishModificationEvent(modificationEventKind: ModificationEventKind, ktModule: KtModule) {
+fun publishModificationEvent(modificationEventKind: KotlinModificationEventKind, ktModule: KtModule) {
     publishModificationEventByKind(modificationEventKind, ktModule.project, ktModule)
 }
 
-fun publishGlobalModificationEvent(modificationEventKind: ModificationEventKind, project: Project) {
+fun publishGlobalModificationEvent(modificationEventKind: KotlinModificationEventKind, project: Project) {
     require(modificationEventKind.isGlobalLevel)
 
     publishModificationEventByKind(modificationEventKind, project, ktModule = null)
 }
 
-private fun publishModificationEventByKind(modificationEventKind: ModificationEventKind, project: Project, ktModule: KtModule?) {
+private fun publishModificationEventByKind(modificationEventKind: KotlinModificationEventKind, project: Project, ktModule: KtModule?) {
     runWriteAction {
         when (modificationEventKind) {
-            ModificationEventKind.MODULE_STATE_MODIFICATION -> {
+            KotlinModificationEventKind.MODULE_STATE_MODIFICATION -> {
                 project.analysisMessageBus
                     .syncPublisher(KotlinTopics.MODULE_STATE_MODIFICATION)
                     .onModification(
@@ -140,25 +126,25 @@ private fun publishModificationEventByKind(modificationEventKind: ModificationEv
                     )
             }
 
-            ModificationEventKind.MODULE_OUT_OF_BLOCK_MODIFICATION -> {
+            KotlinModificationEventKind.MODULE_OUT_OF_BLOCK_MODIFICATION -> {
                 project.analysisMessageBus
                     .syncPublisher(KotlinTopics.MODULE_OUT_OF_BLOCK_MODIFICATION)
                     .onModification(ktModule ?: errorModuleRequired())
             }
 
-            ModificationEventKind.GLOBAL_MODULE_STATE_MODIFICATION -> {
+            KotlinModificationEventKind.GLOBAL_MODULE_STATE_MODIFICATION -> {
                 project.analysisMessageBus.syncPublisher(KotlinTopics.GLOBAL_MODULE_STATE_MODIFICATION).onModification()
             }
 
-            ModificationEventKind.GLOBAL_SOURCE_MODULE_STATE_MODIFICATION -> {
+            KotlinModificationEventKind.GLOBAL_SOURCE_MODULE_STATE_MODIFICATION -> {
                 project.analysisMessageBus.syncPublisher(KotlinTopics.GLOBAL_SOURCE_MODULE_STATE_MODIFICATION).onModification()
             }
 
-            ModificationEventKind.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION -> {
+            KotlinModificationEventKind.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION -> {
                 project.analysisMessageBus.syncPublisher(KotlinTopics.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION).onModification()
             }
 
-            ModificationEventKind.CODE_FRAGMENT_CONTEXT_MODIFICATION -> {
+            KotlinModificationEventKind.CODE_FRAGMENT_CONTEXT_MODIFICATION -> {
                 project.analysisMessageBus
                     .syncPublisher(KotlinTopics.CODE_FRAGMENT_CONTEXT_MODIFICATION)
                     .onModification(ktModule ?: errorModuleRequired())
