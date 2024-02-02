@@ -87,7 +87,7 @@ internal fun IrField.storageKind(context: Context): FieldStorageKind {
         (typeAnnotations?.hasAnnotation(KonanFqNames.frozenLegacyMM) == true && isLegacyMM)
     return when {
         annotations.hasAnnotation(KonanFqNames.threadLocal) -> FieldStorageKind.THREAD_LOCAL
-        !isLegacyMM && !context.config.freezing.freezeImplicit -> FieldStorageKind.GLOBAL
+        !isLegacyMM && !Freezing.Disabled.freezeImplicit -> FieldStorageKind.GLOBAL
         !isFinal -> FieldStorageKind.GLOBAL
         annotations.hasAnnotation(KonanFqNames.sharedImmutable) -> FieldStorageKind.SHARED_FROZEN
         typeFrozen -> FieldStorageKind.SHARED_FROZEN
@@ -1783,13 +1783,11 @@ internal class CodeGeneratorVisitor(
     private fun needMutationCheck(irField: IrField): Boolean {
         // For now we omit mutation checks on immutable types, as this allows initialization in constructor
         // and it is assumed that API doesn't allow to change them.
-        return context.config.freezing.enableFreezeChecks && !irField.parentAsClass.isFrozen(context) && !irField.hasAnnotation(KonanFqNames.volatile)
+        return Freezing.Disabled.enableFreezeChecks && !irField.parentAsClass.isFrozen(context) && !irField.hasAnnotation(KonanFqNames.volatile)
     }
 
     private fun needLifetimeConstraintsCheck(valueToAssign: LLVMValueRef, irClass: IrClass): Boolean {
-        // TODO: Likely, we don't need isFrozen check here at all.
-        return context.config.memoryModel != MemoryModel.EXPERIMENTAL
-                && functionGenerationContext.isObjectType(valueToAssign.type) && !irClass.isFrozen(context)
+        return false
     }
 
     private fun isZeroConstValue(value: IrExpression): Boolean {
@@ -2793,12 +2791,16 @@ internal class CodeGeneratorVisitor(
         if (!context.config.isFinalBinary)
             return
 
-        overrideRuntimeGlobal("Kotlin_destroyRuntimeMode", llvm.constInt32(context.config.destroyRuntimeMode.value))
-        overrideRuntimeGlobal("Kotlin_gcMutatorsCooperate", llvm.constInt32(if (context.config.gcMutatorsCooperate) 1 else 0))
-        overrideRuntimeGlobal("Kotlin_auxGCThreads", llvm.constInt32(context.config.auxGCThreads.toInt()))
-        overrideRuntimeGlobal("Kotlin_workerExceptionHandling", llvm.constInt32(context.config.workerExceptionHandling.value))
-        overrideRuntimeGlobal("Kotlin_suspendFunctionsFromAnyThreadFromObjC", llvm.constInt32(if (context.config.suspendFunctionsFromAnyThreadFromObjC) 1 else 0))
-        val getSourceInfoFunctionName = when (context.config.sourceInfoType) {
+        overrideRuntimeGlobal("Kotlin_destroyRuntimeMode", llvm.constInt32(DestroyRuntimeMode.ON_SHUTDOWN.value))
+        overrideRuntimeGlobal("Kotlin_gcMutatorsCooperate", llvm.constInt32(if (context.get(BinaryOptions.gcMutatorsCooperate)) 1 else 0))
+        overrideRuntimeGlobal("Kotlin_auxGCThreads", llvm.constInt32(context.get(BinaryOptions.auxGCThreads).toInt()))
+        overrideRuntimeGlobal("Kotlin_workerExceptionHandling", llvm.constInt32(WorkerExceptionHandling.USE_HOOK.value))
+        overrideRuntimeGlobal("Kotlin_suspendFunctionsFromAnyThreadFromObjC", llvm.constInt32(
+                when (context.get(BinaryOptions.objcExportSuspendFunctionLaunchThreadRestriction)) {
+                    ObjCExportSuspendFunctionLaunchThreadRestriction.MAIN -> 0
+                    ObjCExportSuspendFunctionLaunchThreadRestriction.NONE -> 1
+                }))
+        val getSourceInfoFunctionName = when (context.get(BinaryOptions.sourceInfoType)) {
             SourceInfoType.NOOP -> null
             SourceInfoType.LIBBACKTRACE -> "Kotlin_getSourceInfo_libbacktrace"
             SourceInfoType.CORESYMBOLICATION -> "Kotlin_getSourceInfo_core_symbolication"
@@ -2814,13 +2816,13 @@ internal class CodeGeneratorVisitor(
             val programType = configuration.get(BinaryOptions.androidProgramType) ?: AndroidProgramType.Default
             overrideRuntimeGlobal("Kotlin_printToAndroidLogcat", llvm.constInt32(if (programType.consolePrintsToLogcat) 1 else 0))
         }
-        overrideRuntimeGlobal("Kotlin_appStateTracking", llvm.constInt32(context.config.appStateTracking.value))
-        overrideRuntimeGlobal("Kotlin_mimallocUseDefaultOptions", llvm.constInt32(if (context.config.mimallocUseDefaultOptions) 1 else 0))
-        overrideRuntimeGlobal("Kotlin_mimallocUseCompaction", llvm.constInt32(if (context.config.mimallocUseCompaction) 1 else 0))
-        overrideRuntimeGlobal("Kotlin_objcDisposeOnMain", llvm.constInt32(if (context.config.objcDisposeOnMain) 1 else 0))
-        overrideRuntimeGlobal("Kotlin_objcDisposeWithRunLoop", llvm.constInt32(if (context.config.objcDisposeWithRunLoop) 1 else 0))
-        overrideRuntimeGlobal("Kotlin_enableSafepointSignposts", llvm.constInt32(if (context.config.enableSafepointSignposts) 1 else 0))
-        overrideRuntimeGlobal("Kotlin_globalDataLazyInit", llvm.constInt32(if (context.config.globalDataLazyInit) 1 else 0))
+        overrideRuntimeGlobal("Kotlin_appStateTracking", llvm.constInt32(context.get(BinaryOptions.appStateTracking).value))
+        overrideRuntimeGlobal("Kotlin_mimallocUseDefaultOptions", llvm.constInt32(if (context.get(BinaryOptions.mimallocUseDefaultOptions)) 1 else 0))
+        overrideRuntimeGlobal("Kotlin_mimallocUseCompaction", llvm.constInt32(if (context.get(BinaryOptions.mimallocUseCompaction)) 1 else 0))
+        overrideRuntimeGlobal("Kotlin_objcDisposeOnMain", llvm.constInt32(if (context.get(BinaryOptions.objcDisposeOnMain)) 1 else 0))
+        overrideRuntimeGlobal("Kotlin_objcDisposeWithRunLoop", llvm.constInt32(if (context.get(BinaryOptions.objcDisposeWithRunLoop)) 1 else 0))
+        overrideRuntimeGlobal("Kotlin_enableSafepointSignposts", llvm.constInt32(if (context.get(BinaryOptions.enableSafepointSignposts)) 1 else 0))
+        overrideRuntimeGlobal("Kotlin_globalDataLazyInit", llvm.constInt32(if (context.get(BinaryOptions.globalDataLazyInit)) 1 else 0))
     }
 
     //-------------------------------------------------------------------------//
@@ -3024,18 +3026,19 @@ internal fun NativeGenerationState.generateRuntimeConstantsModule() : LLVMModule
     }
 
     setRuntimeConstGlobal("Kotlin_needDebugInfo", llvm.constInt32(if (shouldContainDebugInfo()) 1 else 0))
-    setRuntimeConstGlobal("Kotlin_runtimeAssertsMode", llvm.constInt32(config.runtimeAssertsMode.value))
-    setRuntimeConstGlobal("Kotlin_disableMmap", llvm.constInt32(if (config.disableMmap) 1 else 0))
-    setRuntimeConstGlobal("Kotlin_disableAllocatorOverheadEstimate", llvm.constInt32(if (config.disableAllocatorOverheadEstimate) 1 else 0))
-    
+    setRuntimeConstGlobal("Kotlin_runtimeAssertsMode", llvm.constInt32(get(BinaryOptions.runtimeAssertionsMode).value))
+    setRuntimeConstGlobal("Kotlin_disableMmap", llvm.constInt32(if (get(BinaryOptions.disableMmap)) 1 else 0))
+    setRuntimeConstGlobal("Kotlin_disableAllocatorOverheadEstimate", llvm.constInt32(if (get(BinaryOptions.disableAllocatorOverheadEstimate)) 1 else 0))
+
+    val runtimeLogsMap = get(NativeConfigurationKeys.RUNTIME_LOGS)
     val runtimeLogs = ConstArray(llvm.int32Type, LoggingTag.entries.sortedBy { it.ord }.map {
-        config.runtimeLogs[it]!!.ord.let { llvm.constInt32(it) }
+        runtimeLogsMap[it]!!.ord.let { llvm.constInt32(it) }
     })
     setRuntimeConstGlobal("Kotlin_runtimeLogs", runtimeLogs)
-    setRuntimeConstGlobal("Kotlin_freezingEnabled", llvm.constInt32(if (config.freezing.enableFreezeAtRuntime) 1 else 0))
-    setRuntimeConstGlobal("Kotlin_freezingChecksEnabled", llvm.constInt32(if (config.freezing.enableFreezeChecks) 1 else 0))
-    setRuntimeConstGlobal("Kotlin_concurrentWeakSweep", llvm.constInt32(if (context.config.concurrentWeakSweep) 1 else 0))
-    setRuntimeConstGlobal("Kotlin_gcMarkSingleThreaded", llvm.constInt32(if (config.gcMarkSingleThreaded) 1 else 0))
+    setRuntimeConstGlobal("Kotlin_freezingEnabled", llvm.constInt32(if (Freezing.Disabled.enableFreezeAtRuntime) 1 else 0))
+    setRuntimeConstGlobal("Kotlin_freezingChecksEnabled", llvm.constInt32(if (Freezing.Disabled.enableFreezeChecks) 1 else 0))
+    setRuntimeConstGlobal("Kotlin_concurrentWeakSweep", llvm.constInt32(if (get(BinaryOptions.concurrentWeakSweep)) 1 else 0))
+    setRuntimeConstGlobal("Kotlin_gcMarkSingleThreaded", llvm.constInt32(if (get(BinaryOptions.gcMarkSingleThreaded)) 1 else 0))
 
     return llvmModule
 }

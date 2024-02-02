@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.ir.objcinterop.*
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.konan.ForeignExceptionMode
 import org.jetbrains.kotlin.konan.target.CompilerOutputKind
+import org.jetbrains.kotlin.konan.target.hasAddressDependencyInMemoryModel
 
 
 internal class CodeGenerator(override val generationState: NativeGenerationState) : ContextUtils {
@@ -1281,7 +1282,7 @@ internal abstract class FunctionGenerationContext(
     fun loadTypeInfo(objPtr: LLVMValueRef): LLVMValueRef {
         val typeInfoOrMetaPtr = structGep(runtime.objHeaderType, objPtr, 0  /* typeInfoOrMeta_ */)
 
-        val memoryOrder = if (context.config.targetHasAddressDependency) {
+        val memoryOrder = if (context.config.target.hasAddressDependencyInMemoryModel()) {
             /**
              * Formally, this ordering is too weak, and doesn't prevent data race with installing extra object.
              * Check comment in ObjHeader::type_info for details.

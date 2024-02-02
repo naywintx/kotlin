@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.backend.konan.driver.utilities.CExportFiles
 import org.jetbrains.kotlin.backend.konan.driver.utilities.createTempFiles
 import org.jetbrains.kotlin.backend.konan.ir.konanLibrary
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
+import org.jetbrains.kotlin.config.native.BinaryOptions
 import org.jetbrains.kotlin.config.native.NativeConfigurationKeys
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclaration
@@ -250,7 +251,7 @@ internal data class ModuleCompilationOutput(
  */
 internal fun PhaseEngine<NativeGenerationState>.compileModule(module: IrModuleFragment, bitcodeFile: java.io.File, cExportFiles: CExportFiles?) {
     runBackendCodegen(module, cExportFiles)
-    val checkExternalCalls = context.config.checkStateAtExternalCalls
+    val checkExternalCalls = context.get(BinaryOptions.checkStateAtExternalCalls)
     if (checkExternalCalls) {
         runPhase(CheckExternalCallsPhase)
     }
@@ -337,7 +338,7 @@ internal fun PhaseEngine<NativeGenerationState>.runBackendCodegen(module: IrModu
     //  Motivation: possibility to run LTO on bitcode level after separate IR compilation.
     val llvmModule = context.llvm.module
     // TODO: Consider dropping these in favor of proper phases dumping and validation.
-    if (context.config.needCompilerVerification || context.config.configuration.getBoolean(NativeConfigurationKeys.VERIFY_BITCODE)) {
+    if (context.get(NativeConfigurationKeys.VERIFY_COMPILER) || context.getBoolean(NativeConfigurationKeys.VERIFY_BITCODE)) {
         runPhase(VerifyBitcodePhase, llvmModule)
     }
     if (context.shouldPrintBitCode()) {

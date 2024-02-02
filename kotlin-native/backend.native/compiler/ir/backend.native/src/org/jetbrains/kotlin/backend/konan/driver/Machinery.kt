@@ -56,7 +56,7 @@ internal open class BasicPhaseContext(
     }
 
     override val messageCollector: MessageCollector
-        get() = config.configuration.getNotNull(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY)
+        get() = get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY)
 
     override fun report(element: IrElement?, irFile: IrFile?, message: String, isError: Boolean) {
         val location = element?.getCompilerMessageLocation(irFile ?: error("irFile should be not null for $element"))
@@ -87,7 +87,7 @@ internal class PhaseEngine<C : PhaseContext>(
     companion object {
         fun startTopLevel(config: KonanConfig, body: (PhaseEngine<PhaseContext>) -> Unit) {
             val phaserState = PhaserState<Any>()
-            val phaseConfig = config.flexiblePhaseConfig
+            val phaseConfig = get(CLIConfigurationKeys.FLEXIBLE_PHASE_CONFIG)
             val context = BasicPhaseContext(config)
             val topLevelPhase = object : SimpleNamedCompilerPhase<PhaseContext, Any, Unit>(
                     "Compiler",

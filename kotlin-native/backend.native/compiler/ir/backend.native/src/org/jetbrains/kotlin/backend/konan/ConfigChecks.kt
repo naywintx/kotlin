@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.backend.konan
 
+import org.jetbrains.kotlin.config.CompilerConfigurationKey
 import org.jetbrains.kotlin.config.native.NativeConfigurationKeys
 import org.jetbrains.kotlin.konan.target.needSmallBinary
 
@@ -15,13 +16,13 @@ interface ConfigChecks {
 
     val config: KonanConfig
 
-    fun shouldExportKDoc() = config.configuration.getBoolean(NativeConfigurationKeys.EXPORT_KDOC)
+    fun shouldExportKDoc() = getBoolean(NativeConfigurationKeys.EXPORT_KDOC)
 
-    fun shouldVerifyBitCode() = config.configuration.getBoolean(NativeConfigurationKeys.VERIFY_BITCODE)
+    fun shouldVerifyBitCode() = getBoolean(NativeConfigurationKeys.VERIFY_BITCODE)
 
-    fun shouldPrintBitCode() = config.configuration.getBoolean(NativeConfigurationKeys.PRINT_BITCODE)
+    fun shouldPrintBitCode() = getBoolean(NativeConfigurationKeys.PRINT_BITCODE)
 
-    fun shouldPrintFiles() = config.configuration.getBoolean(NativeConfigurationKeys.PRINT_FILES)
+    fun shouldPrintFiles() = getBoolean(NativeConfigurationKeys.PRINT_FILES)
 
     fun shouldContainDebugInfo() = config.debug
 
@@ -29,7 +30,7 @@ interface ConfigChecks {
 
     fun shouldContainAnyDebugInfo() = shouldContainDebugInfo() || shouldContainLocationDebugInfo()
 
-    fun shouldUseDebugInfoFromNativeLibs() = shouldContainAnyDebugInfo() && config.useDebugInfoInNativeLibs
+    fun shouldUseDebugInfoFromNativeLibs() = shouldContainAnyDebugInfo() && !config.stripDebugInfoFromNativeLibs
 
     fun shouldOptimize() = config.optimizationsEnabled
 
@@ -37,4 +38,7 @@ interface ConfigChecks {
 
     fun useLazyFileInitializers() = config.propertyLazyInitialization
 
+    fun <T> get(key: CompilerConfigurationKey<T>): T = config.configuration.getNotNull(key)
+
+    fun getBoolean(key: CompilerConfigurationKey<Boolean>): Boolean = config.configuration.getBoolean(key)
 }

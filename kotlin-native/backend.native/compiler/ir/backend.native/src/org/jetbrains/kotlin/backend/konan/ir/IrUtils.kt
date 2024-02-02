@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.backend.konan.descriptors.arrayTypes
 import org.jetbrains.kotlin.backend.konan.descriptors.arraysWithFixedSizeItems
 import org.jetbrains.kotlin.backend.konan.llvm.isVoidAsReturnType
 import org.jetbrains.kotlin.backend.konan.lower.erasedUpperBound
+import org.jetbrains.kotlin.config.native.Freezing
 import org.jetbrains.kotlin.config.native.MemoryModel
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.IrBuiltIns
@@ -213,7 +214,7 @@ fun IrFunctionSymbol.isComparisonFunction(map: Map<IrClassifierSymbol, IrSimpleF
 internal fun IrClass.isFrozen(context: Context): Boolean {
     val isLegacyMM = context.memoryModel != MemoryModel.EXPERIMENTAL
     return when {
-        !context.config.freezing.freezeImplicit -> false
+        !Freezing.Disabled.freezeImplicit -> false
         annotations.hasAnnotation(KonanFqNames.frozen) -> true
         annotations.hasAnnotation(KonanFqNames.frozenLegacyMM) && isLegacyMM -> true
         // RTTI is used for non-reference type box:

@@ -70,7 +70,7 @@ internal fun produceObjCExportInterface(
             reportNameCollisions = reportNameCollisions,
     )
     val shouldExportKDoc = context.shouldExportKDoc()
-    val additionalImports = context.config.configuration.getNotNull(NativeConfigurationKeys.FRAMEWORK_IMPORT_HEADERS)
+    val additionalImports = context.get(NativeConfigurationKeys.FRAMEWORK_IMPORT_HEADERS)
     val headerGenerator = ObjCExportHeaderGenerator.createInstance(
             moduleDescriptors, mapper, namer, problemCollector, objcGenerics, shouldExportKDoc = shouldExportKDoc,
             additionalImports = additionalImports)

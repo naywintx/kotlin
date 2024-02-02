@@ -92,7 +92,7 @@ class KonanDriver(
         var konanConfig = KonanConfig(project, configuration)
 
         if (configuration.get(NativeConfigurationKeys.LIST_TARGETS) == true) {
-            konanConfig.targetManager.list()
+            konanConfig.platformManager.targetManager(konanConfig.target.name).list()
         }
         if (konanConfig.infoArgsOnly) return
 

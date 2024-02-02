@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.library.uniqueName
 internal fun determineLinkerOutput(context: PhaseContext): LinkerOutputKind =
         when (context.config.produce) {
             CompilerOutputKind.FRAMEWORK -> {
-                val staticFramework = context.config.produceStaticFramework
+                val staticFramework = context.get(NativeConfigurationKeys.STATIC_FRAMEWORK)
                 if (staticFramework) LinkerOutputKind.STATIC_LIBRARY else LinkerOutputKind.DYNAMIC_LIBRARY
             }
             CompilerOutputKind.TEST_BUNDLE,
@@ -147,8 +147,8 @@ internal class Linker(
                 debug = debug,
                 kind = linkerOutput,
                 outputDsymBundle = outputFiles.symbolicInfoFile,
-                mimallocEnabled = config.allocationMode == AllocationMode.MIMALLOC,
-                sanitizer = config.sanitizer
+                mimallocEnabled = config.configuration.getNotNull(NativeConfigurationKeys.ALLOCATION_MODE) == AllocationMode.MIMALLOC,
+                sanitizer = config.configuration.get(BinaryOptions.sanitizer)
         )
     }
 }

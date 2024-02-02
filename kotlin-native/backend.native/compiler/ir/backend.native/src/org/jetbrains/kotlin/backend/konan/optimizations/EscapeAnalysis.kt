@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.backend.konan.DirectedGraphCondensationBuilder
 import org.jetbrains.kotlin.backend.konan.DirectedGraphMultiNode
 import org.jetbrains.kotlin.backend.konan.llvm.Lifetime
 import org.jetbrains.kotlin.backend.konan.logMultiple
+import org.jetbrains.kotlin.config.native.BinaryOptions
 import org.jetbrains.kotlin.config.native.GC
 import org.jetbrains.kotlin.config.native.MemoryModel
 import org.jetbrains.kotlin.ir.IrElement
@@ -1829,11 +1830,11 @@ internal object EscapeAnalysis {
             val intraproceduralAnalysisResult =
                     IntraproceduralAnalysis(context, moduleDFG, externalModulesDFG, callGraph).analyze()
             InterproceduralAnalysis(context, generationState, callGraph, intraproceduralAnalysisResult, externalModulesDFG, lifetimes,
-                    propagateExiledToHeapObjects = context.config.memoryModel != MemoryModel.EXPERIMENTAL
+                    propagateExiledToHeapObjects =
                             // The GC must be careful not to scan exiled objects, that have already became dead,
                             // as they may reference other already destroyed stack-allocated objects.
                             // TODO somehow tag these object, so that GC could handle them properly.
-                            || context.config.gc == GC.CONCURRENT_MARK_AND_SWEEP
+                            context.get(BinaryOptions.gc) == GC.CONCURRENT_MARK_AND_SWEEP
             ).analyze()
         } catch (t: Throwable) {
             val extraUserInfo =

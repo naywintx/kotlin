@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.konan.library.KonanLibrary
 import org.jetbrains.kotlin.konan.properties.loadProperties
 import org.jetbrains.kotlin.konan.target.*
-import org.jetbrains.kotlin.konan.util.KonanHomeProvider
 import org.jetbrains.kotlin.konan.util.visibleName
 import org.jetbrains.kotlin.library.metadata.resolver.TopologicalLibraryOrder
 import org.jetbrains.kotlin.util.removeSuffixIfPresent
@@ -27,244 +26,36 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 class KonanConfig(val project: Project, val configuration: CompilerConfiguration) {
-    internal val distribution = run {
-        val overridenProperties = mutableMapOf<String, String>().apply {
-            configuration.get(NativeConfigurationKeys.OVERRIDE_KONAN_PROPERTIES)?.let(this::putAll)
-            configuration.get(NativeConfigurationKeys.LLVM_VARIANT)?.getKonanPropertiesEntry()?.let { (key, value) ->
-                put(key, value)
-            }
-        }
+    internal val distribution = configuration.getNotNull(NativeConfigurationKeys.DISTRIBUTION)
+    internal val platformManager = configuration.getNotNull(NativeConfigurationKeys.PLATFORM_MANAGER)
+    internal val target = configuration.getNotNull(NativeConfigurationKeys.TARGET)
 
-        Distribution(
-                configuration.get(NativeConfigurationKeys.KONAN_HOME) ?: KonanHomeProvider.determineKonanHome(),
-                false,
-                configuration.get(NativeConfigurationKeys.RUNTIME_FILE),
-                overridenProperties,
-                configuration.get(NativeConfigurationKeys.KONAN_DATA_DIR)
-        )
-    }
-
-    private val platformManager = PlatformManager(distribution)
-    internal val targetManager = platformManager.targetManager(configuration.get(NativeConfigurationKeys.TARGET))
-    internal val target = targetManager.target.also { target ->
-        require(target.supportsThreads()) { "All supported targets must have threads, but was given $target" }
-    }
-    val targetHasAddressDependency get() = target.hasAddressDependencyInMemoryModel()
-    internal val flexiblePhaseConfig = configuration.get(CLIConfigurationKeys.FLEXIBLE_PHASE_CONFIG)!!
+    internal val produce by configuration.getting(NativeConfigurationKeys.PRODUCE)
+    internal val produceStaticFramework by configuration.getting(NativeConfigurationKeys.STATIC_FRAMEWORK)
 
     // TODO: debug info generation mode and debug/release variant selection probably requires some refactoring.
-    val debug: Boolean get() = configuration.getBoolean(NativeConfigurationKeys.DEBUG)
-    val lightDebug: Boolean = configuration.get(NativeConfigurationKeys.LIGHT_DEBUG)
-            ?: target.family.isAppleFamily // Default is true for Apple targets.
-    val generateDebugTrampoline = debug && configuration.get(NativeConfigurationKeys.GENERATE_DEBUG_TRAMPOLINE) ?: false
+    val debug by configuration.getting(NativeConfigurationKeys.DEBUG)
+    val lightDebug = configuration.getBoolean(NativeConfigurationKeys.LIGHT_DEBUG)
+    val generateDebugTrampoline = configuration.getBoolean(NativeConfigurationKeys.GENERATE_DEBUG_TRAMPOLINE)
     val optimizationsEnabled = configuration.getBoolean(NativeConfigurationKeys.OPTIMIZATION)
-    val assertsEnabled = configuration.getBoolean(NativeConfigurationKeys.ENABLE_ASSERTIONS)
-    val sanitizer = configuration.get(BinaryOptions.sanitizer)?.takeIf {
+
+    val packFields = configuration.getNotNull(BinaryOptions.packFields)
+
+    internal val unitSuspendFunctionObjCExport by configuration.getting(BinaryOptions.unitSuspendFunctionObjCExport)
+
+    internal val stripDebugInfoFromNativeLibs by configuration.getting(BinaryOptions.stripDebugInfoFromNativeLibs)
+
+    internal val threadsCount = configuration.get(CommonConfigurationKeys.PARALLEL_BACKEND_THREADS) ?: 1
+
+    internal val omitFrameworkBinary = configuration.getting(NativeConfigurationKeys.OMIT_FRAMEWORK_BINARY)
+
+    internal val cInterfaceGenerationMode: CInterfaceGenerationMode by lazy {
+        val explicitMode = configuration.get(BinaryOptions.cInterfaceMode)
         when {
-            it != SanitizerKind.THREAD -> "${it.name} sanitizer is not supported yet"
-            produce == CompilerOutputKind.STATIC -> "${it.name} sanitizer is unsupported for static library"
-            produce == CompilerOutputKind.FRAMEWORK && produceStaticFramework -> "${it.name} sanitizer is unsupported for static framework"
-            it !in target.supportedSanitizers() -> "${it.name} sanitizer is unsupported on ${target.name}"
-            else -> null
-        }?.let {message ->
-            configuration.report(CompilerMessageSeverity.STRONG_WARNING, message)
-            return@takeIf false
+            explicitMode != null -> explicitMode
+            produce == CompilerOutputKind.DYNAMIC || produce == CompilerOutputKind.STATIC -> CInterfaceGenerationMode.V1
+            else -> CInterfaceGenerationMode.NONE
         }
-        return@takeIf true
-    }
-
-    val memoryModel: MemoryModel
-        get() = configuration.get(BinaryOptions.memoryModel)?.also {
-        if (it != MemoryModel.EXPERIMENTAL) {
-            configuration.report(CompilerMessageSeverity.ERROR, "Legacy MM is deprecated and no longer works.")
-        } else {
-            configuration.report(CompilerMessageSeverity.STRONG_WARNING, "-memory-model and memoryModel switches are deprecated and will be removed in a future release.")
-        }
-    }.let { MemoryModel.EXPERIMENTAL }
-    val destroyRuntimeMode: DestroyRuntimeMode
-        get() = configuration.get(NativeConfigurationKeys.DESTROY_RUNTIME_MODE)?.also {
-        if (it != DestroyRuntimeMode.ON_SHUTDOWN) {
-            configuration.report(CompilerMessageSeverity.ERROR, "New MM is incompatible with 'legacy' destroy runtime mode.")
-        } else {
-            configuration.report(CompilerMessageSeverity.STRONG_WARNING, "-Xdestroy-runtime-mode switch is deprecated and will be removed in a future release.")
-        }
-    }.let { DestroyRuntimeMode.ON_SHUTDOWN }
-    private val defaultGC get() = GC.PARALLEL_MARK_CONCURRENT_SWEEP
-    val gc: GC get() = configuration.get(BinaryOptions.gc) ?: defaultGC
-    val runtimeAssertsMode: RuntimeAssertsMode get() = configuration.get(BinaryOptions.runtimeAssertionsMode) ?: RuntimeAssertsMode.IGNORE
-    val checkStateAtExternalCalls: Boolean get() = configuration.get(BinaryOptions.checkStateAtExternalCalls) ?: false
-    private val defaultDisableMmap get() = target.family == Family.MINGW
-    val disableMmap: Boolean by lazy {
-        when (configuration.get(BinaryOptions.disableMmap)) {
-            null -> defaultDisableMmap
-            true -> true
-            false -> {
-                if (target.family == Family.MINGW) {
-                    configuration.report(CompilerMessageSeverity.STRONG_WARNING, "MinGW target does not support mmap/munmap")
-                    true
-                } else {
-                    false
-                }
-            }
-        }
-    }
-    val disableAllocatorOverheadEstimate: Boolean by lazy {
-        configuration.get(BinaryOptions.disableAllocatorOverheadEstimate) ?: false
-    }
-    val packFields: Boolean by lazy {
-        configuration.get(BinaryOptions.packFields) ?: true
-    }
-    val workerExceptionHandling: WorkerExceptionHandling
-        get() = configuration.get(NativeConfigurationKeys.WORKER_EXCEPTION_HANDLING)?.also {
-        if (it != WorkerExceptionHandling.USE_HOOK) {
-            configuration.report(CompilerMessageSeverity.ERROR, "Legacy exception handling in workers is deprecated")
-        } else {
-            configuration.report(CompilerMessageSeverity.STRONG_WARNING, "-Xworker-exception-handling is deprecated")
-        }
-    } ?: WorkerExceptionHandling.USE_HOOK
-
-    val runtimeLogsEnabled: Boolean by lazy {
-        configuration.get(NativeConfigurationKeys.RUNTIME_LOGS) != null
-    }
-
-    val runtimeLogs: Map<LoggingTag, LoggingLevel> by lazy {
-        val default = LoggingTag.entries.associateWith { LoggingLevel.None }
-
-        val cfgString = configuration.get(NativeConfigurationKeys.RUNTIME_LOGS) ?: return@lazy default
-
-        fun <T> error(message: String): T? {
-            configuration.report(CompilerMessageSeverity.STRONG_WARNING, "$message. No logging will be performed.")
-            return null
-        }
-
-        fun parseSingleTagLevel(tagLevel: String): Pair<LoggingTag, LoggingLevel>? {
-            val parts = tagLevel.split("=")
-            val tagStr = parts[0]
-            val tag = tagStr.let {
-                LoggingTag.parse(it) ?: error("Failed to parse log tag at \"$tagStr\"")
-            }
-            val levelStr = parts.getOrNull(1) ?: error("Failed to parse log tag-level pair at \"$tagLevel\"")
-            val level = parts.getOrNull(1)?.let {
-                LoggingLevel.parse(it) ?: error("Failed to parse log level at \"$levelStr\"")
-            }
-            if (level == LoggingLevel.None) return error("Invalid log level: \"$levelStr\"")
-            return tag?.let { t -> level?.let { l -> Pair(t, l) } }
-        }
-
-        val configured = cfgString.split(",").map { parseSingleTagLevel(it) ?: return@lazy default }
-        default + configured
-    }
-
-
-    val suspendFunctionsFromAnyThreadFromObjC: Boolean by lazy { configuration.get(BinaryOptions.objcExportSuspendFunctionLaunchThreadRestriction) == ObjCExportSuspendFunctionLaunchThreadRestriction.NONE }
-    val freezing: Freezing
-        get() = configuration.get(BinaryOptions.freezing)?.also {
-        if (it != Freezing.Disabled) {
-            configuration.report(
-                    CompilerMessageSeverity.ERROR,
-                    "`freezing` is not supported with the new MM. Freezing API is deprecated since 1.7.20. See https://kotlinlang.org/docs/native-migration-guide.html for details"
-            )
-        } else {
-            configuration.report(CompilerMessageSeverity.STRONG_WARNING, "freezing switch is deprecated and will be removed in a future release.")
-        }
-    }.let { Freezing.Disabled }
-    val sourceInfoType: SourceInfoType
-        get() = configuration.get(BinaryOptions.sourceInfoType)
-                ?: SourceInfoType.CORESYMBOLICATION.takeIf { debug && target.supportsCoreSymbolication() }
-                ?: SourceInfoType.NOOP
-
-    val defaultGCSchedulerType get() =
-        when (gc) {
-            GC.NOOP -> GCSchedulerType.MANUAL
-            else -> GCSchedulerType.ADAPTIVE
-        }
-
-    val gcSchedulerType: GCSchedulerType by lazy {
-        val arg = configuration.get(BinaryOptions.gcSchedulerType) ?: defaultGCSchedulerType
-        arg.deprecatedWithReplacement?.let { replacement ->
-            configuration.report(CompilerMessageSeverity.WARNING, "Binary option gcSchedulerType=$arg is deprecated. Use gcSchedulerType=$replacement instead")
-            replacement
-        } ?: arg
-    }
-
-    private val defaultGcMarkSingleThreaded get() = target.family == Family.MINGW && gc == GC.PARALLEL_MARK_CONCURRENT_SWEEP
-
-    val gcMarkSingleThreaded: Boolean by lazy {
-        configuration.get(BinaryOptions.gcMarkSingleThreaded) ?: defaultGcMarkSingleThreaded
-    }
-
-    val concurrentWeakSweep: Boolean
-        get() = configuration.get(BinaryOptions.concurrentWeakSweep) ?: true
-
-    val gcMutatorsCooperate: Boolean by lazy {
-        val mutatorsCooperate = configuration.get(BinaryOptions.gcMutatorsCooperate)
-        if (gcMarkSingleThreaded) {
-            if (mutatorsCooperate == true) {
-                configuration.report(CompilerMessageSeverity.STRONG_WARNING,
-                        "Mutators cooperation is not supported during single threaded mark")
-            }
-            false
-        } else if (gc == GC.CONCURRENT_MARK_AND_SWEEP) {
-            if (mutatorsCooperate == true) {
-                configuration.report(CompilerMessageSeverity.STRONG_WARNING,
-                        "Mutators cooperation is not yet supported in CMS GC")
-            }
-            false
-        } else {
-            mutatorsCooperate ?: true
-        }
-    }
-
-    val auxGCThreads: UInt by lazy {
-        val auxGCThreads = configuration.get(BinaryOptions.auxGCThreads)
-        if (gcMarkSingleThreaded) {
-            if (auxGCThreads != null && auxGCThreads != 0U) {
-                configuration.report(CompilerMessageSeverity.STRONG_WARNING,
-                        "Auxiliary GC workers are not supported during single threaded mark")
-            }
-            0U
-        } else {
-            auxGCThreads ?: 0U
-        }
-    }
-
-    val irVerificationMode: IrVerificationMode
-        get() = configuration.getNotNull(NativeConfigurationKeys.VERIFY_IR)
-
-    val needCompilerVerification: Boolean
-        get() = configuration.get(NativeConfigurationKeys.VERIFY_COMPILER)
-                ?: (optimizationsEnabled || !KotlinCompilerVersion.VERSION.isRelease())
-
-    val appStateTracking: AppStateTracking by lazy {
-        configuration.get(BinaryOptions.appStateTracking) ?: AppStateTracking.DISABLED
-    }
-
-
-    val mimallocUseDefaultOptions: Boolean by lazy {
-        configuration.get(BinaryOptions.mimallocUseDefaultOptions) ?: false
-    }
-
-    val mimallocUseCompaction: Boolean by lazy {
-        // Turned off by default, because it slows down allocation.
-        configuration.get(BinaryOptions.mimallocUseCompaction) ?: false
-    }
-
-    val objcDisposeOnMain: Boolean by lazy {
-        configuration.get(BinaryOptions.objcDisposeOnMain) ?: true
-    }
-
-    val objcDisposeWithRunLoop: Boolean by lazy {
-        configuration.get(BinaryOptions.objcDisposeWithRunLoop) ?: true
-    }
-
-    val enableSafepointSignposts: Boolean = configuration.get(BinaryOptions.enableSafepointSignposts)?.also {
-        if (it && !target.supportsSignposts) {
-            configuration.report(CompilerMessageSeverity.STRONG_WARNING, "Signposts are not available on $target. The setting will have no effect.")
-        }
-    } ?: target.supportsSignposts
-
-    val globalDataLazyInit: Boolean by lazy {
-        configuration.get(BinaryOptions.globalDataLazyInit) ?: true
     }
 
     init {
@@ -283,13 +74,10 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
     val indirectBranchesAreAllowed = target != KonanTarget.WASM32
     val threadsAreAllowed = (target != KonanTarget.WASM32) && (target !is KonanTarget.ZEPHYR)
 
-    internal val produce get() = configuration.get(NativeConfigurationKeys.PRODUCE)!!
 
     internal val metadataKlib get() = configuration.getBoolean(CommonConfigurationKeys.METADATA_KLIB)
 
     internal val headerKlibPath get() = configuration.get(NativeConfigurationKeys.HEADER_KLIB)
-
-    internal val produceStaticFramework get() = configuration.getBoolean(NativeConfigurationKeys.STATIC_FRAMEWORK)
 
     internal val purgeUserLibs: Boolean
         get() = configuration.getBoolean(NativeConfigurationKeys.PURGE_USER_LIBS)
@@ -324,37 +112,6 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
         return resolvedLibraries.filterRoots { (!it.isDefault && !this.purgeUserLibs) || it.isNeededForLink }.getFullList(TopologicalLibraryOrder).map { it as KonanLibrary }
     }
 
-    private val defaultAllocationMode get() =
-        if (sanitizer == null)
-            AllocationMode.CUSTOM
-        else
-            AllocationMode.STD
-
-    val allocationMode by lazy {
-        when (configuration.get(NativeConfigurationKeys.ALLOCATION_MODE)) {
-            null -> defaultAllocationMode
-            AllocationMode.STD -> AllocationMode.STD
-            AllocationMode.MIMALLOC -> {
-                if (sanitizer != null) {
-                    configuration.report(CompilerMessageSeverity.STRONG_WARNING, "Sanitizers are useful only with the std allocator")
-                }
-                if (target.supportsMimallocAllocator()) {
-                    AllocationMode.MIMALLOC
-                } else {
-                    configuration.report(CompilerMessageSeverity.STRONG_WARNING,
-                            "Mimalloc allocator isn't supported on target ${target.name}. Used standard mode.")
-                    AllocationMode.STD
-                }
-            }
-            AllocationMode.CUSTOM -> {
-                if (sanitizer != null) {
-                    configuration.report(CompilerMessageSeverity.STRONG_WARNING, "Sanitizers are useful only with the std allocator")
-                }
-                AllocationMode.CUSTOM
-            }
-        }
-    }
-
     internal val runtimeNativeLibraries: List<String> = mutableListOf<String>().apply {
         if (debug) add("debug.bc")
         add("runtime.bc")
@@ -362,6 +119,7 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
         add("common_alloc.bc")
         add("common_gc.bc")
         add("common_gcScheduler.bc")
+        val gcSchedulerType = configuration.getNotNull(BinaryOptions.gcSchedulerType)
         when (gcSchedulerType) {
             GCSchedulerType.MANUAL -> {
                 add("manual_gcScheduler.bc")
@@ -376,6 +134,8 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
                 throw IllegalStateException("Deprecated options must have already been handled")
             }
         }
+        val gc = configuration.getNotNull(BinaryOptions.gc)
+        val allocationMode = configuration.getNotNull(NativeConfigurationKeys.ALLOCATION_MODE)
         if (allocationMode == AllocationMode.CUSTOM) {
             when (gc) {
                 GC.STOP_THE_WORLD_MARK_AND_SWEEP -> add("same_thread_ms_gc_custom.bc")
@@ -412,7 +172,7 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
                 add("custom_alloc.bc")
             }
         }
-        when (checkStateAtExternalCalls) {
+        when (configuration.getNotNull(BinaryOptions.checkStateAtExternalCalls)) {
             true -> add("impl_externalCallsChecker.bc")
             false -> add("noop_externalCallsChecker.bc")
         }
@@ -474,18 +234,11 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
         "Konan_main"
     }
 
-    internal val unitSuspendFunctionObjCExport: UnitSuspendFunctionObjCExport
-        get() = configuration.get(BinaryOptions.unitSuspendFunctionObjCExport) ?: UnitSuspendFunctionObjCExport.DEFAULT
-
     internal val testDumpFile: File? = configuration[NativeConfigurationKeys.TEST_DUMP_OUTPUT_PATH]?.let(::File)
-
-    internal val useDebugInfoInNativeLibs= configuration.get(BinaryOptions.stripDebugInfoFromNativeLibs) == false
 
     internal val partialLinkageConfig = configuration.partialLinkageConfig
 
     internal val additionalCacheFlags by lazy { platformManager.loader(target).additionalCacheFlags }
-
-    internal val threadsCount = configuration.get(CommonConfigurationKeys.PARALLEL_BACKEND_THREADS) ?: 1
 
     private fun StringBuilder.appendCommonCacheFlavor() {
         append(target.toString())
@@ -499,19 +252,25 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
     private val systemCacheFlavorString = buildString {
         appendCommonCacheFlavor()
 
-        if (useDebugInfoInNativeLibs)
+        if (!stripDebugInfoFromNativeLibs)
             append("-runtime_debug")
-        if (allocationMode != defaultAllocationMode)
+        val allocationMode = configuration.getNotNull(NativeConfigurationKeys.ALLOCATION_MODE)
+        if (allocationMode != configuration.defaultAllocationMode)
             append("-allocator${allocationMode.name}")
-        if (gc != defaultGC)
+        val gc = configuration.getNotNull(BinaryOptions.gc)
+        if (gc != configuration.defaultGC)
             append("-gc${gc.name}")
-        if (gcSchedulerType != defaultGCSchedulerType)
+        val gcSchedulerType = configuration.getNotNull(BinaryOptions.gcSchedulerType)
+        if (gcSchedulerType != configuration.defaultGCSchedulerType)
             append("-gc_scheduler${gcSchedulerType.name}")
-        if (runtimeAssertsMode != RuntimeAssertsMode.IGNORE)
+        val runtimeAssertsMode = configuration.getNotNull(BinaryOptions.runtimeAssertionsMode)
+        if (runtimeAssertsMode != configuration.defaultRuntimeAssertsMode)
             append("-runtime_asserts${runtimeAssertsMode.name}")
-        if (disableMmap != defaultDisableMmap)
+        val disableMmap = configuration.getNotNull(BinaryOptions.disableMmap)
+        if (disableMmap != configuration.defaultDisableMmap)
             append("-disable_mmap${if (disableMmap) "TRUE" else "FALSE"}")
-        if (gcMarkSingleThreaded != defaultGcMarkSingleThreaded)
+        val gcMarkSingleThreaded = configuration.getNotNull(BinaryOptions.gcMarkSingleThreaded)
+        if (gcMarkSingleThreaded != configuration.defaultGcMarkSingleThreaded)
             append("-gc_mark_single_threaded${if (gcMarkSingleThreaded) "TRUE" else "FALSE"}")
     }
 
@@ -537,9 +296,9 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
 
     internal val ignoreCacheReason = when {
         optimizationsEnabled -> "for optimized compilation"
-        sanitizer != null -> "with sanitizers enabled"
-        runtimeLogsEnabled -> "with runtime logs"
-        checkStateAtExternalCalls -> "with external calls state checker"
+        configuration.get(BinaryOptions.sanitizer) != null -> "with sanitizers enabled"
+        configuration.getNotNull(NativeConfigurationKeys.RUNTIME_LOGS) != configuration.defaultRuntimeLogs -> "with runtime logs"
+        configuration.getNotNull(BinaryOptions.checkStateAtExternalCalls) -> "with external calls state checker"
         else -> null
     }
 
@@ -573,19 +332,6 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
                 CachedLibraries.getCachedLibraryName(it.klib)
         }
                 ?: File(outputPath).name
-
-    /**
-     * Do not compile binary when compiling framework.
-     * This is useful when user care only about framework's interface.
-     */
-    internal val omitFrameworkBinary: Boolean by lazy {
-        configuration.getBoolean(NativeConfigurationKeys.OMIT_FRAMEWORK_BINARY).also {
-            if (it && produce != CompilerOutputKind.FRAMEWORK) {
-                configuration.report(CompilerMessageSeverity.STRONG_WARNING,
-                        "Trying to disable framework binary compilation when producing ${produce.name.lowercase()} is meaningless.")
-            }
-        }
-    }
 
     /**
      * Continue from bitcode. Skips the frontend and codegen phase of the compiler
@@ -631,24 +377,4 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
         }
     }
 
-    internal val cInterfaceGenerationMode: CInterfaceGenerationMode by lazy {
-        val explicitMode = configuration.get(BinaryOptions.cInterfaceMode)
-        when {
-            explicitMode != null -> explicitMode
-            produce == CompilerOutputKind.DYNAMIC || produce == CompilerOutputKind.STATIC -> CInterfaceGenerationMode.V1
-            else -> CInterfaceGenerationMode.NONE
-        }
-    }
-}
-
-fun CompilerConfiguration.report(priority: CompilerMessageSeverity, message: String)
-    = this.getNotNull(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY).report(priority, message)
-
-private fun String.isRelease(): Boolean {
-    // major.minor.patch-meta-build where patch, meta and build are optional.
-    val versionPattern = "(\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:-(\\p{Alpha}*\\p{Alnum}|[\\p{Alpha}-]*))?(?:-(\\d+))?".toRegex()
-    val (_, _, _, metaString, build) = versionPattern.matchEntire(this)?.destructured
-            ?: throw IllegalStateException("Cannot parse Kotlin/Native version: $this")
-
-    return metaString.isEmpty() && build.isEmpty()
 }

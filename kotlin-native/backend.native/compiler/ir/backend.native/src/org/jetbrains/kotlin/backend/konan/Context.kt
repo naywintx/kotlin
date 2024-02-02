@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportCodeSpec
 import org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportedInterface
 import org.jetbrains.kotlin.backend.konan.serialization.KonanIrLinker
 import org.jetbrains.kotlin.builtins.konan.KonanBuiltIns
+import org.jetbrains.kotlin.config.native.MemoryModel
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.declarations.*
@@ -107,7 +108,7 @@ internal class Context(
 
     val targetAbiInfo = config.target.abiInfo
 
-    val memoryModel = config.memoryModel
+    val memoryModel = MemoryModel.EXPERIMENTAL
 
     override fun dispose() {}
 

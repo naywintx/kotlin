@@ -23,6 +23,8 @@ import org.jetbrains.kotlin.backend.konan.insertAliasToEntryPoint
 import org.jetbrains.kotlin.backend.konan.llvm.verifyModule
 import org.jetbrains.kotlin.backend.konan.optimizations.RemoveRedundantSafepointsPass
 import org.jetbrains.kotlin.backend.konan.optimizations.removeMultipleThreadDataLoads
+import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
+import org.jetbrains.kotlin.config.native.BinaryOptions
 import org.jetbrains.kotlin.config.native.MemoryModel
 import org.jetbrains.kotlin.konan.target.SanitizerKind
 import java.io.File
@@ -152,22 +154,20 @@ internal fun <T : BitcodePostProcessingContext> PhaseEngine<T>.runBitcodePostPro
             context,
             context.llvm.targetTriple,
             closedWorld = context.config.isFinalBinary,
-            timePasses = context.config.flexiblePhaseConfig.needProfiling,
+            timePasses = context.get(CLIConfigurationKeys.FLEXIBLE_PHASE_CONFIG).needProfiling,
     )
     useContext(OptimizationState(context.config, optimizationConfig)) {
         val module = this@runBitcodePostProcessing.context.llvmModule
         it.runPhase(MandatoryBitcodeLLVMPostprocessingPhase, module)
         it.runPhase(ModuleBitcodeOptimizationPhase, module)
         it.runPhase(LTOBitcodeOptimizationPhase, module)
-        when (context.config.sanitizer) {
+        when (context.config.configuration.get(BinaryOptions.sanitizer)) {
             SanitizerKind.THREAD -> it.runPhase(ThreadSanitizerPhase, module)
             SanitizerKind.ADDRESS -> context.reportCompilationError("Address sanitizer is not supported yet")
             null -> {}
         }
     }
-    if (context.config.memoryModel == MemoryModel.EXPERIMENTAL) {
-        runPhase(RemoveRedundantSafepointsPhase)
-    }
+    runPhase(RemoveRedundantSafepointsPhase)
     if (context.config.optimizationsEnabled) {
         runPhase(OptimizeTLSDataLoadsPhase)
     }

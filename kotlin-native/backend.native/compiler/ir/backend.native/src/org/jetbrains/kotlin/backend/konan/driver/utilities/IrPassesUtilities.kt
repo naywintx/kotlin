@@ -15,8 +15,10 @@ import org.jetbrains.kotlin.backend.common.phaser.BeforeOrAfter
 import org.jetbrains.kotlin.backend.common.phaser.defaultDumper
 import org.jetbrains.kotlin.config.native.IrVerificationMode
 import org.jetbrains.kotlin.backend.konan.driver.PhaseContext
+import org.jetbrains.kotlin.backend.konan.getting
 import org.jetbrains.kotlin.backend.konan.reportCompilationWarning
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
+import org.jetbrains.kotlin.config.native.NativeConfigurationKeys
 import org.jetbrains.kotlin.ir.IrElement
 
 
@@ -57,7 +59,8 @@ private fun ActionState.isDumpNeeded() =
 
 private fun <Context : PhaseContext, Data> getIrValidator(): Action<Data, Context> =
         fun(state: ActionState, data: Data, context: Context) {
-            if (context.config.irVerificationMode == IrVerificationMode.NONE) return
+            val irVerificationMode = context.get(NativeConfigurationKeys.VERIFY_IR)
+            if (irVerificationMode == IrVerificationMode.NONE) return
 
             val backendContext: CommonBackendContext? = findBackendContext(context)
             if (backendContext == null) {
@@ -72,7 +75,7 @@ private fun <Context : PhaseContext, Data> getIrValidator(): Action<Data, Contex
                 return
             }
             val validatorConfig = IrValidatorConfig(
-                abortOnError = context.config.irVerificationMode == IrVerificationMode.ERROR,
+                abortOnError = irVerificationMode == IrVerificationMode.ERROR,
                 ensureAllNodesAreDifferent = true,
                 checkTypes = true,
                 checkDescriptors = false
