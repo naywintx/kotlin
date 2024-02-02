@@ -9,6 +9,7 @@
 package org.jetbrains.kotlin.bir.expressions
 
 import org.jetbrains.kotlin.bir.BirElement
+import org.jetbrains.kotlin.bir.BirElementBackReferencesKey
 import org.jetbrains.kotlin.bir.BirElementClass
 
 /**
@@ -17,5 +18,7 @@ import org.jetbrains.kotlin.bir.BirElementClass
  * Generated from: [org.jetbrains.kotlin.bir.generator.BirTree.getValue]
  */
 abstract class BirGetValue(elementClass: BirElementClass<*>) : BirValueAccessExpression(elementClass), BirElement {
-    companion object : BirElementClass<BirGetValue>(BirGetValue::class.java, 38, true)
+    companion object : BirElementClass<BirGetValue>(BirGetValue::class.java, 38, true) {
+        val symbol = BirElementBackReferencesKey<BirGetValue, _>{ (it as? BirGetValue)?.symbol }
+    }
 }

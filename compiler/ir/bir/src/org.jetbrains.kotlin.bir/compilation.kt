@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.ir.declarations.IrField
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.impl.IrModuleFragmentImpl
+import org.jetbrains.kotlin.ir.types.IdSignatureValues.result
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.transformFlat
 import java.util.IdentityHashMap
@@ -268,7 +269,6 @@ class BirCompilation() {
                 )
 
                 birModule = ir2BirConverter.remapElement<BirModuleFragment>(input)
-                compiledBir.attachRootElement(birModule)
             }
 
             ir2BirConverter.convertImplElementsIntoLazyWhenPossible = true
@@ -314,16 +314,16 @@ class BirCompilation() {
         ): BirCompilationBundle {
             val compiledBir = input.backendContext!!.compiledBir
             val externalBir = input.backendContext.externalModulesBir
-            compiledBir.activateNewRegisteredIndices()
-            externalBir.activateNewRegisteredIndices()
 
             invokePhaseMeasuringTime("BIR", "baseline tree traversal") {
                 input.birModule!!.countAllElementsInTree()
             }
 
-            invokePhaseMeasuringTime("BIR", "index compiled BIR") {
-                compiledBir.reindexAllElements()
+            invokePhaseMeasuringTime("BIR", "index BIR one time") {
+                compiledBir.attachRootElement(input.birModule!!)
             }
+
+            invokePhaseMeasuringTime("BIR", "index BIR scalable") {}
 
             dumpBirPhase(context, phaseConfig, input, null, "Initial")
             for (phase in input.backendContext.loweringPhases) {

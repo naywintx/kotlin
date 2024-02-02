@@ -167,8 +167,8 @@ sealed class Field(
     var isOverride = false
 
     var passViaConstructorParameter = false
-    var isReadWriteTrackedProperty = false
     var initializeToThis = false
+    var trackForwardReferences = false
 
     val backingFieldName: String
         get() = "_$name"
