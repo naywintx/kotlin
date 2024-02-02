@@ -1,6 +1,12 @@
 package inline
 
 inline fun f(): Int {
-    A().foo.hashCode()
-    return 1
+    val obj = A()
+    val oldSum = PublishedClass().getValue()
+        + obj.publishedVal
+        + obj.publishedMethod()
+        + obj.publishedVar
+        + inline.A.publishedConst
+
+    return 9 / oldSum
 }

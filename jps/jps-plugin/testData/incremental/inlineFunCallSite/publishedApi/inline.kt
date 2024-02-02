@@ -1,6 +1,10 @@
 package inline
 
 inline fun f(): Int {
-    A().foo.hashCode()
-    return 0
+    val obj = A()
+    return PublishedClass().getValue()
+        + obj.publishedVal
+        + obj.publishedMethod()
+        + obj.publishedVar
+        + inline.A.publishedConst
 }
