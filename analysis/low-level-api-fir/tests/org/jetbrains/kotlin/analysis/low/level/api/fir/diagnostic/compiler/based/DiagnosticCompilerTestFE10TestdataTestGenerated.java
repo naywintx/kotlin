@@ -844,6 +844,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
         }
 
         @Test
+        @TestMetadata("missingDependencyTypealias.kt")
+        public void testMissingDependencyTypealias() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/missingDependencyTypealias.kt");
+        }
+
+        @Test
         @TestMetadata("missingIteratorMissing.kt")
         public void testMissingIteratorMissing() throws Exception {
             runTest("compiler/testData/diagnostics/tests/missingIteratorMissing.kt");
