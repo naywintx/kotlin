@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir.analysis.checkers.type
 
 import org.jetbrains.kotlin.KtFakeSourceElementKind
+import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
@@ -25,7 +26,7 @@ object FirOptionalExpectationTypeChecker : FirTypeRefChecker(MppCheckerKind.Comm
         val classSymbol = typeRef.coneTypeSafe<ConeClassLikeType>()?.toRegularClassSymbol(context.session) ?: return
         if (!classSymbol.isOptionalAnnotationClass(context.session)) return
 
-        if (!context.session.moduleData.isCommon) {
+        if (!context.languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation) && !context.session.moduleData.isCommon) {
             reporter.reportOn(source, FirErrors.OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE, context)
         }
 

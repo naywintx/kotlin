@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.backend.common.actualizer.SpecialFakeOverrideSymbols
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
@@ -103,17 +104,23 @@ fun FirResult.convertToIrAndActualize(
     val (irModuleFragment, components, pluginContext) = irOutputs.last()
     val allIrModules = irOutputs.map { it.irModuleFragment }
 
-    val irActualizer = if (allIrModules.size == 1) null else IrActualizer(
-        KtDiagnosticReporterWithImplicitIrBasedContext(
-            fir2IrConfiguration.diagnosticReporter,
-            fir2IrConfiguration.languageVersionSettings
-        ),
-        actualizerTypeContextProvider(irModuleFragment.irBuiltins),
-        fir2IrConfiguration.expectActualTracker,
-        fir2IrConfiguration.useIrFakeOverrideBuilder,
-        irModuleFragment,
-        allIrModules.dropLast(1),
-    )
+    val stdlibCompilation = fir2IrConfiguration.languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation)
+
+    val irActualizer = if (allIrModules.size == 1 && !stdlibCompilation) {
+            null
+        } else {
+            IrActualizer(
+                KtDiagnosticReporterWithImplicitIrBasedContext(
+                    fir2IrConfiguration.diagnosticReporter,
+                    fir2IrConfiguration.languageVersionSettings
+                ),
+                actualizerTypeContextProvider(irModuleFragment.irBuiltins),
+                fir2IrConfiguration.expectActualTracker,
+                fir2IrConfiguration.useIrFakeOverrideBuilder,
+                irModuleFragment,
+                if (stdlibCompilation) allIrModules else allIrModules.dropLast(1),
+            )
+        }
 
     if (fir2IrConfiguration.useIrFakeOverrideBuilder) {
         // actualizeCallablesAndMergeModules call below in fact can also actualize classifiers.

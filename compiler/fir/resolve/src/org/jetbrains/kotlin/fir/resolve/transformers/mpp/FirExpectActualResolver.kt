@@ -5,12 +5,14 @@
 
 package org.jetbrains.kotlin.fir.resolve.transformers.mpp
 
+import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.fir.FirExpectActualMatchingContext
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.ExpectForActualMatchingData
 import org.jetbrains.kotlin.fir.declarations.expectForActual
 import org.jetbrains.kotlin.fir.declarations.fullyExpandedClass
 import org.jetbrains.kotlin.fir.declarations.utils.isExpect
+import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.resolve.providers.dependenciesSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.scopes.impl.FirPackageMemberScope
@@ -29,6 +31,8 @@ object FirExpectActualResolver {
         useSiteSession: FirSession,
         context: FirExpectActualMatchingContext,
     ): ExpectForActualMatchingData {
+        val stdlibCompilation = useSiteSession.languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation)
+        val provider = if (stdlibCompilation) useSiteSession.symbolProvider else useSiteSession.dependenciesSymbolProvider
         with(context) {
             val result: Map<ExpectActualMatchingCompatibility, List<FirBasedSymbol<*>>> = when (actualSymbol) {
                 is FirCallableSymbol<*> -> {
@@ -41,9 +45,13 @@ object FirExpectActualResolver {
                         classId != null -> {
                             actualContainingClass = useSiteSession.symbolProvider.getClassLikeSymbolByClassId(classId)
                                 ?.fullyExpandedClass(useSiteSession)
-                            expectContainingClass = actualContainingClass?.fir?.expectForActual
-                                ?.get(ExpectActualMatchingCompatibility.MatchedSuccessfully)
-                                ?.singleOrNull() as? FirRegularClassSymbol
+                            expectContainingClass = if (stdlibCompilation && actualContainingClass?.isExpect == true) {
+                                actualContainingClass.fir.symbol
+                            } else {
+                                actualContainingClass?.fir?.expectForActual
+                                    ?.get(ExpectActualMatchingCompatibility.MatchedSuccessfully)
+                                    ?.singleOrNull() as? FirRegularClassSymbol
+                            }
 
                             when (actualSymbol) {
                                 is FirConstructorSymbol -> expectContainingClass?.getConstructors(expectScopeSession)
@@ -51,7 +59,8 @@ object FirExpectActualResolver {
                             }.orEmpty()
                         }
                         else -> {
-                            val scope = FirPackageMemberScope(callableId.packageName, useSiteSession, useSiteSession.dependenciesSymbolProvider)
+                            val scope =
+                                FirPackageMemberScope(callableId.packageName, useSiteSession, provider)
                             mutableListOf<FirCallableSymbol<*>>().apply {
                                 scope.processFunctionsByName(callableId.callableName) { add(it) }
                                 scope.processPropertiesByName(callableId.callableName) { add(it) }
@@ -77,8 +86,9 @@ object FirExpectActualResolver {
                     }
                 }
                 is FirClassLikeSymbol<*> -> {
-                    val expectClassSymbol = useSiteSession.dependenciesSymbolProvider
-                        .getClassLikeSymbolByClassId(actualSymbol.classId) as? FirRegularClassSymbol ?: return emptyMap()
+                    val expectClassSymbol =
+                        provider.getClassLikeSymbolByClassId(actualSymbol.classId) as? FirRegularClassSymbol ?: return emptyMap()
+
                     if (expectClassSymbol.isExpect) {
                         val compatibility = AbstractExpectActualMatcher.matchClassifiers(expectClassSymbol, actualSymbol, context)
                         mapOf(compatibility to listOf(expectClassSymbol))
