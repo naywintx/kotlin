@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.backend.konan.ir.konanLibrary
 import org.jetbrains.kotlin.backend.konan.serialization.KonanIrLinker
 import org.jetbrains.kotlin.backend.konan.serialization.KonanManglerDesc
 import org.jetbrains.kotlin.backend.konan.serialization.KonanManglerIr
+import org.jetbrains.kotlin.config.native.NativeConfigurationKeys
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
@@ -234,7 +235,7 @@ internal fun PsiToIrContext.psiToIr(
 
     val modules = if (isProducingLibrary) emptyMap() else (irDeserializer as KonanIrLinker).modules
 
-    if (config.configuration.getBoolean(KonanConfigKeys.FAKE_OVERRIDE_VALIDATOR)) {
+    if (config.configuration.getBoolean(NativeConfigurationKeys.FAKE_OVERRIDE_VALIDATOR)) {
         val fakeOverrideChecker = FakeOverrideChecker(KonanManglerIr, KonanManglerDesc)
         modules.values.forEach { fakeOverrideChecker.check(it) }
     }

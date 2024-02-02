@@ -10,13 +10,15 @@ import org.jetbrains.kotlin.backend.common.serialization.codedInputStream
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrFile
 import org.jetbrains.kotlin.backend.konan.driver.DynamicCompilerDriver
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.config.kotlinSourceRoots
+import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.CompilerConfigurationKey
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.native.BinaryOptions
+import org.jetbrains.kotlin.config.native.NativeConfigurationKeys
 import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.konan.library.impl.createKonanLibrary
 import org.jetbrains.kotlin.konan.target.CompilerOutputKind
@@ -53,8 +55,8 @@ class KonanDriver(
         val compilationSpawner: CompilationSpawner
 ) {
     fun run() {
-        val outputKind = configuration[KonanConfigKeys.PRODUCE]
-        val isCompilingFromBitcode = configuration[KonanConfigKeys.COMPILE_FROM_BITCODE] != null
+        val outputKind = configuration[NativeConfigurationKeys.PRODUCE]
+        val isCompilingFromBitcode = configuration[NativeConfigurationKeys.COMPILE_FROM_BITCODE] != null
         val hasSourceRoots = configuration.kotlinSourceRoots.isNotEmpty()
 
         if (isCompilingFromBitcode && hasSourceRoots) {
@@ -69,11 +71,11 @@ class KonanDriver(
             return
         }
 
-        val fileNames = configuration.get(KonanConfigKeys.LIBRARY_TO_ADD_TO_CACHE)?.let { libPath ->
-            val filesToCache = configuration.get(KonanConfigKeys.FILES_TO_CACHE)
+        val fileNames = configuration.get(NativeConfigurationKeys.LIBRARY_TO_ADD_TO_CACHE)?.let { libPath ->
+            val filesToCache = configuration.get(NativeConfigurationKeys.FILES_TO_CACHE)
             when {
                 !filesToCache.isNullOrEmpty() -> filesToCache
-                configuration.get(KonanConfigKeys.MAKE_PER_FILE_CACHE) == true -> {
+                configuration.get(NativeConfigurationKeys.MAKE_PER_FILE_CACHE) == true -> {
                     val lib = createKonanLibrary(File(libPath), "default", null, true)
                     (0 until lib.fileCount()).map { fileIndex ->
                         val proto = IrFile.parseFrom(lib.file(fileIndex).codedInputStream, ExtensionRegistryLite.newInstance())
@@ -84,12 +86,12 @@ class KonanDriver(
             }
         }
         if (fileNames != null) {
-            configuration.put(KonanConfigKeys.MAKE_PER_FILE_CACHE, true)
-            configuration.put(KonanConfigKeys.FILES_TO_CACHE, fileNames)
+            configuration.put(NativeConfigurationKeys.MAKE_PER_FILE_CACHE, true)
+            configuration.put(NativeConfigurationKeys.FILES_TO_CACHE, fileNames)
         }
         var konanConfig = KonanConfig(project, configuration)
 
-        if (configuration.get(KonanConfigKeys.LIST_TARGETS) == true) {
+        if (configuration.get(NativeConfigurationKeys.LIST_TARGETS) == true) {
             konanConfig.targetManager.list()
         }
         if (konanConfig.infoArgsOnly) return
@@ -124,7 +126,7 @@ class KonanDriver(
             val moduleName = config.moduleId
             if (libraries.any { it.uniqueName == moduleName }) {
                 val kexeModuleName = "${moduleName}_kexe"
-                config.configuration.put(KonanConfigKeys.MODULE_NAME, kexeModuleName)
+                config.configuration.put(NativeConfigurationKeys.MODULE_NAME, kexeModuleName)
                 assert(libraries.none { it.uniqueName == kexeModuleName })
             }
         }
@@ -157,21 +159,21 @@ class KonanDriver(
             fun <T> copy(key: CompilerConfigurationKey<T>) = putIfNotNull(key, configuration.get(key))
             fun <T> copyNotNull(key: CompilerConfigurationKey<T>) = put(key, configuration.getNotNull(key))
             // For the first stage, use "-p library" produce mode.
-            put(KonanConfigKeys.PRODUCE, CompilerOutputKind.LIBRARY)
-            copy(KonanConfigKeys.TARGET)
-            put(KonanConfigKeys.OUTPUT, intermediateKLib.absolutePath)
+            put(NativeConfigurationKeys.PRODUCE, CompilerOutputKind.LIBRARY)
+            copy(NativeConfigurationKeys.TARGET)
+            put(NativeConfigurationKeys.OUTPUT, intermediateKLib.absolutePath)
             copyNotNull(CLIConfigurationKeys.CONTENT_ROOTS)
-            copyNotNull(KonanConfigKeys.LIBRARY_FILES)
-            copyNotNull(KonanConfigKeys.REPOSITORIES)
-            copy(KonanConfigKeys.FRIEND_MODULES)
-            copy(KonanConfigKeys.REFINES_MODULES)
-            copy(KonanConfigKeys.EMIT_LAZY_OBJC_HEADER_FILE)
-            copy(KonanConfigKeys.FULL_EXPORTED_NAME_PREFIX)
-            copy(KonanConfigKeys.EXPORT_KDOC)
+            copyNotNull(NativeConfigurationKeys.LIBRARY_FILES)
+            copyNotNull(NativeConfigurationKeys.REPOSITORIES)
+            copy(NativeConfigurationKeys.FRIEND_MODULES)
+            copy(NativeConfigurationKeys.REFINES_MODULES)
+            copy(NativeConfigurationKeys.EMIT_LAZY_OBJC_HEADER_FILE)
+            copy(NativeConfigurationKeys.FULL_EXPORTED_NAME_PREFIX)
+            copy(NativeConfigurationKeys.EXPORT_KDOC)
             copy(BinaryOptions.unitSuspendFunctionObjCExport)
             copy(BinaryOptions.objcExportDisableSwiftMemberNameMangling)
             copy(BinaryOptions.objcExportIgnoreInterfaceMethodCollisions)
-            copy(KonanConfigKeys.OBJC_GENERICS)
+            copy(NativeConfigurationKeys.OBJC_GENERICS)
             copy(CommonConfigurationKeys.USE_IR_FAKE_OVERRIDE_BUILDER)
         }
 
@@ -183,9 +185,9 @@ class KonanDriver(
         require(intermediateKLib.exists) { "Intermediate KLib $intermediateKLib must have been created by successful first compilation stage" }
         // We need to remove this flag, as it would otherwise override header written previously.
         // Unfortunately, there is no way to remove the flag, so empty string is put instead
-        configuration.get(KonanConfigKeys.EMIT_LAZY_OBJC_HEADER_FILE)?.let { configuration.put(KonanConfigKeys.EMIT_LAZY_OBJC_HEADER_FILE, "") }
-        configuration.put(KonanConfigKeys.INCLUDED_LIBRARIES,
-                configuration.get(KonanConfigKeys.INCLUDED_LIBRARIES).orEmpty() + listOf(intermediateKLib.absolutePath))
+        configuration.get(NativeConfigurationKeys.EMIT_LAZY_OBJC_HEADER_FILE)?.let { configuration.put(NativeConfigurationKeys.EMIT_LAZY_OBJC_HEADER_FILE, "") }
+        configuration.put(NativeConfigurationKeys.INCLUDED_LIBRARIES,
+                configuration.get(NativeConfigurationKeys.INCLUDED_LIBRARIES).orEmpty() + listOf(intermediateKLib.absolutePath))
         compilationSpawner.spawn(configuration) // Need to spawn a new compilation to create fresh environment (without sources).
     }
 }

@@ -1,6 +1,7 @@
 package org.jetbrains.kotlin.backend.konan
 
 import org.jetbrains.kotlin.backend.konan.driver.PhaseContext
+import org.jetbrains.kotlin.config.native.*
 import org.jetbrains.kotlin.konan.KonanExternalToolFailure
 import org.jetbrains.kotlin.konan.exec.Command
 import org.jetbrains.kotlin.konan.file.File
@@ -27,8 +28,8 @@ internal fun determineLinkerOutput(context: PhaseContext): LinkerOutputKind =
                 if (context.config.target.family == Family.ANDROID) {
                     val configuration = context.config.configuration
                     val androidProgramType = configuration.get(BinaryOptions.androidProgramType) ?: AndroidProgramType.Default
-                    if (androidProgramType.linkerOutputKindOverride != null) {
-                        return@run androidProgramType.linkerOutputKindOverride
+                    androidProgramType.linkerOutputKindOverride?.let {
+                        return@run it
                     }
                 }
                 LinkerOutputKind.EXECUTABLE
@@ -132,8 +133,8 @@ internal class Linker(
         }
         File(executable).delete()
 
-        val linkerArgs = asLinkerArgs(config.configuration.getNotNull(KonanConfigKeys.LINKER_ARGS)) +
-                BitcodeEmbedding.getLinkerOptions(config) +
+        val linkerArgs = asLinkerArgs(config.configuration.getNotNull(NativeConfigurationKeys.LINKER_ARGS)) +
+                BitcodeEmbedding.getLinkerOptions(config.configuration) +
                 caches.dynamic +
                 libraryProvidedLinkerFlags + additionalLinkerArgs
 

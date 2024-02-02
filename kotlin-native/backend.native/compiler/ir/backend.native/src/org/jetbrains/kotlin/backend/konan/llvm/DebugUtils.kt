@@ -10,6 +10,7 @@ import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.reinterpret
 import llvm.*
 import org.jetbrains.kotlin.backend.konan.*
+import org.jetbrains.kotlin.config.native.NativeConfigurationKeys
 import org.jetbrains.kotlin.ir.IrFileEntry
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.declarations.IrFile
@@ -54,7 +55,7 @@ internal object DWARF {
     }
 }
 
-fun KonanConfig.debugInfoVersion(): Int = configuration[KonanConfigKeys.DEBUG_INFO_VERSION] ?: 1
+fun KonanConfig.debugInfoVersion(): Int = configuration[NativeConfigurationKeys.DEBUG_INFO_VERSION] ?: 1
 
 internal class DebugInfo(override val generationState: NativeGenerationState) : ContextUtils {
     private val config = context.config
@@ -289,7 +290,7 @@ internal fun String?.toFileAndFolder(config: KonanConfig): FileAndFolder {
     this ?: return FileAndFolder.NOFILE
     val file = File(this).absoluteFile
     var parent = file.parent
-    config.configuration.get(KonanConfigKeys.DEBUG_PREFIX_MAP)?.let { debugPrefixMap ->
+    config.configuration.get(NativeConfigurationKeys.DEBUG_PREFIX_MAP)?.let { debugPrefixMap ->
         for ((key, value) in debugPrefixMap) {
             if (parent.startsWith(key)) {
                 parent = value + parent.removePrefix(key)

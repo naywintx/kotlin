@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.cli.jvm.plugins.PluginCliParser
 import org.jetbrains.kotlin.config.*
-import org.jetbrains.kotlin.ir.linkage.partial.PartialLinkageConfig
+import org.jetbrains.kotlin.config.native.NativeConfigurationKeys
 import org.jetbrains.kotlin.ir.linkage.partial.partialLinkageConfig
 import org.jetbrains.kotlin.ir.linkage.partial.setupPartialLinkageConfig
 import org.jetbrains.kotlin.ir.util.IrMessageLogger
@@ -76,7 +76,7 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
 
                 | * Source files: ${environment.getSourceFiles().joinToString(transform = KtFile::getName)}
                 | * Compiler version: ${KotlinCompilerVersion.getVersion()}
-                | * Output kind: ${configuration.get(KonanConfigKeys.PRODUCE)}
+                | * Output kind: ${configuration.get(NativeConfigurationKeys.PRODUCE)}
 
                 """.trimMargin())
             throw e

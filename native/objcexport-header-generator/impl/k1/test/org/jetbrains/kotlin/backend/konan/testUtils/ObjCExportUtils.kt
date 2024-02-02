@@ -5,13 +5,13 @@
 
 package org.jetbrains.kotlin.backend.konan.testUtils
 
-import org.jetbrains.kotlin.backend.konan.UnitSuspendFunctionObjCExport
 import org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportMapper
 import org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportNamer
 import org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportNamerImpl
 import org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportProblemCollector
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.config.native.UnitSuspendFunctionObjCExport
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationResolver

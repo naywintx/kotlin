@@ -3,7 +3,7 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.backend.konan
+package org.jetbrains.kotlin.config.native
 
 /**
  * Controls whether K/N runtime is allowed track application state.

@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.backend.konan
 
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.native.NativeConfigurationKeys
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.konan.library.KonanLibrary
@@ -39,11 +40,11 @@ internal fun getExportedLibraries(
     resolver: SearchPathResolver<KonanLibrary>,
     report: Boolean
 ): List<KonanLibrary> = getFeaturedLibraries(
-        configuration.getList(KonanConfigKeys.EXPORTED_LIBRARIES),
-        resolvedLibraries,
-        resolver,
-        if (report) FeaturedLibrariesReporter.forExportedLibraries(configuration) else FeaturedLibrariesReporter.Silent,
-        allowDefaultLibs = false
+    configuration.getList(NativeConfigurationKeys.EXPORTED_LIBRARIES),
+    resolvedLibraries,
+    resolver,
+    if (report) FeaturedLibrariesReporter.forExportedLibraries(configuration) else FeaturedLibrariesReporter.Silent,
+    allowDefaultLibs = false
 )
 
 internal fun getIncludedLibraries(

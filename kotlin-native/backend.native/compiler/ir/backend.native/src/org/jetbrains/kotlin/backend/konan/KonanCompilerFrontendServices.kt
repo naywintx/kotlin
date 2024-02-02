@@ -11,6 +11,9 @@ import org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportLazy
 import org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportLazyImpl
 import org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportProblemCollector
 import org.jetbrains.kotlin.backend.konan.objcexport.dumpObjCHeader
+import org.jetbrains.kotlin.config.native.BinaryOptions
+import org.jetbrains.kotlin.config.native.NativeConfigurationKeys
+import org.jetbrains.kotlin.config.native.UnitSuspendFunctionObjCExport
 import org.jetbrains.kotlin.container.*
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.psi.KtFile
@@ -19,7 +22,7 @@ import org.jetbrains.kotlin.resolve.deprecation.DeprecationResolver
 internal fun StorageComponentContainer.initContainer(config: KonanConfig) {
     useImpl<FrontendServices>()
 
-    if (!config.configuration.get(KonanConfigKeys.EMIT_LAZY_OBJC_HEADER_FILE).isNullOrEmpty()) {
+    if (!config.configuration.get(NativeConfigurationKeys.EMIT_LAZY_OBJC_HEADER_FILE).isNullOrEmpty()) {
         useImpl<ObjCExportLazyImpl>()
         useInstance(object : ObjCExportProblemCollector {
             override fun reportWarning(text: String) {}
@@ -38,7 +41,7 @@ internal fun StorageComponentContainer.initContainer(config: KonanConfig) {
             }
 
             override val objcGenerics: Boolean
-                get() = config.configuration.getBoolean(KonanConfigKeys.OBJC_GENERICS)
+                get() = config.configuration.getBoolean(NativeConfigurationKeys.OBJC_GENERICS)
 
             override val disableSwiftMemberNameMangling: Boolean
                 get() = config.configuration.getBoolean(BinaryOptions.objcExportDisableSwiftMemberNameMangling)
@@ -55,7 +58,7 @@ internal fun StorageComponentContainer.initContainer(config: KonanConfig) {
 internal fun ComponentProvider.postprocessComponents(context: FrontendContext, files: Collection<KtFile>) {
     context.frontendServices = this.get<FrontendServices>()
 
-    context.config.configuration.get(KonanConfigKeys.EMIT_LAZY_OBJC_HEADER_FILE)?.takeIf { it.isNotEmpty() }?.let {
+    context.config.configuration.get(NativeConfigurationKeys.EMIT_LAZY_OBJC_HEADER_FILE)?.takeIf { it.isNotEmpty() }?.let {
         this.get<ObjCExportLazy>().dumpObjCHeader(files, it, context.shouldExportKDoc())
     }
 }

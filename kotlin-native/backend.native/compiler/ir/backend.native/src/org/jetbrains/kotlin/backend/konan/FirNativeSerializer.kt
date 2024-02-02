@@ -1,6 +1,5 @@
 package org.jetbrains.kotlin.backend.konan
 
-import org.jetbrains.kotlin.KtSourceFile
 import org.jetbrains.kotlin.backend.common.serialization.CompatibilityMode
 import org.jetbrains.kotlin.backend.common.serialization.serializeModuleIntoKlib
 import org.jetbrains.kotlin.backend.konan.driver.PhaseContext
@@ -11,6 +10,7 @@ import org.jetbrains.kotlin.backend.konan.driver.phases.SerializerOutput
 import org.jetbrains.kotlin.backend.konan.serialization.KonanIrModuleSerializer
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.fir.reportToMessageCollector
+import org.jetbrains.kotlin.config.native.NativeConfigurationKeys
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporterFactory
 import org.jetbrains.kotlin.fir.moduleData
 import org.jetbrains.kotlin.fir.pipeline.Fir2KlibMetadataSerializer
@@ -35,7 +35,7 @@ internal fun PhaseContext.firSerializerBase(
     val configuration = config.configuration
     val usedResolvedLibraries = fir2IrOutput?.let {
         config.resolvedLibraries.getFullResolvedList(TopologicalLibraryOrder).filter {
-            (!it.isDefault && !configuration.getBoolean(KonanConfigKeys.PURGE_USER_LIBS)) || it in fir2IrOutput.usedLibraries
+            (!it.isDefault && !configuration.getBoolean(NativeConfigurationKeys.PURGE_USER_LIBS)) || it in fir2IrOutput.usedLibraries
         }
     }
 

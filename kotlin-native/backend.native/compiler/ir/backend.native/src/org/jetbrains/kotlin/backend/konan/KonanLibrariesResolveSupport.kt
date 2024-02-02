@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.backend.konan
 
 import org.jetbrains.kotlin.cli.common.messages.getLogger
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.native.NativeConfigurationKeys
 import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.konan.library.defaultResolver
 import org.jetbrains.kotlin.konan.target.Distribution
@@ -22,16 +23,16 @@ class KonanLibrariesResolveSupport(
         resolveManifestDependenciesLenient: Boolean
 ) {
     private val includedLibraryFiles =
-            configuration.getList(KonanConfigKeys.INCLUDED_LIBRARIES).map { File(it) }
+            configuration.getList(NativeConfigurationKeys.INCLUDED_LIBRARIES).map { File(it) }
 
     private val libraryToCacheFile =
-                    configuration.get(KonanConfigKeys.LIBRARY_TO_ADD_TO_CACHE)?.let { File(it) }
+                    configuration.get(NativeConfigurationKeys.LIBRARY_TO_ADD_TO_CACHE)?.let { File(it) }
 
-    private val libraryNames = configuration.getList(KonanConfigKeys.LIBRARY_FILES)
+    private val libraryNames = configuration.getList(NativeConfigurationKeys.LIBRARY_FILES)
 
     private val unresolvedLibraries = libraryNames.toUnresolvedLibraries
 
-    private val repositories = configuration.getList(KonanConfigKeys.REPOSITORIES)
+    private val repositories = configuration.getList(NativeConfigurationKeys.REPOSITORIES)
 
     private val resolver = defaultResolver(
             repositories,
@@ -48,10 +49,10 @@ class KonanLibrariesResolveSupport(
     internal val resolvedLibraries = run {
         val additionalLibraryFiles = (includedLibraryFiles + listOfNotNull(libraryToCacheFile)).toSet()
         resolver.resolveWithDependencies(
-                unresolvedLibraries + additionalLibraryFiles.map { UnresolvedLibrary(it.absolutePath, null) },
-                noStdLib = configuration.getBoolean(KonanConfigKeys.NOSTDLIB),
-                noDefaultLibs = configuration.getBoolean(KonanConfigKeys.NODEFAULTLIBS),
-                noEndorsedLibs = configuration.getBoolean(KonanConfigKeys.NOENDORSEDLIBS)
+            unresolvedLibraries + additionalLibraryFiles.map { UnresolvedLibrary(it.absolutePath, null) },
+            noStdLib = configuration.getBoolean(NativeConfigurationKeys.NOSTDLIB),
+            noDefaultLibs = configuration.getBoolean(NativeConfigurationKeys.NODEFAULTLIBS),
+            noEndorsedLibs = configuration.getBoolean(NativeConfigurationKeys.NOENDORSEDLIBS)
         )
     }
 

@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.backend.konan.*
 import org.jetbrains.kotlin.backend.konan.driver.PhaseContext
 import org.jetbrains.kotlin.backend.konan.lower.TestProcessor
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.config.native.NativeConfigurationKeys
+import org.jetbrains.kotlin.config.native.TestRunnerKind
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
@@ -69,9 +71,9 @@ internal class KonanSymbols(
 ): Symbols(irBuiltIns, symbolTable) {
     val entryPoint = run {
         val config = context.config.configuration
-        if (config.get(KonanConfigKeys.PRODUCE) != CompilerOutputKind.PROGRAM) return@run null
+        if (config.get(NativeConfigurationKeys.PRODUCE) != CompilerOutputKind.PROGRAM) return@run null
 
-        val entryPoint = FqName(config.get(KonanConfigKeys.ENTRY) ?: when (config.get(KonanConfigKeys.GENERATE_TEST_RUNNER)) {
+        val entryPoint = FqName(config.get(NativeConfigurationKeys.ENTRY) ?: when (config.get(NativeConfigurationKeys.GENERATE_TEST_RUNNER)) {
             TestRunnerKind.MAIN_THREAD -> "kotlin.native.internal.test.main"
             TestRunnerKind.WORKER -> "kotlin.native.internal.test.worker"
             TestRunnerKind.MAIN_THREAD_NO_EXIT -> "kotlin.native.internal.test.mainNoExit"

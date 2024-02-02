@@ -12,6 +12,7 @@ sourceSets {
 dependencies {
     api(intellijCore())
     api(project(":native:base"))
+    api(project(":native:config.native"))
     api(project(":core:compiler.common"))
 
     testApi(libs.junit.jupiter.api)

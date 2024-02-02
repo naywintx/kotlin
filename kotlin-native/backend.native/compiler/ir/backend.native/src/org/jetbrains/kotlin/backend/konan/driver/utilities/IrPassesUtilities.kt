@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.backend.common.phaser.Action
 import org.jetbrains.kotlin.backend.common.phaser.ActionState
 import org.jetbrains.kotlin.backend.common.phaser.BeforeOrAfter
 import org.jetbrains.kotlin.backend.common.phaser.defaultDumper
-import org.jetbrains.kotlin.backend.konan.IrVerificationMode
+import org.jetbrains.kotlin.config.native.IrVerificationMode
 import org.jetbrains.kotlin.backend.konan.driver.PhaseContext
 import org.jetbrains.kotlin.backend.konan.reportCompilationWarning
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
@@ -72,10 +72,10 @@ private fun <Context : PhaseContext, Data> getIrValidator(): Action<Data, Contex
                 return
             }
             val validatorConfig = IrValidatorConfig(
-                    abortOnError = context.config.irVerificationMode == IrVerificationMode.ERROR,
-                    ensureAllNodesAreDifferent = true,
-                    checkTypes = true,
-                    checkDescriptors = false
+                abortOnError = context.config.irVerificationMode == IrVerificationMode.ERROR,
+                ensureAllNodesAreDifferent = true,
+                checkTypes = true,
+                checkDescriptors = false
             )
             try {
                 element.accept(IrValidator(backendContext, validatorConfig), null)

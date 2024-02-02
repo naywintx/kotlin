@@ -8,6 +8,8 @@ import llvm.*
 import org.jetbrains.kotlin.backend.konan.driver.PhaseContext
 import org.jetbrains.kotlin.backend.konan.llvm.*
 import org.jetbrains.kotlin.backend.konan.llvm.objc.patchObjCRuntimeModule
+import org.jetbrains.kotlin.config.native.CInterfaceGenerationMode
+import org.jetbrains.kotlin.config.native.NativeConfigurationKeys
 import org.jetbrains.kotlin.konan.file.isBitcode
 import org.jetbrains.kotlin.konan.target.CompilerOutputKind
 import org.jetbrains.kotlin.library.isNativeStdlib
@@ -148,7 +150,7 @@ private fun linkAllDependencies(generationState: NativeGenerationState, generate
 
 internal fun insertAliasToEntryPoint(context: PhaseContext, module: LLVMModuleRef) {
     val config = context.config
-    val nomain = config.configuration.get(KonanConfigKeys.NOMAIN) ?: false
+    val nomain = config.configuration.get(NativeConfigurationKeys.NOMAIN) ?: false
     if (config.produce != CompilerOutputKind.PROGRAM || nomain)
         return
     val entryPointName = config.entryPointName

@@ -6,6 +6,9 @@
 package org.jetbrains.kotlin.backend.konan
 
 import org.jetbrains.kotlin.backend.konan.driver.PhaseContext
+import org.jetbrains.kotlin.config.native.BinaryOptions
+import org.jetbrains.kotlin.config.native.BitcodeEmbedding
+import org.jetbrains.kotlin.config.native.NativeConfigurationKeys
 import org.jetbrains.kotlin.konan.exec.Command
 import org.jetbrains.kotlin.konan.target.*
 import java.io.File
@@ -23,7 +26,7 @@ internal class BitcodeCompiler(
     private val debug = config.debug
 
     private val overrideClangOptions =
-            config.configuration.getList(KonanConfigKeys.OVERRIDE_CLANG_OPTIONS)
+            config.configuration.getList(NativeConfigurationKeys.OVERRIDE_CLANG_OPTIONS)
 
     private fun MutableList<String>.addNonEmpty(elements: List<String>) {
         addAll(elements.filter { it.isNotEmpty() })
@@ -62,7 +65,7 @@ internal class BitcodeCompiler(
                         debug -> configurables.clangDebugFlags
                         else -> configurables.clangNooptFlags
                     })
-                    addNonEmpty(BitcodeEmbedding.getClangOptions(config))
+                    addNonEmpty(BitcodeEmbedding.getClangOptions(config.configuration))
                     addNonEmpty(configurables.currentRelocationMode(context).translateToClangCc1Flag())
                 }
         val bitcodePath = bitcodeFile.absoluteFile.normalize().path

@@ -7,6 +7,8 @@ package org.jetbrains.kotlin.backend.konan.objcexport
 
 import org.jetbrains.kotlin.backend.konan.*
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
+import org.jetbrains.kotlin.config.native.BinaryOptions
+import org.jetbrains.kotlin.config.native.NativeConfigurationKeys
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.konan.target.AppleConfigurables
 import org.jetbrains.kotlin.konan.target.Family
@@ -128,7 +130,7 @@ internal class InfoPListBuilder(
         mainPackageGuesser: MainPackageGuesser,
         moduleDescriptor: ModuleDescriptor,
     ): String {
-        val deprecatedBundleIdOption = configuration[KonanConfigKeys.BUNDLE_ID]
+        val deprecatedBundleIdOption = configuration[NativeConfigurationKeys.BUNDLE_ID]
         val bundleIdOption = configuration[BinaryOptions.bundleId]
         if (deprecatedBundleIdOption != null && bundleIdOption != null && deprecatedBundleIdOption != bundleIdOption) {
             configuration.report(

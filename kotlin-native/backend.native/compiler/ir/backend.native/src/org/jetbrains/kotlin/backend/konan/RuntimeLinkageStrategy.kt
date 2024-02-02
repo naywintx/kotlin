@@ -9,6 +9,8 @@ import llvm.LLVMModuleCreateWithNameInContext
 import llvm.LLVMModuleRef
 import org.jetbrains.kotlin.backend.konan.llvm.*
 import org.jetbrains.kotlin.backend.konan.llvm.llvmLinkModules2
+import org.jetbrains.kotlin.config.native.BinaryOptions
+import org.jetbrains.kotlin.config.native.RuntimeLinkageStrategyBinaryOption
 
 /**
  * To avoid combinatorial explosion, we split runtime into several LLVM modules.
@@ -81,9 +83,4 @@ internal sealed class RuntimeLinkageStrategy {
 
         }
     }
-}
-
-enum class RuntimeLinkageStrategyBinaryOption {
-    Raw,
-    Optimize
 }

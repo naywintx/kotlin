@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.library.metadata.resolver.TopologicalLibraryOrder
 import org.jetbrains.kotlin.library.uniqueName
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
+import org.jetbrains.kotlin.config.native.NativeConfigurationKeys
+import org.jetbrains.kotlin.config.native.TestRunnerKind
 import org.jetbrains.kotlin.library.unresolvedDependencies
 import org.jetbrains.kotlin.library.metadata.isInteropLibrary
 
@@ -40,10 +42,10 @@ class CacheBuilder(
         val compilationSpawner: CompilationSpawner
 ) {
     private val configuration = konanConfig.configuration
-    private val autoCacheableFrom = configuration.get(KonanConfigKeys.AUTO_CACHEABLE_FROM)!!.map { File(it) }
+    private val autoCacheableFrom = configuration.get(NativeConfigurationKeys.AUTO_CACHEABLE_FROM)!!.map { File(it) }
     private val icEnabled = configuration.get(CommonConfigurationKeys.INCREMENTAL_COMPILATION)!!
-    private val includedLibraries = configuration.get(KonanConfigKeys.INCLUDED_LIBRARIES).orEmpty().toSet()
-    private val generateTestRunner = configuration.getNotNull(KonanConfigKeys.GENERATE_TEST_RUNNER)
+    private val includedLibraries = configuration.get(NativeConfigurationKeys.INCLUDED_LIBRARIES).orEmpty().toSet()
+    private val generateTestRunner = configuration.getNotNull(NativeConfigurationKeys.GENERATE_TEST_RUNNER)
 
     fun needToBuild() = konanConfig.isFinalBinary && konanConfig.ignoreCacheReason == null && (autoCacheableFrom.isNotEmpty() || icEnabled)
 
@@ -263,22 +265,22 @@ class CacheBuilder(
                         libraryCacheDirectory.absolutePath)
 
                 setupCommonOptionsForCaches(konanConfig)
-                put(KonanConfigKeys.PRODUCE, CompilerOutputKind.STATIC_CACHE)
-                put(KonanConfigKeys.LIBRARY_TO_ADD_TO_CACHE, libraryPath)
-                put(KonanConfigKeys.NODEFAULTLIBS, true)
-                put(KonanConfigKeys.NOENDORSEDLIBS, true)
-                put(KonanConfigKeys.NOSTDLIB, true)
-                put(KonanConfigKeys.LIBRARY_FILES, libraries)
+                put(NativeConfigurationKeys.PRODUCE, CompilerOutputKind.STATIC_CACHE)
+                put(NativeConfigurationKeys.LIBRARY_TO_ADD_TO_CACHE, libraryPath)
+                put(NativeConfigurationKeys.NODEFAULTLIBS, true)
+                put(NativeConfigurationKeys.NOENDORSEDLIBS, true)
+                put(NativeConfigurationKeys.NOSTDLIB, true)
+                put(NativeConfigurationKeys.LIBRARY_FILES, libraries)
                 if (generateTestRunner != TestRunnerKind.NONE && libraryPath in includedLibraries) {
-                    put(KonanConfigKeys.GENERATE_TEST_RUNNER, generateTestRunner)
-                    put(KonanConfigKeys.INCLUDED_LIBRARIES, listOf(libraryPath))
-                    configuration.get(KonanConfigKeys.TEST_DUMP_OUTPUT_PATH)?.let { put(KonanConfigKeys.TEST_DUMP_OUTPUT_PATH, it) }
+                    put(NativeConfigurationKeys.GENERATE_TEST_RUNNER, generateTestRunner)
+                    put(NativeConfigurationKeys.INCLUDED_LIBRARIES, listOf(libraryPath))
+                    configuration.get(NativeConfigurationKeys.TEST_DUMP_OUTPUT_PATH)?.let { put(NativeConfigurationKeys.TEST_DUMP_OUTPUT_PATH, it) }
                 }
-                put(KonanConfigKeys.CACHED_LIBRARIES, cachedLibraries)
-                put(KonanConfigKeys.CACHE_DIRECTORIES, listOf(libraryCacheDirectory.absolutePath))
-                put(KonanConfigKeys.MAKE_PER_FILE_CACHE, makePerFileCache)
+                put(NativeConfigurationKeys.CACHED_LIBRARIES, cachedLibraries)
+                put(NativeConfigurationKeys.CACHE_DIRECTORIES, listOf(libraryCacheDirectory.absolutePath))
+                put(NativeConfigurationKeys.MAKE_PER_FILE_CACHE, makePerFileCache)
                 if (filesToCache.isNotEmpty())
-                    put(KonanConfigKeys.FILES_TO_CACHE, filesToCache)
+                    put(NativeConfigurationKeys.FILES_TO_CACHE, filesToCache)
             }
             cacheRootDirectories[library] = libraryCache.absolutePath
         } catch (t: Throwable) {

@@ -10,7 +10,7 @@ import llvm.LLVMModuleRef
 import llvm.LLVMPrintModuleToFile
 import org.jetbrains.kotlin.backend.common.phaser.Action
 import org.jetbrains.kotlin.backend.common.phaser.ActionState
-import org.jetbrains.kotlin.backend.konan.KonanConfigKeys
+import org.jetbrains.kotlin.config.native.NativeConfigurationKeys
 import org.jetbrains.kotlin.backend.konan.driver.PhaseContext
 import org.jetbrains.kotlin.backend.konan.llvm.getName
 import org.jetbrains.kotlin.backend.konan.llvm.verifyModule
@@ -30,7 +30,7 @@ interface LlvmIrHolder {
  */
 private fun <Data, Context : PhaseContext> createLlvmDumperAction(): Action<Data, Context> =
         fun(state: ActionState, data: Data, context: Context) {
-            if (state.phase.name in context.config.configuration.getList(KonanConfigKeys.SAVE_LLVM_IR)) {
+            if (state.phase.name in context.config.configuration.getList(NativeConfigurationKeys.SAVE_LLVM_IR)) {
                 val llvmModule = findLlvmModule(data, context)
                 if (llvmModule == null) {
                     context.messageCollector.report(
@@ -51,7 +51,7 @@ private fun <Data, Context : PhaseContext> createLlvmDumperAction(): Action<Data
  */
 private fun <Data, Context : PhaseContext> createLlvmVerifierAction(): Action<Data, Context> =
         fun(actionState: ActionState, data: Data, context: Context) {
-            if (!context.config.configuration.getBoolean(KonanConfigKeys.VERIFY_BITCODE)) {
+            if (!context.config.configuration.getBoolean(NativeConfigurationKeys.VERIFY_BITCODE)) {
                 return
             }
             val llvmModule = findLlvmModule(data, context)

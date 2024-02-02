@@ -1,10 +1,12 @@
 /*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.backend.konan
+package org.jetbrains.kotlin.config.native
 
+import org.jetbrains.kotlin.config.native.AndroidProgramType.NativeActivity
+import org.jetbrains.kotlin.config.native.AndroidProgramType.Standalone
 import org.jetbrains.kotlin.konan.target.LinkerOutputKind
 
 /**
@@ -14,9 +16,9 @@ import org.jetbrains.kotlin.konan.target.LinkerOutputKind
  *   signature ( https://developer.android.com/ndk/reference/group/native-activity#anativeactivity_createfunc ).
  */
 enum class AndroidProgramType(
-        val konanMainOverride: String?,
-        val linkerOutputKindOverride: LinkerOutputKind?,
-        val consolePrintsToLogcat: Boolean
+    val konanMainOverride: String?,
+    val linkerOutputKindOverride: LinkerOutputKind?,
+    val consolePrintsToLogcat: Boolean,
 ) {
 
     /** Regular executable. The runtime entry point name is not Konan_main for historical reasons. */

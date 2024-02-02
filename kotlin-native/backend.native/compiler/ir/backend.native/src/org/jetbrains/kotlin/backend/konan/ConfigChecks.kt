@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.backend.konan
 
+import org.jetbrains.kotlin.config.native.NativeConfigurationKeys
 import org.jetbrains.kotlin.konan.target.needSmallBinary
 
 /**
@@ -14,13 +15,13 @@ interface ConfigChecks {
 
     val config: KonanConfig
 
-    fun shouldExportKDoc() = config.configuration.getBoolean(KonanConfigKeys.EXPORT_KDOC)
+    fun shouldExportKDoc() = config.configuration.getBoolean(NativeConfigurationKeys.EXPORT_KDOC)
 
-    fun shouldVerifyBitCode() = config.configuration.getBoolean(KonanConfigKeys.VERIFY_BITCODE)
+    fun shouldVerifyBitCode() = config.configuration.getBoolean(NativeConfigurationKeys.VERIFY_BITCODE)
 
-    fun shouldPrintBitCode() = config.configuration.getBoolean(KonanConfigKeys.PRINT_BITCODE)
+    fun shouldPrintBitCode() = config.configuration.getBoolean(NativeConfigurationKeys.PRINT_BITCODE)
 
-    fun shouldPrintFiles() = config.configuration.getBoolean(KonanConfigKeys.PRINT_FILES)
+    fun shouldPrintFiles() = config.configuration.getBoolean(NativeConfigurationKeys.PRINT_FILES)
 
     fun shouldContainDebugInfo() = config.debug
 

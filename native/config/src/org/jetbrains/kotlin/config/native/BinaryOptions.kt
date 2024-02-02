@@ -1,9 +1,9 @@
 /*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.backend.konan
+package org.jetbrains.kotlin.config.native
 
 import org.jetbrains.kotlin.config.CompilerConfigurationKey
 import org.jetbrains.kotlin.konan.target.SanitizerKind
@@ -83,9 +83,9 @@ object BinaryOptions : BinaryOptionRegistry() {
 }
 
 open class BinaryOption<T : Any>(
-        val name: String,
-        val valueParser: ValueParser<T>,
-        val compilerConfigurationKey: CompilerConfigurationKey<T> = CompilerConfigurationKey.create(name)
+    val name: String,
+    val valueParser: ValueParser<T>,
+    val compilerConfigurationKey: CompilerConfigurationKey<T> = CompilerConfigurationKey.create(name),
 ) {
     interface ValueParser<T : Any> {
         fun parse(value: String): T?
@@ -107,53 +107,56 @@ open class BinaryOptionRegistry {
     fun getByName(name: String): BinaryOption<*>? = registeredOptionsByName[name]
 
     protected fun booleanOption(): PropertyDelegateProvider<Any?, ReadOnlyProperty<Any?, CompilerConfigurationKey<Boolean>>> =
-            PropertyDelegateProvider { _, property ->
-                val option = BinaryOption(property.name, BooleanValueParser)
-                register(option)
-                ReadOnlyProperty { _, _ ->
-                    option.compilerConfigurationKey
-                }
+        PropertyDelegateProvider { _, property ->
+            val option = BinaryOption(property.name, BooleanValueParser)
+            register(option)
+            ReadOnlyProperty { _, _ ->
+                option.compilerConfigurationKey
             }
+        }
 
     protected fun uintOption(): PropertyDelegateProvider<Any?, ReadOnlyProperty<Any?, CompilerConfigurationKey<UInt>>> =
-            PropertyDelegateProvider { _, property ->
-                val option = BinaryOption(property.name, UIntValueParser)
-                register(option)
-                ReadOnlyProperty { _, _ ->
-                    option.compilerConfigurationKey
-                }
+        PropertyDelegateProvider { _, property ->
+            val option = BinaryOption(property.name, UIntValueParser)
+            register(option)
+            ReadOnlyProperty { _, _ ->
+                option.compilerConfigurationKey
             }
+        }
 
     protected fun stringOption(): PropertyDelegateProvider<Any?, ReadOnlyProperty<Any?, CompilerConfigurationKey<String>>> =
-            PropertyDelegateProvider { _, property ->
-                val option = BinaryOption(property.name, StringValueParser)
-                register(option)
-                ReadOnlyProperty { _, _ ->
-                    option.compilerConfigurationKey
-                }
+        PropertyDelegateProvider { _, property ->
+            val option = BinaryOption(property.name, StringValueParser)
+            register(option)
+            ReadOnlyProperty { _, _ ->
+                option.compilerConfigurationKey
             }
+        }
 
-    protected inline fun <reified T : Enum<T>> option(noinline shortcut : (T) -> String? = { null }, noinline hideValue: (T) -> Boolean = { false }): PropertyDelegateProvider<Any?, ReadOnlyProperty<Any?, CompilerConfigurationKey<T>>> =
-            PropertyDelegateProvider { _, property ->
-                val option = BinaryOption(property.name, EnumValueParser(enumValues<T>().toList(), shortcut, hideValue))
-                register(option)
-                ReadOnlyProperty { _, _ ->
-                    option.compilerConfigurationKey
-                }
+    protected inline fun <reified T : Enum<T>> option(
+        noinline shortcut: (T) -> String? = { null },
+        noinline hideValue: (T) -> Boolean = { false },
+    ): PropertyDelegateProvider<Any?, ReadOnlyProperty<Any?, CompilerConfigurationKey<T>>> =
+        PropertyDelegateProvider { _, property ->
+            val option = BinaryOption(property.name, EnumValueParser(enumValues<T>().toList(), shortcut, hideValue))
+            register(option)
+            ReadOnlyProperty { _, _ ->
+                option.compilerConfigurationKey
             }
+        }
 }
 
 private object BooleanValueParser : BinaryOption.ValueParser<Boolean> {
     override fun parse(value: String): Boolean? = value.toBooleanStrictOrNull()
 
-    override val validValuesHint: String?
+    override val validValuesHint: String
         get() = "true|false"
 }
 
 private object UIntValueParser : BinaryOption.ValueParser<UInt> {
     override fun parse(value: String): UInt? = value.toUIntOrNull()
 
-    override val validValuesHint: String?
+    override val validValuesHint: String
         get() = "non-negative-number"
 }
 
@@ -174,7 +177,7 @@ internal class EnumValueParser<T : Enum<T>>(
         it.name.equals(value, ignoreCase = true) || (shortcut(it)?.equals(value, ignoreCase = true) ?: false)
     }
 
-    override val validValuesHint: String?
+    override val validValuesHint: String
         get() = values.filter { !hideValue(it) }.map {
             val fullName = "$it".lowercase()
             shortcut(it)?.let { short ->

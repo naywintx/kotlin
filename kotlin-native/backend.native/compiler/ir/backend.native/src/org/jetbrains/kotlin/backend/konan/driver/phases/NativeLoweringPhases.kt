@@ -32,6 +32,8 @@ import org.jetbrains.kotlin.backend.konan.lower.RedundantCoercionsCleaner
 import org.jetbrains.kotlin.backend.konan.lower.ReturnsInsertionLowering
 import org.jetbrains.kotlin.backend.konan.lower.UnboxInlineLowering
 import org.jetbrains.kotlin.backend.konan.optimizations.KonanBCEForLoopBodyTransformer
+import org.jetbrains.kotlin.config.native.NativeConfigurationKeys
+import org.jetbrains.kotlin.config.native.TestRunnerKind
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.interpreter.IrInterpreterConfiguration
@@ -535,7 +537,7 @@ private fun PhaseEngine<NativeGenerationState>.getAllLowerings() = listOfNotNull
         innerClassPhase,
         dataClassesPhase,
         ifNullExpressionsFusionPhase,
-        testProcessorPhase.takeIf { context.config.configuration.getNotNull(KonanConfigKeys.GENERATE_TEST_RUNNER) != TestRunnerKind.NONE },
+        testProcessorPhase.takeIf { context.config.configuration.getNotNull(NativeConfigurationKeys.GENERATE_TEST_RUNNER) != TestRunnerKind.NONE },
         delegationPhase,
         functionReferencePhase,
         singleAbstractMethodPhase,

@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.backend.konan.descriptors.arrayTypes
 import org.jetbrains.kotlin.backend.konan.descriptors.arraysWithFixedSizeItems
 import org.jetbrains.kotlin.backend.konan.llvm.isVoidAsReturnType
 import org.jetbrains.kotlin.backend.konan.lower.erasedUpperBound
+import org.jetbrains.kotlin.config.native.MemoryModel
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.declarations.IrClass

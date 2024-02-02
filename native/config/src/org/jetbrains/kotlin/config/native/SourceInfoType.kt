@@ -3,11 +3,10 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.backend.konan
+package org.jetbrains.kotlin.config.native
 
-enum class GC(val shortcut: String? = null) {
+enum class SourceInfoType {
+    CORESYMBOLICATION,
+    LIBBACKTRACE,
     NOOP,
-    STOP_THE_WORLD_MARK_AND_SWEEP("stwms"),
-    PARALLEL_MARK_CONCURRENT_SWEEP("pmcs"),
-    CONCURRENT_MARK_AND_SWEEP("cms"),
 }

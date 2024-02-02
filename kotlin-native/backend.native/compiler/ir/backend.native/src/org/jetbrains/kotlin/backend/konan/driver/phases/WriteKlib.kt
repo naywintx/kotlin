@@ -6,7 +6,7 @@
 package org.jetbrains.kotlin.backend.konan.driver.phases
 
 import org.jetbrains.kotlin.backend.common.phaser.createSimpleNamedCompilerPhase
-import org.jetbrains.kotlin.backend.konan.KonanConfigKeys
+import org.jetbrains.kotlin.config.native.NativeConfigurationKeys
 import org.jetbrains.kotlin.backend.konan.OutputFiles
 import org.jetbrains.kotlin.backend.konan.driver.PhaseContext
 import org.jetbrains.kotlin.backend.konan.driver.PhaseEngine
@@ -28,13 +28,13 @@ internal val WriteKlibPhase = createSimpleNamedCompilerPhase<PhaseContext, KlibW
     val configuration = config.configuration
     val outputFiles = OutputFiles(input.customOutputPath?.removeSuffixIfPresent(".klib")
             ?: config.outputPath, config.target, config.produce)
-    val nopack = configuration.getBoolean(KonanConfigKeys.NOPACK)
+    val nopack = configuration.getBoolean(NativeConfigurationKeys.NOPACK)
     val output = outputFiles.klibOutputFileName(!nopack)
     val libraryName = config.moduleId
     val shortLibraryName = config.shortModuleName
     val abiVersion = KotlinAbiVersion.CURRENT
     val compilerVersion = KotlinCompilerVersion.getVersion().toString()
-    val libraryVersion = configuration.get(KonanConfigKeys.LIBRARY_VERSION)
+    val libraryVersion = configuration.get(NativeConfigurationKeys.LIBRARY_VERSION)
     val metadataVersion = KlibMetadataVersion.INSTANCE.toString()
     val versions = KotlinLibraryVersioning(
             abiVersion = abiVersion,

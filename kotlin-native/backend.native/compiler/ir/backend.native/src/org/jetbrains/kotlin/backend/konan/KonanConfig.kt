@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.config.kotlinSourceRoots
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.config.native.*
 import org.jetbrains.kotlin.ir.linkage.partial.partialLinkageConfig
 import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.konan.library.KonanLibrary
@@ -25,32 +26,26 @@ import org.jetbrains.kotlin.util.removeSuffixIfPresent
 import java.nio.file.Files
 import java.nio.file.Paths
 
-enum class IrVerificationMode {
-    NONE,
-    WARNING,
-    ERROR
-}
-
 class KonanConfig(val project: Project, val configuration: CompilerConfiguration) {
     internal val distribution = run {
         val overridenProperties = mutableMapOf<String, String>().apply {
-            configuration.get(KonanConfigKeys.OVERRIDE_KONAN_PROPERTIES)?.let(this::putAll)
-            configuration.get(KonanConfigKeys.LLVM_VARIANT)?.getKonanPropertiesEntry()?.let { (key, value) ->
+            configuration.get(NativeConfigurationKeys.OVERRIDE_KONAN_PROPERTIES)?.let(this::putAll)
+            configuration.get(NativeConfigurationKeys.LLVM_VARIANT)?.getKonanPropertiesEntry()?.let { (key, value) ->
                 put(key, value)
             }
         }
 
         Distribution(
-                configuration.get(KonanConfigKeys.KONAN_HOME) ?: KonanHomeProvider.determineKonanHome(),
+                configuration.get(NativeConfigurationKeys.KONAN_HOME) ?: KonanHomeProvider.determineKonanHome(),
                 false,
-                configuration.get(KonanConfigKeys.RUNTIME_FILE),
+                configuration.get(NativeConfigurationKeys.RUNTIME_FILE),
                 overridenProperties,
-                configuration.get(KonanConfigKeys.KONAN_DATA_DIR)
+                configuration.get(NativeConfigurationKeys.KONAN_DATA_DIR)
         )
     }
 
     private val platformManager = PlatformManager(distribution)
-    internal val targetManager = platformManager.targetManager(configuration.get(KonanConfigKeys.TARGET))
+    internal val targetManager = platformManager.targetManager(configuration.get(NativeConfigurationKeys.TARGET))
     internal val target = targetManager.target.also { target ->
         require(target.supportsThreads()) { "All supported targets must have threads, but was given $target" }
     }
@@ -58,12 +53,12 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
     internal val flexiblePhaseConfig = configuration.get(CLIConfigurationKeys.FLEXIBLE_PHASE_CONFIG)!!
 
     // TODO: debug info generation mode and debug/release variant selection probably requires some refactoring.
-    val debug: Boolean get() = configuration.getBoolean(KonanConfigKeys.DEBUG)
-    val lightDebug: Boolean = configuration.get(KonanConfigKeys.LIGHT_DEBUG)
+    val debug: Boolean get() = configuration.getBoolean(NativeConfigurationKeys.DEBUG)
+    val lightDebug: Boolean = configuration.get(NativeConfigurationKeys.LIGHT_DEBUG)
             ?: target.family.isAppleFamily // Default is true for Apple targets.
-    val generateDebugTrampoline = debug && configuration.get(KonanConfigKeys.GENERATE_DEBUG_TRAMPOLINE) ?: false
-    val optimizationsEnabled = configuration.getBoolean(KonanConfigKeys.OPTIMIZATION)
-    val assertsEnabled = configuration.getBoolean(KonanConfigKeys.ENABLE_ASSERTIONS)
+    val generateDebugTrampoline = debug && configuration.get(NativeConfigurationKeys.GENERATE_DEBUG_TRAMPOLINE) ?: false
+    val optimizationsEnabled = configuration.getBoolean(NativeConfigurationKeys.OPTIMIZATION)
+    val assertsEnabled = configuration.getBoolean(NativeConfigurationKeys.ENABLE_ASSERTIONS)
     val sanitizer = configuration.get(BinaryOptions.sanitizer)?.takeIf {
         when {
             it != SanitizerKind.THREAD -> "${it.name} sanitizer is not supported yet"
@@ -78,14 +73,16 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
         return@takeIf true
     }
 
-    val memoryModel: MemoryModel get() = configuration.get(BinaryOptions.memoryModel)?.also {
+    val memoryModel: MemoryModel
+        get() = configuration.get(BinaryOptions.memoryModel)?.also {
         if (it != MemoryModel.EXPERIMENTAL) {
             configuration.report(CompilerMessageSeverity.ERROR, "Legacy MM is deprecated and no longer works.")
         } else {
             configuration.report(CompilerMessageSeverity.STRONG_WARNING, "-memory-model and memoryModel switches are deprecated and will be removed in a future release.")
         }
     }.let { MemoryModel.EXPERIMENTAL }
-    val destroyRuntimeMode: DestroyRuntimeMode get() = configuration.get(KonanConfigKeys.DESTROY_RUNTIME_MODE)?.also {
+    val destroyRuntimeMode: DestroyRuntimeMode
+        get() = configuration.get(NativeConfigurationKeys.DESTROY_RUNTIME_MODE)?.also {
         if (it != DestroyRuntimeMode.ON_SHUTDOWN) {
             configuration.report(CompilerMessageSeverity.ERROR, "New MM is incompatible with 'legacy' destroy runtime mode.")
         } else {
@@ -117,7 +114,8 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
     val packFields: Boolean by lazy {
         configuration.get(BinaryOptions.packFields) ?: true
     }
-    val workerExceptionHandling: WorkerExceptionHandling get() = configuration.get(KonanConfigKeys.WORKER_EXCEPTION_HANDLING)?.also {
+    val workerExceptionHandling: WorkerExceptionHandling
+        get() = configuration.get(NativeConfigurationKeys.WORKER_EXCEPTION_HANDLING)?.also {
         if (it != WorkerExceptionHandling.USE_HOOK) {
             configuration.report(CompilerMessageSeverity.ERROR, "Legacy exception handling in workers is deprecated")
         } else {
@@ -126,13 +124,13 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
     } ?: WorkerExceptionHandling.USE_HOOK
 
     val runtimeLogsEnabled: Boolean by lazy {
-        configuration.get(KonanConfigKeys.RUNTIME_LOGS) != null
+        configuration.get(NativeConfigurationKeys.RUNTIME_LOGS) != null
     }
 
     val runtimeLogs: Map<LoggingTag, LoggingLevel> by lazy {
         val default = LoggingTag.entries.associateWith { LoggingLevel.None }
 
-        val cfgString = configuration.get(KonanConfigKeys.RUNTIME_LOGS) ?: return@lazy default
+        val cfgString = configuration.get(NativeConfigurationKeys.RUNTIME_LOGS) ?: return@lazy default
 
         fun <T> error(message: String): T? {
             configuration.report(CompilerMessageSeverity.STRONG_WARNING, "$message. No logging will be performed.")
@@ -159,7 +157,8 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
 
 
     val suspendFunctionsFromAnyThreadFromObjC: Boolean by lazy { configuration.get(BinaryOptions.objcExportSuspendFunctionLaunchThreadRestriction) == ObjCExportSuspendFunctionLaunchThreadRestriction.NONE }
-    val freezing: Freezing get() = configuration.get(BinaryOptions.freezing)?.also {
+    val freezing: Freezing
+        get() = configuration.get(BinaryOptions.freezing)?.also {
         if (it != Freezing.Disabled) {
             configuration.report(
                     CompilerMessageSeverity.ERROR,
@@ -230,10 +229,10 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
     }
 
     val irVerificationMode: IrVerificationMode
-        get() = configuration.getNotNull(KonanConfigKeys.VERIFY_IR)
+        get() = configuration.getNotNull(NativeConfigurationKeys.VERIFY_IR)
 
     val needCompilerVerification: Boolean
-        get() = configuration.get(KonanConfigKeys.VERIFY_COMPILER)
+        get() = configuration.get(NativeConfigurationKeys.VERIFY_COMPILER)
                 ?: (optimizationsEnabled || !KotlinCompilerVersion.VERSION.isRelease())
 
     val appStateTracking: AppStateTracking by lazy {
@@ -275,7 +274,7 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
     }
 
     val platform = platformManager.platform(target).apply {
-        if (configuration.getBoolean(KonanConfigKeys.CHECK_DEPENDENCIES)) {
+        if (configuration.getBoolean(NativeConfigurationKeys.CHECK_DEPENDENCIES)) {
             downloadDependencies()
         }
     }
@@ -284,16 +283,16 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
     val indirectBranchesAreAllowed = target != KonanTarget.WASM32
     val threadsAreAllowed = (target != KonanTarget.WASM32) && (target !is KonanTarget.ZEPHYR)
 
-    internal val produce get() = configuration.get(KonanConfigKeys.PRODUCE)!!
+    internal val produce get() = configuration.get(NativeConfigurationKeys.PRODUCE)!!
 
     internal val metadataKlib get() = configuration.getBoolean(CommonConfigurationKeys.METADATA_KLIB)
 
-    internal val headerKlibPath get() = configuration.get(KonanConfigKeys.HEADER_KLIB)
+    internal val headerKlibPath get() = configuration.get(NativeConfigurationKeys.HEADER_KLIB)
 
-    internal val produceStaticFramework get() = configuration.getBoolean(KonanConfigKeys.STATIC_FRAMEWORK)
+    internal val produceStaticFramework get() = configuration.getBoolean(NativeConfigurationKeys.STATIC_FRAMEWORK)
 
     internal val purgeUserLibs: Boolean
-        get() = configuration.getBoolean(KonanConfigKeys.PURGE_USER_LIBS)
+        get() = configuration.getBoolean(NativeConfigurationKeys.PURGE_USER_LIBS)
 
     internal val resolve = KonanLibrariesResolveSupport(
             configuration, target, distribution, resolveManifestDependenciesLenient = metadataKlib
@@ -301,7 +300,7 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
 
     val resolvedLibraries get() = resolve.resolvedLibraries
 
-    internal val externalDependenciesFile = configuration.get(KonanConfigKeys.EXTERNAL_DEPENDENCIES)?.let(::File)
+    internal val externalDependenciesFile = configuration.get(NativeConfigurationKeys.EXTERNAL_DEPENDENCIES)?.let(::File)
 
     internal val userVisibleIrModulesSupport = KonanUserVisibleIrModulesSupport(
             externalDependenciesLoader = UserVisibleIrModulesSupport.ExternalDependenciesLoader.from(
@@ -313,13 +312,13 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
     )
 
     val fullExportedNamePrefix: String
-        get() = configuration.get(KonanConfigKeys.FULL_EXPORTED_NAME_PREFIX) ?: implicitModuleName
+        get() = configuration.get(NativeConfigurationKeys.FULL_EXPORTED_NAME_PREFIX) ?: implicitModuleName
 
     val moduleId: String
-        get() = configuration.get(KonanConfigKeys.MODULE_NAME) ?: implicitModuleName
+        get() = configuration.get(NativeConfigurationKeys.MODULE_NAME) ?: implicitModuleName
 
     val shortModuleName: String?
-        get() = configuration.get(KonanConfigKeys.SHORT_MODULE_NAME)
+        get() = configuration.get(NativeConfigurationKeys.SHORT_MODULE_NAME)
 
     fun librariesWithDependencies(): List<KonanLibrary> {
         return resolvedLibraries.filterRoots { (!it.isDefault && !this.purgeUserLibs) || it.isNeededForLink }.getFullList(TopologicalLibraryOrder).map { it as KonanLibrary }
@@ -332,7 +331,7 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
             AllocationMode.STD
 
     val allocationMode by lazy {
-        when (configuration.get(KonanConfigKeys.ALLOCATION_MODE)) {
+        when (configuration.get(NativeConfigurationKeys.ALLOCATION_MODE)) {
             null -> defaultAllocationMode
             AllocationMode.STD -> AllocationMode.STD
             AllocationMode.MIMALLOC -> {
@@ -435,41 +434,41 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
             File(distribution.defaultNatives(target)).child("exceptionsSupport.bc").absolutePath
 
     internal val nativeLibraries: List<String> =
-            configuration.getList(KonanConfigKeys.NATIVE_LIBRARY_FILES)
+            configuration.getList(NativeConfigurationKeys.NATIVE_LIBRARY_FILES)
 
     internal val includeBinaries: List<String> =
-            configuration.getList(KonanConfigKeys.INCLUDED_BINARY_FILES)
+            configuration.getList(NativeConfigurationKeys.INCLUDED_BINARY_FILES)
 
     internal val languageVersionSettings =
             configuration.get(CommonConfigurationKeys.LANGUAGE_VERSION_SETTINGS)!!
 
     internal val friendModuleFiles: Set<File> =
-            configuration.get(KonanConfigKeys.FRIEND_MODULES)?.map { File(it) }?.toSet() ?: emptySet()
+            configuration.get(NativeConfigurationKeys.FRIEND_MODULES)?.map { File(it) }?.toSet() ?: emptySet()
 
     internal val refinesModuleFiles: Set<File> =
-            configuration.get(KonanConfigKeys.REFINES_MODULES)?.map { File(it) }?.toSet().orEmpty()
+            configuration.get(NativeConfigurationKeys.REFINES_MODULES)?.map { File(it) }?.toSet().orEmpty()
 
-    internal val manifestProperties = configuration.get(KonanConfigKeys.MANIFEST_FILE)?.let {
+    internal val manifestProperties = configuration.get(NativeConfigurationKeys.MANIFEST_FILE)?.let {
         File(it).loadProperties()
     }
 
     internal val isInteropStubs: Boolean get() = manifestProperties?.getProperty("interop") == "true"
 
     private val defaultPropertyLazyInitialization = true
-    internal val propertyLazyInitialization: Boolean get() = configuration.get(KonanConfigKeys.PROPERTY_LAZY_INITIALIZATION)?.also {
+    internal val propertyLazyInitialization: Boolean get() = configuration.get(NativeConfigurationKeys.PROPERTY_LAZY_INITIALIZATION)?.also {
         if (!it) {
             configuration.report(CompilerMessageSeverity.STRONG_WARNING, "Eager property initialization is deprecated")
         }
     } ?: defaultPropertyLazyInitialization
 
-    internal val lazyIrForCaches: Boolean get() = configuration.get(KonanConfigKeys.LAZY_IR_FOR_CACHES)!!
+    internal val lazyIrForCaches: Boolean get() = configuration.get(NativeConfigurationKeys.LAZY_IR_FOR_CACHES)!!
 
     internal val entryPointName: String by lazy {
         if (target.family == Family.ANDROID) {
             val androidProgramType = configuration.get(BinaryOptions.androidProgramType)
                     ?: AndroidProgramType.Default
-            if (androidProgramType.konanMainOverride != null) {
-                return@lazy androidProgramType.konanMainOverride
+            androidProgramType.konanMainOverride?.let {
+                return@lazy it
             }
         }
         "Konan_main"
@@ -478,7 +477,7 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
     internal val unitSuspendFunctionObjCExport: UnitSuspendFunctionObjCExport
         get() = configuration.get(BinaryOptions.unitSuspendFunctionObjCExport) ?: UnitSuspendFunctionObjCExport.DEFAULT
 
-    internal val testDumpFile: File? = configuration[KonanConfigKeys.TEST_DUMP_OUTPUT_PATH]?.let(::File)
+    internal val testDumpFile: File? = configuration[NativeConfigurationKeys.TEST_DUMP_OUTPUT_PATH]?.let(::File)
 
     internal val useDebugInfoInNativeLibs= configuration.get(BinaryOptions.stripDebugInfoFromNativeLibs) == false
 
@@ -523,13 +522,13 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
 
     private val systemCacheRootDirectory = File(distribution.konanHome).child("klib").child("cache")
     internal val systemCacheDirectory = systemCacheRootDirectory.child(systemCacheFlavorString).also { it.mkdirs() }
-    private val autoCacheRootDirectory = configuration.get(KonanConfigKeys.AUTO_CACHE_DIR)?.let {
+    private val autoCacheRootDirectory = configuration.get(NativeConfigurationKeys.AUTO_CACHE_DIR)?.let {
         File(it).apply {
             if (!isDirectory) configuration.reportCompilationError("auto cache directory $this is not found or is not a directory")
         }
     } ?: systemCacheRootDirectory
     internal val autoCacheDirectory = autoCacheRootDirectory.child(userCacheFlavorString).also { it.mkdirs() }
-    private val incrementalCacheRootDirectory = configuration.get(KonanConfigKeys.INCREMENTAL_CACHE_DIR)?.let {
+    private val incrementalCacheRootDirectory = configuration.get(NativeConfigurationKeys.INCREMENTAL_CACHE_DIR)?.let {
         File(it).apply {
             if (!isDirectory) configuration.reportCompilationError("incremental cache directory $this is not found or is not a directory")
         }
@@ -562,9 +561,9 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
         get() = cacheSupport.libraryToCache
 
     internal val producePerFileCache
-        get() = configuration.get(KonanConfigKeys.MAKE_PER_FILE_CACHE) == true
+        get() = configuration.get(NativeConfigurationKeys.MAKE_PER_FILE_CACHE) == true
 
-    val outputPath get() = configuration.get(KonanConfigKeys.OUTPUT)?.removeSuffixIfPresent(produce.suffix(target)) ?: produce.visibleName
+    val outputPath get() = configuration.get(NativeConfigurationKeys.OUTPUT)?.removeSuffixIfPresent(produce.suffix(target)) ?: produce.visibleName
 
     private val implicitModuleName: String
         get() = cacheSupport.libraryToCache?.let {
@@ -580,7 +579,7 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
      * This is useful when user care only about framework's interface.
      */
     internal val omitFrameworkBinary: Boolean by lazy {
-        configuration.getBoolean(KonanConfigKeys.OMIT_FRAMEWORK_BINARY).also {
+        configuration.getBoolean(NativeConfigurationKeys.OMIT_FRAMEWORK_BINARY).also {
             if (it && produce != CompilerOutputKind.FRAMEWORK) {
                 configuration.report(CompilerMessageSeverity.STRONG_WARNING,
                         "Trying to disable framework binary compilation when producing ${produce.name.lowercase()} is meaningless.")
@@ -594,26 +593,26 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
      * This option can be used for continuing the compilation from a previous invocation.
      */
     internal val compileFromBitcode: String? by lazy {
-        configuration.get(KonanConfigKeys.COMPILE_FROM_BITCODE)
+        configuration.get(NativeConfigurationKeys.COMPILE_FROM_BITCODE)
     }
 
     /**
      * Path to serialized dependencies to use for bitcode compilation.
      */
     internal val readSerializedDependencies: String? by lazy {
-        configuration.get(KonanConfigKeys.SERIALIZED_DEPENDENCIES)
+        configuration.get(NativeConfigurationKeys.SERIALIZED_DEPENDENCIES)
     }
 
     /**
      * Path to store backend dependency information.
      */
     internal val writeSerializedDependencies: String? by lazy {
-        configuration.get(KonanConfigKeys.SAVE_DEPENDENCIES_PATH)
+        configuration.get(NativeConfigurationKeys.SAVE_DEPENDENCIES_PATH)
     }
 
     val infoArgsOnly = (configuration.kotlinSourceRoots.isEmpty()
-            && configuration[KonanConfigKeys.INCLUDED_LIBRARIES].isNullOrEmpty()
-            && configuration[KonanConfigKeys.EXPORTED_LIBRARIES].isNullOrEmpty()
+            && configuration[NativeConfigurationKeys.INCLUDED_LIBRARIES].isNullOrEmpty()
+            && configuration[NativeConfigurationKeys.EXPORTED_LIBRARIES].isNullOrEmpty()
             && libraryToCache == null && compileFromBitcode.isNullOrEmpty())
 
 
@@ -621,7 +620,7 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
      * Directory to store LLVM IR from -Xsave-llvm-ir-after.
      */
     internal val saveLlvmIrDirectory: java.io.File by lazy {
-        val path = configuration.get(KonanConfigKeys.SAVE_LLVM_IR_DIRECTORY)
+        val path = configuration.get(NativeConfigurationKeys.SAVE_LLVM_IR_DIRECTORY)
         if (path == null) {
             val tempDir = Files.createTempDirectory(Paths.get(StandardSystemProperty.JAVA_IO_TMPDIR.value()!!), /* prefix= */ null).toFile()
             configuration.report(CompilerMessageSeverity.WARNING,

@@ -166,6 +166,7 @@ dependencies {
     distPack project(':native:objcexport-header-generator')
     distPack project(':native:objcexport-header-generator-k1')
     distPack project(':native:base')
+    distPack project(':native:config.native')
     distPack project(':kotlin-native:utilities:cli-runner')
     distPack project(':kotlin-native:utilities:basic-utils')
     distPack project(':kotlin-native:klib')
