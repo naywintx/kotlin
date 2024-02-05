@@ -145,6 +145,12 @@ class FirCompileTimeConstantEvaluator(
         return super.transformConstructor(constructor, data)
     }
 
+    override fun transformResolvedTypeRef(resolvedTypeRef: FirResolvedTypeRef, data: Nothing?): FirTypeRef {
+        // Visit annotations on type arguments
+        resolvedTypeRef.delegatedTypeRef?.transform<FirTypeRef, Nothing?>(this, data)
+        return super.transformResolvedTypeRef(resolvedTypeRef, data)
+    }
+
     override fun transformExpression(expression: FirExpression, data: Nothing?): FirStatement {
         // TODO try to evaluate in a special mode
         return super.transformExpression(expression, data)
