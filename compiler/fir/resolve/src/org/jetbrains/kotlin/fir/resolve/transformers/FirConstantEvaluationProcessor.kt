@@ -38,8 +38,6 @@ class FirConstantEvaluationTransformerAdapter(session: FirSession) : FirTransfor
 }
 
 class FirConstantEvaluationBodyResolveTransformer(private val session: FirSession) : FirTransformer<Nothing?>() {
-    private val firCompileTimeConstantEvaluator = FirCompileTimeConstantEvaluator(session)
-
     override fun <E : FirElement> transformElement(element: E, data: Nothing?): E {
         return element
     }
@@ -57,7 +55,6 @@ class FirConstantEvaluationBodyResolveTransformer(private val session: FirSessio
     }
 
     override fun transformProperty(property: FirProperty, data: Nothing?): FirStatement {
-        property.accept(firCompileTimeConstantEvaluator, null)
-        return property
+        return property.transformSingle(session.compileTimeEvaluator, null)
     }
 }
