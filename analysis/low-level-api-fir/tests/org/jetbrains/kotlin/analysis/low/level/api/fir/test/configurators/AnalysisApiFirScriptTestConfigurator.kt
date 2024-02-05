@@ -21,6 +21,4 @@ open class AnalysisApiFirScriptTestConfigurator(analyseInDependentSession: Boole
             useAdditionalService<KtTestModuleFactory> { KtScriptTestModuleFactory }
         }
     }
-
-    override val serviceRegistrars: List<AnalysisApiTestServiceRegistrar> = super.serviceRegistrars + AnalysisApiScriptTestServiceRegistrar
 }
