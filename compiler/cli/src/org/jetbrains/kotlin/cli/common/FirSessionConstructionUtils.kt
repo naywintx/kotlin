@@ -68,6 +68,7 @@ fun <F> prepareJvmSessions(
     librariesScope: AbstractProjectFileSearchScope,
     libraryList: DependencyListForCliModule,
     isCommonSource: (F) -> Boolean,
+    isScript: (F) -> Boolean,
     fileBelongsToModule: (F, String) -> Boolean,
     createProviderAndScopeForIncrementalCompilation: (List<F>) -> IncrementalCompilationContext?,
 ): List<SessionWithSources<F>> {
@@ -79,7 +80,7 @@ fun <F> prepareJvmSessions(
 
     return prepareSessions(
         files, configuration, rootModuleName, JvmPlatforms.unspecifiedJvmPlatform,
-        JvmPlatformAnalyzerServices, metadataCompilationMode = false, libraryList, isCommonSource, fileBelongsToModule,
+        JvmPlatformAnalyzerServices, metadataCompilationMode = false, libraryList, isCommonSource, isScript, fileBelongsToModule,
         createLibrarySession = { sessionProvider ->
             FirJvmSessionFactory.createLibrarySession(
                 rootModuleName,
@@ -149,7 +150,8 @@ fun <F> prepareJsSessions(
 ): List<SessionWithSources<F>> {
     return prepareSessions(
         files, configuration, rootModuleName, JsPlatforms.defaultJsPlatform, JsPlatformAnalyzerServices,
-        metadataCompilationMode = false, libraryList, isCommonSource, fileBelongsToModule,
+        metadataCompilationMode = false, libraryList, isCommonSource, { false },
+        fileBelongsToModule,
         createLibrarySession = { sessionProvider ->
             FirJsSessionFactory.createLibrarySession(
                 rootModuleName,
@@ -196,7 +198,7 @@ fun <F> prepareNativeSessions(
 ): List<SessionWithSources<F>> {
     return prepareSessions(
         files, configuration, rootModuleName, NativePlatforms.unspecifiedNativePlatform, NativePlatformAnalyzerServices,
-        metadataCompilationMode, libraryList, isCommonSource, fileBelongsToModule, createLibrarySession = { sessionProvider ->
+        metadataCompilationMode, libraryList, isCommonSource, { false }, fileBelongsToModule, createLibrarySession = { sessionProvider ->
             FirNativeSessionFactory.createLibrarySession(
                 rootModuleName,
                 resolvedLibraries,
@@ -244,7 +246,8 @@ fun <F> prepareWasmSessions(
     }
     return prepareSessions(
         files, configuration, rootModuleName, WasmPlatforms.Default, analyzerServices,
-        metadataCompilationMode = false, libraryList, isCommonSource, fileBelongsToModule,
+        metadataCompilationMode = false, libraryList, isCommonSource, { false },
+        fileBelongsToModule,
         createLibrarySession = { sessionProvider ->
             FirWasmSessionFactory.createLibrarySession(
                 rootModuleName,
@@ -291,7 +294,7 @@ fun <F> prepareCommonSessions(
 ): List<SessionWithSources<F>> {
     return prepareSessions(
         files, configuration, rootModuleName, CommonPlatforms.defaultCommonPlatform, CommonPlatformAnalyzerServices,
-        metadataCompilationMode = true, libraryList, isCommonSource, fileBelongsToModule, createLibrarySession = { sessionProvider ->
+        metadataCompilationMode = true, libraryList, isCommonSource, { false }, fileBelongsToModule, createLibrarySession = { sessionProvider ->
             FirCommonSessionFactory.createLibrarySession(
                 rootModuleName,
                 sessionProvider,
@@ -335,6 +338,7 @@ private inline fun <F> prepareSessions(
     metadataCompilationMode: Boolean,
     libraryList: DependencyListForCliModule,
     isCommonSource: (F) -> Boolean,
+    isScript: (F) -> Boolean,
     fileBelongsToModule: (F, String) -> Boolean,
     createLibrarySession: (FirProjectSessionProvider) -> FirSession,
     createSourceSession: FirSessionProducer<F>,
@@ -354,16 +358,26 @@ private inline fun <F> prepareSessions(
     }
 
     return when {
-        metadataCompilationMode || !isMppEnabled -> listOf(
-            createSingleSession(
-                files, rootModuleName, libraryList, targetPlatform, analyzerServices,
-                sessionProvider, sessionConfigurator, createSourceSession
+        metadataCompilationMode || !isMppEnabled -> {
+            val (scripts, nonScripts) = files.partition(isScript)
+
+            listOfNotNull(
+                createSingleSession(
+                    nonScripts, rootModuleName, libraryList, targetPlatform, analyzerServices,
+                    sessionProvider, sessionConfigurator, createSourceSession
+                ),
+                if (scripts.isEmpty()) null
+                else
+                    createSingleSession(
+                        scripts, rootModuleName, libraryList, targetPlatform, analyzerServices,
+                        sessionProvider, sessionConfigurator, createSourceSession
+                    )
             )
-        )
+        }
 
         hmppModuleStructure == null -> createSessionsForLegacyMppProject(
             files, rootModuleName, libraryList, targetPlatform, analyzerServices,
-            sessionProvider, sessionConfigurator, isCommonSource, createSourceSession
+            sessionProvider, sessionConfigurator, isCommonSource, isScript, createSourceSession
         )
 
         else -> createSessionsForHmppProject(
@@ -408,6 +422,7 @@ private inline fun <F> createSessionsForLegacyMppProject(
     sessionProvider: FirProjectSessionProvider,
     noinline sessionConfigurator: FirSessionConfigurator.() -> Unit,
     isCommonSource: (F) -> Boolean,
+    isScript: (F) -> Boolean,
     createFirSession: FirSessionProducer<F>,
 ): List<SessionWithSources<F>> {
     val commonModuleData = FirModuleDataImpl(
@@ -432,8 +447,13 @@ private inline fun <F> createSessionsForLegacyMppProject(
 
     val commonFiles = mutableListOf<F>()
     val platformFiles = mutableListOf<F>()
+    val scriptFiles = mutableListOf<F>()
     for (file in files) {
-        (if (isCommonSource(file)) commonFiles else platformFiles).add(file)
+        (when {
+            isScript(file) -> scriptFiles
+            isCommonSource(file) -> commonFiles
+            else -> platformFiles
+        }).add(file)
     }
 
     val commonSession = createFirSession(commonFiles, commonModuleData, sessionProvider, sessionConfigurator)
@@ -443,10 +463,17 @@ private inline fun <F> createSessionsForLegacyMppProject(
         // Therefore, only run the opt-in LV checker on the platform module.
         useCheckers(OptInLanguageVersionSettingsCheckers)
     }
+    val scriptSession =
+        if (scriptFiles.isEmpty()) null
+        else createFirSession(scriptFiles, platformModuleData, sessionProvider) {
+            sessionConfigurator()
+            useCheckers(OptInLanguageVersionSettingsCheckers)
+        }
 
-    return listOf(
+    return listOfNotNull(
         SessionWithSources(commonSession, commonFiles),
-        SessionWithSources(platformSession, platformFiles)
+        SessionWithSources(platformSession, platformFiles),
+        scriptSession?.let { SessionWithSources(scriptSession, scriptFiles) }
     )
 }
 
