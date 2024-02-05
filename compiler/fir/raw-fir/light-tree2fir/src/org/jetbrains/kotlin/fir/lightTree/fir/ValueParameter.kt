@@ -80,6 +80,7 @@ class ValueParameter(
             moduleData = this@ValueParameter.moduleData
             origin = FirDeclarationOrigin.Source
             isVararg = modifiers.hasVararg()
+            isDataarg = modifiers.hasDataarg()
             returnTypeRef = if (isVararg && this@ValueParameter.returnTypeRef is FirErrorTypeRef) {
                 this@ValueParameter.returnTypeRef.wrapIntoArray()
             } else {

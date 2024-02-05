@@ -6,10 +6,7 @@
 package org.jetbrains.kotlin.fir.resolve.calls
 
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
-import org.jetbrains.kotlin.fir.declarations.FirFunction
-import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
-import org.jetbrains.kotlin.fir.declarations.FirValueParameter
+import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isOperator
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.isSubstitutionOrIntersectionOverride
@@ -22,6 +19,9 @@ import org.jetbrains.kotlin.fir.scopes.ProcessorAction
 import org.jetbrains.kotlin.fir.scopes.processOverriddenFunctions
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
+import org.jetbrains.kotlin.fir.types.ConeClassLikeType
+import org.jetbrains.kotlin.fir.types.coneTypeSafe
+import org.jetbrains.kotlin.fir.types.toSymbol
 import org.jetbrains.kotlin.fir.utils.exceptions.withFirEntry
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.ForbiddenNamedArgumentsTarget
@@ -46,6 +46,15 @@ data class ArgumentMapping(
                 is ResolvedCallArgument.SimpleArgument -> argumentToParameterMapping[resolvedArgument.callArgument] = valueParameter
                 is ResolvedCallArgument.VarargArgument -> resolvedArgument.arguments.forEach {
                     argumentToParameterMapping[it] = valueParameter
+                }
+                is ResolvedCallArgument.DataargArgument -> resolvedArgument.namedArguments.forEach { (dataargParam, dataArgValue) ->
+                    when (dataArgValue) {
+                        is ResolvedCallArgument.SimpleArgument ->
+                            argumentToParameterMapping[dataArgValue.callArgument] = dataargParam
+                        else -> {
+                        }
+                    }
+
                 }
                 ResolvedCallArgument.DefaultArgument -> {
                 }
@@ -116,6 +125,8 @@ private class FirCallArgumentsProcessor(
     private var currentPositionedParameterIndex = 0
     private var varargArguments: MutableList<FirExpression>? = null
     private var nameToParameter: Map<Name, FirValueParameter>? = null
+    private val dataargParameter: FirValueParameter? = parameters.singleOrNull { it.isDataarg }
+    private val dataargArguments: MutableMap<FirValueParameter, ResolvedCallArgument> = mutableMapOf()
     private var namedDynamicArgumentsNamesImpl: MutableSet<Name>? = null
     private val namedDynamicArgumentsNames: MutableSet<Name>
         get() = namedDynamicArgumentsNamesImpl ?: mutableSetOf<Name>().also { namedDynamicArgumentsNamesImpl = it }
@@ -231,14 +242,34 @@ private class FirCallArgumentsProcessor(
 
         val stateAllowsMixedNamedAndPositionArguments = state != State.NAMED_ONLY_ARGUMENTS
         state = State.NAMED_ONLY_ARGUMENTS
-        val parameter = findParameterByName(argument) ?: return
 
-        result[parameter]?.let {
-            addDiagnostic(ArgumentPassedTwice(argument))
-            return
+        val parameter = findParameterByName(argument)?.takeUnless { it.isDataarg }
+        val dataargsParameter = getDataargParameterByName(argument.name)
+
+        when {
+            parameter != null && dataargsParameter != null -> {
+                addDiagnostic(ValueDataargsConflict(argument))
+                return
+            }
+            parameter != null -> {
+                result[parameter]?.let {
+                    addDiagnostic(ArgumentPassedTwice(argument))
+                    return
+                }
+                result[parameter] = ResolvedCallArgument.SimpleArgument(argument)
+            }
+            dataargsParameter != null -> {
+                dataargArguments[dataargsParameter]?.let {
+                    addDiagnostic(ArgumentPassedTwice(argument))
+                    return
+                }
+                dataargArguments[dataargsParameter] = ResolvedCallArgument.SimpleArgument(argument)
+            }
+            else -> {
+                addDiagnostic(NameNotFound(argument, function))
+                return
+            }
         }
-
-        result[parameter] = ResolvedCallArgument.SimpleArgument(argument)
 
         if (stateAllowsMixedNamedAndPositionArguments && parameters.getOrNull(currentPositionedParameterIndex) == parameter) {
             state = State.POSITION_ARGUMENTS
@@ -307,10 +338,19 @@ private class FirCallArgumentsProcessor(
                         result[parameter] = ResolvedCallArgument.DefaultArgument
                     parameter.isVararg ->
                         result[parameter] = ResolvedCallArgument.VarargArgument(emptyList())
-                    else ->
+                    !parameter.isDataarg ->
                         addDiagnostic(NoValueForParameter(parameter, function))
                 }
             }
+        }
+
+        if (dataargParameter != null) {
+            for (parameter in getDataargConstructor()?.valueParameters.orEmpty()) {
+                if (!dataargArguments.contains(parameter)) {
+                    dataargArguments[parameter] = ResolvedCallArgument.DefaultArgument
+                }
+            }
+            result[dataargParameter] = ResolvedCallArgument.DataargArgument(dataargArguments)
         }
     }
 
@@ -333,6 +373,17 @@ private class FirCallArgumentsProcessor(
             nameToParameter = parameters.associateBy { it.name }
         }
         return nameToParameter!![name]
+    }
+
+    private fun getDataargParameterByName(name: Name): FirValueParameter? =
+        getDataargConstructor()?.valueParameters?.find { it.name == name }
+
+    private fun getDataargConstructor(): FirConstructor? {
+        val param = dataargParameter ?: return null
+        val type = param.returnTypeRef.coneTypeSafe<ConeClassLikeType>() ?: return null
+        val klass = (type.toSymbol(useSiteSession)?.fir as? FirClass) ?: return null
+        val constructor = klass.primaryConstructorIfAny(useSiteSession) ?: return null
+        return constructor.fir
     }
 
     private fun findParameterByName(argument: FirNamedArgumentExpression): FirValueParameter? {
@@ -385,9 +436,6 @@ private class FirCallArgumentsProcessor(
                         }
                     }
                 }
-            }
-            if (parameter == null) {
-                addDiagnostic(NameNotFound(argument, function))
             }
         } else {
             if (symbol != null && function.isSubstitutionOrIntersectionOverride) {

@@ -122,6 +122,7 @@ fun FirRegularClassBuilder.generateValueOfFunction(
             isCrossinline = false
             isNoinline = false
             isVararg = false
+            isDataarg = false
             resolvePhase = this@generateValueOfFunction.resolvePhase
         }
         resolvePhase = this@generateValueOfFunction.resolvePhase

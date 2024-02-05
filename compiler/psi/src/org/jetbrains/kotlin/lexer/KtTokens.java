@@ -175,6 +175,7 @@ public interface KtTokens {
     int IMPL_KEYWORD_Id = 146;
     int EXPECT_KEYWORD_Id = 147;
     int ACTUAL_KEYWORD_Id = 148;
+    int DATAARG_KEYWORD_Id = 149;
 
     KtToken EOF   = new KtToken("EOF", EOF_Id);
 
@@ -318,6 +319,7 @@ public interface KtTokens {
     KtKeywordToken CATCH_KEYWORD     = KtKeywordToken.softKeyword("catch", CATCH_KEYWORD_Id);
     KtModifierKeywordToken OUT_KEYWORD       = KtModifierKeywordToken.softKeywordModifier("out", OUT_KEYWORD_Id);
     KtModifierKeywordToken VARARG_KEYWORD    = KtModifierKeywordToken.softKeywordModifier("vararg", VARARG_KEYWORD_Id);
+    KtModifierKeywordToken DATAARG_KEYWORD   = KtModifierKeywordToken.softKeywordModifier("dataarg", DATAARG_KEYWORD_Id);
     KtModifierKeywordToken REIFIED_KEYWORD   = KtModifierKeywordToken.softKeywordModifier("reified", REIFIED_KEYWORD_Id);
     KtKeywordToken DYNAMIC_KEYWORD   = KtKeywordToken.softKeyword("dynamic", DYNAMIC_KEYWORD_Id);
     KtModifierKeywordToken COMPANION_KEYWORD = KtModifierKeywordToken.softKeywordModifier("companion", COMPANION_KEYWORD_Id);
@@ -373,7 +375,7 @@ public interface KtTokens {
                                              DATA_KEYWORD, INLINE_KEYWORD, NOINLINE_KEYWORD, TAILREC_KEYWORD, EXTERNAL_KEYWORD,
                                              ANNOTATION_KEYWORD, CROSSINLINE_KEYWORD, CONST_KEYWORD, OPERATOR_KEYWORD, INFIX_KEYWORD,
                                              SUSPEND_KEYWORD, HEADER_KEYWORD, IMPL_KEYWORD, EXPECT_KEYWORD, ACTUAL_KEYWORD,
-                                             VALUE_KEYWORD, CONTEXT_KEYWORD
+                                             VALUE_KEYWORD, CONTEXT_KEYWORD, DATAARG_KEYWORD
     );
 
     /*
@@ -388,14 +390,14 @@ public interface KtTokens {
                     REIFIED_KEYWORD, COMPANION_KEYWORD, SEALED_KEYWORD, LATEINIT_KEYWORD,
                     DATA_KEYWORD, INLINE_KEYWORD, NOINLINE_KEYWORD, TAILREC_KEYWORD, EXTERNAL_KEYWORD, ANNOTATION_KEYWORD, CROSSINLINE_KEYWORD,
                     CONST_KEYWORD, OPERATOR_KEYWORD, INFIX_KEYWORD, SUSPEND_KEYWORD,
-                    HEADER_KEYWORD, IMPL_KEYWORD, EXPECT_KEYWORD, ACTUAL_KEYWORD, FUN_KEYWORD, VALUE_KEYWORD
+                    HEADER_KEYWORD, IMPL_KEYWORD, EXPECT_KEYWORD, ACTUAL_KEYWORD, FUN_KEYWORD, VALUE_KEYWORD, DATAARG_KEYWORD
             };
 
     TokenSet MODIFIER_KEYWORDS = TokenSet.create(MODIFIER_KEYWORDS_ARRAY);
 
     TokenSet TYPE_MODIFIER_KEYWORDS = TokenSet.create(SUSPEND_KEYWORD);
     TokenSet TYPE_ARGUMENT_MODIFIER_KEYWORDS = TokenSet.create(IN_KEYWORD, OUT_KEYWORD);
-    TokenSet RESERVED_VALUE_PARAMETER_MODIFIER_KEYWORDS = TokenSet.create(OUT_KEYWORD, VARARG_KEYWORD);
+    TokenSet RESERVED_VALUE_PARAMETER_MODIFIER_KEYWORDS = TokenSet.create(OUT_KEYWORD, VARARG_KEYWORD, DATAARG_KEYWORD);
 
     TokenSet VISIBILITY_MODIFIERS = TokenSet.create(PRIVATE_KEYWORD, PUBLIC_KEYWORD, INTERNAL_KEYWORD, PROTECTED_KEYWORD);
     TokenSet MODALITY_MODIFIERS = TokenSet.create(ABSTRACT_KEYWORD, FINAL_KEYWORD, SEALED_KEYWORD, OPEN_KEYWORD);

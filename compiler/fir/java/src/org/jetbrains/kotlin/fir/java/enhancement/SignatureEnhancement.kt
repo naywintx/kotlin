@@ -405,6 +405,7 @@ class FirSignatureEnhancement(
                     isCrossinline = valueParameter.isCrossinline
                     isNoinline = valueParameter.isNoinline
                     isVararg = valueParameter.isVararg
+                    isDataarg = valueParameter.isDataarg
                     resolvePhase = FirResolvePhase.ANALYZED_DEPENDENCIES
                     annotations += valueParameter.annotations
                 }

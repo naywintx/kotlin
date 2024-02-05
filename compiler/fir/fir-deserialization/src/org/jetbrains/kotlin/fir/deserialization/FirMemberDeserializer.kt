@@ -683,6 +683,7 @@ class FirMemberDeserializer(private val c: FirDeserializationContext) {
                 isCrossinline = Flags.IS_CROSSINLINE.get(flags)
                 isNoinline = Flags.IS_NOINLINE.get(flags)
                 isVararg = proto.varargElementType(c.typeTable) != null
+                isDataarg = Flags.IS_DATAARG.get(flags)
                 annotations += c.annotationDeserializer.loadValueParameterAnnotations(
                     c.containerSource,
                     callableProto,

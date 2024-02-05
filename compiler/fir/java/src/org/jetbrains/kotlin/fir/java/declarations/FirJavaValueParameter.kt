@@ -109,6 +109,9 @@ class FirJavaValueParameter @FirImplementationDetail constructor(
     override val contextReceivers: List<FirContextReceiver>
         get() = emptyList()
 
+    override val isDataarg: Boolean
+        get() = false
+
     override fun <R, D> acceptChildren(visitor: FirVisitor<R, D>, data: D) {
         returnTypeRef.accept(visitor, data)
         annotations.forEach { it.accept(visitor, data) }

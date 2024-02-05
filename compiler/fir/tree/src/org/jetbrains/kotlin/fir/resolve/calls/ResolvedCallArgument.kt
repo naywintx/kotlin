@@ -24,6 +24,11 @@ sealed class ResolvedCallArgument {
     }
 
     class VarargArgument(override val arguments: List<FirExpression>) : ResolvedCallArgument()
+
+    class DataargArgument(val namedArguments: CallableReferenceMappedArguments) : ResolvedCallArgument() {
+        override val arguments: List<FirExpression>
+            get() = namedArguments.values.flatMap { it.arguments }
+    }
 }
 
 typealias CallableReferenceMappedArguments = Map<FirValueParameter, ResolvedCallArgument>
