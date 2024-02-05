@@ -132,11 +132,12 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
         val propertySymbol = propertyAccessExpression.toReference(session)?.toResolvedCallableSymbol(discardErrorReference = true)
             ?: return null
 
-        fun evaluate(initializer: FirExpression?): FirExpression? {
+        fun evaluateOrCopy(initializer: FirExpression?): FirExpression? {
             return if (initializer is FirLiteralExpression<*>) {
-                initializer
+                // We need a copy here to copy a source of the original expression
+                initializer.copy(propertyAccessExpression)
             } else {
-                this.evaluate(initializer)
+                evaluate(initializer)
             }
         }
 
@@ -149,10 +150,10 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
                                 ?.adjustTypeAndConvertToLiteral(propertyAccessExpression)
                         }
                     }
-                    else -> evaluate(propertySymbol.fir.initializer)
+                    else -> evaluateOrCopy(propertySymbol.fir.initializer)
                 }
             }
-            is FirFieldSymbol -> evaluate(propertySymbol.fir.initializer)
+            is FirFieldSymbol -> evaluateOrCopy(propertySymbol.fir.initializer)
             is FirEnumEntrySymbol -> propertyAccessExpression // Can't be evaluated, should be returned as is.
             else -> error("FIR symbol \"${propertySymbol::class}\" is not supported in constant evaluation")
         }
@@ -322,4 +323,10 @@ private fun <T> Any?.toConstExpression(
 ): FirLiteralExpression<T> {
     @Suppress("UNCHECKED_CAST")
     return (buildLiteralExpression(originalExpression.source, kind, this as T, setType = false))
+}
+
+private fun <T> FirLiteralExpression<T>.copy(originalExpression: FirExpression): FirLiteralExpression<T> {
+    return buildLiteralExpression(source, kind, value, setType = false).apply {
+        replaceConeTypeOrNull(originalExpression.resolvedType)
+    }
 }
