@@ -65,6 +65,19 @@ class FirCompileTimeConstantEvaluator(
         return result ?: error("Couldn't evaluate FIR expression: ${expression.render()}")
     }
 
+    fun transformJavaFieldAndGetResultAsString(firProperty: FirProperty): String {
+        fun FirLiteralExpression<*>.asString(): String {
+            return when (val constVal = value) {
+                is Char -> constVal.code.toString()
+                is String -> "\"$constVal\""
+                else -> constVal.toString()
+            }
+        }
+
+        val evaluatedProperty = transformProperty(firProperty, null) as FirProperty
+        return evaluatedProperty.evaluatedInitializer?.asString().toString()
+    }
+
     override fun transformProperty(property: FirProperty, data: Nothing?): FirStatement {
         if (!property.isConst) {
             return super.transformProperty(property, data)

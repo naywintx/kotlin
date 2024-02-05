@@ -41,8 +41,7 @@ import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.providers.FirProvider
 import org.jetbrains.kotlin.fir.resolve.providers.firProvider
 import org.jetbrains.kotlin.fir.resolve.toSymbol
-import org.jetbrains.kotlin.fir.resolve.transformers.FirSupertypeResolverVisitor
-import org.jetbrains.kotlin.fir.resolve.transformers.SupertypeComputationSession
+import org.jetbrains.kotlin.fir.resolve.transformers.*
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.utils.exceptions.withConeTypeEntry
@@ -218,7 +217,13 @@ class FirJavaElementFinder(
         if (!firProperty.isConst) return
 
         val psiField = object : StubBase<PsiField>(classStub, JavaStubElementTypes.FIELD), PsiFieldStub, NotEvaluatedConstAware {
-            private val lazyInitializerText by lazy { propertyEvaluator?.invoke(firProperty) }
+            private val lazyInitializerText by lazy {
+                if (propertyEvaluator == null) {
+                    session.compileTimeEvaluator.transformJavaFieldAndGetResultAsString(firProperty)
+                } else {
+                    propertyEvaluator?.invoke(firProperty)
+                }
+            }
 
             override fun getName(): String = firProperty.name.identifier
 
