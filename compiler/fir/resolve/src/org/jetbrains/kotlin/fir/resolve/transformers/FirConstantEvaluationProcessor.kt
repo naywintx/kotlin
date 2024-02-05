@@ -55,6 +55,6 @@ class FirConstantEvaluationBodyResolveTransformer(private val session: FirSessio
     }
 
     override fun transformProperty(property: FirProperty, data: Nothing?): FirStatement {
-        return property.transformSingle(session.compileTimeEvaluator, null)
+        return property.transformSingle(session.compileTimeEvaluator, FirEvaluationMode.ONLY_NECESSARY)
     }
 }

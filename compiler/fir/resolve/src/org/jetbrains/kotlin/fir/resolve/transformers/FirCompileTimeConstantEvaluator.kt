@@ -41,6 +41,26 @@ import org.jetbrains.kotlin.resolve.constants.evaluate.evalUnaryOp
 import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
+@RequiresOptIn(message = "This evaluation mode is experimental and is not tested properly. Please refrain from using it.")
+annotation class UnstableEvaluationMode
+
+enum class FirEvaluationMode {
+    /**
+     * In this mode, evaluator will try to analyze and evaluate all expressions.
+     */
+    @UnstableEvaluationMode
+    FULL,
+
+    /**
+     * In this mode, evaluator will try to analyze and evaluate only the necessary expressions.
+     * This includes:
+     * 1. initializer of const property;
+     * 2. arguments of annotations;
+     * 3. default value for parameters of annotation's constructor.
+     */
+    ONLY_NECESSARY
+}
+
 val FirSession.compileTimeEvaluator: FirCompileTimeConstantEvaluator by FirSession.sessionComponentAccessor()
 
 private sealed class EvaluationException : Exception()
@@ -50,11 +70,11 @@ private class RecursiveEvaluationException : EvaluationException()
 
 class FirCompileTimeConstantEvaluator(
     private val session: FirSession,
-) : FirTransformer<Nothing?>(), FirSessionComponent {
+) : FirTransformer<FirEvaluationMode>(), FirSessionComponent {
     private val evaluator = FirExpressionEvaluator(session)
     private val intrinsicConstEvaluation = session.languageVersionSettings.supportsFeature(LanguageFeature.IntrinsicConstEvaluation)
 
-    override fun <E : FirElement> transformElement(element: E, data: Nothing?): E {
+    override fun <E : FirElement> transformElement(element: E, data: FirEvaluationMode): E {
         @Suppress("UNCHECKED_CAST")
         return element.transformChildren(this, data) as E
     }
@@ -78,7 +98,7 @@ class FirCompileTimeConstantEvaluator(
 
     // Null result means that the evaluator encountered an error during evaluation.
     // Later on, the compiler should report proper diagnostic.
-    fun transformJavaFieldAndGetResultAsString(firProperty: FirProperty): String? {
+    fun transformJavaFieldAndGetResultAsString(firProperty: FirProperty, data: FirEvaluationMode): String? {
         fun FirLiteralExpression<*>.asString(): String {
             return when (val constVal = value) {
                 is Char -> constVal.code.toString()
@@ -87,11 +107,11 @@ class FirCompileTimeConstantEvaluator(
             }
         }
 
-        val evaluatedProperty = transformProperty(firProperty, null) as FirProperty
+        val evaluatedProperty = transformProperty(firProperty, data) as FirProperty
         return evaluatedProperty.evaluatedInitializer?.asString()
     }
 
-    override fun transformProperty(property: FirProperty, data: Nothing?): FirStatement {
+    override fun transformProperty(property: FirProperty, data: FirEvaluationMode): FirStatement {
         if (!property.isConst) {
             return super.transformProperty(property, data)
         }
@@ -112,7 +132,7 @@ class FirCompileTimeConstantEvaluator(
         return super.transformProperty(property, data)
     }
 
-    override fun transformAnnotationCall(annotationCall: FirAnnotationCall, data: Nothing?): FirStatement {
+    override fun transformAnnotationCall(annotationCall: FirAnnotationCall, data: FirEvaluationMode): FirStatement {
         if (annotationCall.annotationTypeRef is FirErrorTypeRef) {
             return super.transformAnnotationCall(annotationCall, data)
         }
@@ -135,7 +155,7 @@ class FirCompileTimeConstantEvaluator(
         return super.transformAnnotationCall(annotationCall, data)
     }
 
-    override fun transformConstructor(constructor: FirConstructor, data: Nothing?): FirStatement {
+    override fun transformConstructor(constructor: FirConstructor, data: FirEvaluationMode): FirStatement {
         // We should evaluate default arguments for primary constructor of an annotation
         if (!constructor.symbol.isAnnotationConstructor(session)) return super.transformConstructor(constructor, data)
 
@@ -147,14 +167,18 @@ class FirCompileTimeConstantEvaluator(
         return super.transformConstructor(constructor, data)
     }
 
-    override fun transformResolvedTypeRef(resolvedTypeRef: FirResolvedTypeRef, data: Nothing?): FirTypeRef {
+    override fun transformResolvedTypeRef(resolvedTypeRef: FirResolvedTypeRef, data: FirEvaluationMode): FirTypeRef {
         // Visit annotations on type arguments
-        resolvedTypeRef.delegatedTypeRef?.transform<FirTypeRef, Nothing?>(this, data)
+        resolvedTypeRef.delegatedTypeRef?.transform<FirTypeRef, FirEvaluationMode>(this, data)
         return super.transformResolvedTypeRef(resolvedTypeRef, data)
     }
 
-    override fun transformExpression(expression: FirExpression, data: Nothing?): FirStatement {
-        // TODO try to evaluate in a special mode
+    @OptIn(UnstableEvaluationMode::class)
+    override fun transformExpression(expression: FirExpression, data: FirEvaluationMode): FirStatement {
+        if (data == FirEvaluationMode.FULL && expression.canBeEvaluated()) {
+            return super.transformExpression(tryToEvaluateExpression(expression), data)
+        }
+
         return super.transformExpression(expression, data)
     }
 
