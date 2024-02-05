@@ -257,6 +257,11 @@ object BuilderConfigurator : AbstractFirBuilderConfigurator<FirTreeBuilder>(FirT
             withCopy()
         }
 
+        builder(backingField) {
+            parents += variableBuilder
+            default("resolvePhase", "FirResolvePhase.DECLARATIONS")
+        }
+
         builder(enumEntry) {
             withCopy()
         }
