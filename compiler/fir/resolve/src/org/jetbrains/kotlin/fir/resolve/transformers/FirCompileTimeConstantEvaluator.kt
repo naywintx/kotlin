@@ -42,6 +42,11 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 
 val FirSession.compileTimeEvaluator: FirCompileTimeConstantEvaluator by FirSession.sessionComponentAccessor()
 
+private sealed class EvaluationException : Exception()
+private class UnknownEvaluationException : EvaluationException()
+private class DivisionByZeroEvaluationException : EvaluationException()
+private class RecursiveEvaluationException : EvaluationException()
+
 class FirCompileTimeConstantEvaluator(
     private val session: FirSession,
 ) : FirTransformer<Nothing?>(), FirSessionComponent {
@@ -61,7 +66,11 @@ class FirCompileTimeConstantEvaluator(
     }
 
     private fun tryToEvaluateExpression(expression: FirExpression): FirExpression {
-        val result = evaluator.evaluate(expression)
+        val result = try {
+            evaluator.evaluate(expression)
+        } catch (_: EvaluationException) {
+            return expression
+        }
         return result ?: error("Couldn't evaluate FIR expression: ${expression.render()}")
     }
 
@@ -75,7 +84,7 @@ class FirCompileTimeConstantEvaluator(
         }
 
         val evaluatedProperty = transformProperty(firProperty, null) as FirProperty
-        return evaluatedProperty.evaluatedInitializer?.asString().toString()
+        return evaluatedProperty.evaluatedInitializer?.asString() ?: throw UnknownEvaluationException()
     }
 
     override fun transformProperty(property: FirProperty, data: Nothing?): FirStatement {
@@ -156,8 +165,19 @@ class FirCompileTimeConstantEvaluator(
 }
 
 private class FirExpressionEvaluator(private val session: FirSession) : FirVisitor<FirElement?, Nothing?>() {
+    private val propertyStack = mutableSetOf<FirCallableSymbol<*>>()
+
     fun evaluate(expression: FirExpression?): FirExpression? {
         return expression?.accept(this, null) as? FirExpression
+    }
+
+    private fun <T> FirCallableSymbol<*>.visit(block: () -> T?): T? {
+        propertyStack += this
+        try {
+            return block()
+        } finally {
+            propertyStack.remove(this)
+        }
     }
 
     override fun visitElement(element: FirElement, data: Nothing?): FirElement? {
@@ -237,8 +257,12 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
         val propertySymbol = propertyAccessExpression.toReference(session)?.toResolvedCallableSymbol(discardErrorReference = true)
             ?: return null
 
-        fun evaluateOrCopy(initializer: FirExpression?): FirExpression? {
-            return if (initializer is FirLiteralExpression<*>) {
+        if (propertySymbol in propertyStack) {
+            throw RecursiveEvaluationException()
+        }
+
+        fun evaluateOrCopy(initializer: FirExpression?): FirExpression? = propertySymbol.visit {
+            if (initializer is FirLiteralExpression<*>) {
                 // We need a copy here to copy a source of the original expression
                 initializer.copy(propertyAccessExpression)
             } else {
@@ -432,6 +456,15 @@ private fun evaluateBinary(
     val opr2 = arg2.kind.convertToGivenKind(arg2.value) ?: return null
 
     val functionName = callableId.callableName.asString()
+
+    // Check for division by zero
+    if (functionName == "div" || functionName == "rem") {
+        if (rightType != CompileTimeType.FLOAT && rightType != CompileTimeType.DOUBLE && (opr2 as? Number)?.toInt() == 0) {
+            // If expression is division by zero, then return the original expression as a result. We will handle on later steps.
+            throw DivisionByZeroEvaluationException()
+        }
+    }
+
     return evalBinaryOp(
         functionName,
         arg1.kind.toCompileTimeType(),
