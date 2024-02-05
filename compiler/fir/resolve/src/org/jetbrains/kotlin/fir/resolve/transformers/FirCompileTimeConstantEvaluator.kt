@@ -130,11 +130,15 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
         val propertySymbol = propertyAccessExpression.toReference(session)?.toResolvedCallableSymbol(discardErrorReference = true)
             ?: return null
 
-        fun evaluate(initializer: FirExpression?): FirExpression? {
+        fun evaluateOrCopy(initializer: FirExpression?): FirExpression? {
             return if (initializer is FirLiteralExpression<*>) {
-                initializer
+                // We need a copy here to avoid unnecessary changes in the literal expression.
+                // For example, `const val a = 1; const val b = a`.
+                // When evaluating `b`, we will get reference to the `1` literal that now is shared between `a` and `b`.
+                // Modifying `originalExpression` for this literal also changes it for both properties.
+                initializer.copy(propertyAccessExpression)
             } else {
-                this.evaluate(initializer)
+                evaluate(initializer)
             }
         }
 
@@ -142,14 +146,14 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
             is FirPropertySymbol -> {
                 when {
                     propertySymbol.callableId.isStringLength || propertySymbol.callableId.isCharCode -> {
-                        this.evaluate(propertyAccessExpression.explicitReceiver)?.let { receiver ->
+                        evaluate(propertyAccessExpression.explicitReceiver)?.let { receiver ->
                             propertyAccessExpression.evaluate(receiver, propertySymbol.callableId)
                         }
                     }
-                    else -> evaluate(propertySymbol.fir.initializer)
+                    else -> evaluateOrCopy(propertySymbol.fir.initializer)
                 }
             }
-            is FirFieldSymbol -> evaluate(propertySymbol.fir.initializer)
+            is FirFieldSymbol -> evaluateOrCopy(propertySymbol.fir.initializer)
             is FirEnumEntrySymbol -> propertyAccessExpression // Can't be evaluated, should be returned as is.
             else -> error("FIR symbol \"${propertySymbol::class}\" is not supported in constant evaluation")
         }
@@ -318,4 +322,10 @@ private fun <T> ConstantValueKind<T>.toConstExpression(
 ): FirLiteralExpression<T> {
     @Suppress("UNCHECKED_CAST")
     return (buildLiteralExpression(source, this, value as T, setType = false, originalExpression = originalExpression))
+}
+
+private fun <T> FirLiteralExpression<T>.copy(originalExpression: FirExpression): FirLiteralExpression<T> {
+    return buildLiteralExpression(source, kind, value, setType = false, originalExpression = originalExpression).apply {
+        replaceConeTypeOrNull(originalExpression.resolvedType)
+    }
 }
