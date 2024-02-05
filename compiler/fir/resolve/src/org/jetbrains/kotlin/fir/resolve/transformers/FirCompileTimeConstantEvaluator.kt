@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.resolve.transformers
 
+import org.jetbrains.kotlin.contracts.description.LogicOperationKind
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
@@ -193,6 +194,62 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
         return constructorCall
     }
 
+    override fun visitIntegerLiteralOperatorCall(
+        integerLiteralOperatorCall: FirIntegerLiteralOperatorCall,
+        data: Nothing?
+    ): FirElement? {
+        return visitFunctionCall(integerLiteralOperatorCall, data)
+    }
+
+    override fun visitComparisonExpression(comparisonExpression: FirComparisonExpression, data: Nothing?): FirElement? {
+        return visitFunctionCall(comparisonExpression.compareToCall, data).let {
+            if (it !is FirLiteralExpression<*>) return@let it
+            val intResult = it.value as Int
+            val compareToResult = when (comparisonExpression.operation) {
+                FirOperation.LT -> intResult < 0
+                FirOperation.LT_EQ -> intResult <= 0
+                FirOperation.GT -> intResult > 0
+                FirOperation.GT_EQ -> intResult >= 0
+                else -> error("Unsupported comparison operation type \"${comparisonExpression.operation.name}\"")
+            }
+            compareToResult.adjustTypeAndConvertToLiteral(comparisonExpression)
+        }
+    }
+
+    override fun visitEqualityOperatorCall(equalityOperatorCall: FirEqualityOperatorCall, data: Nothing?): FirStatement? {
+        val evaluatedArgs = equalityOperatorCall.arguments.map { evaluate(it) as? FirLiteralExpression<*> }
+        if (evaluatedArgs.any { it == null } || evaluatedArgs.size != 2) return null
+
+        val result = when (equalityOperatorCall.operation) {
+            FirOperation.EQ -> evaluatedArgs[0]?.value == evaluatedArgs[1]?.value
+            FirOperation.NOT_EQ -> evaluatedArgs[0]?.value != evaluatedArgs[1]?.value
+            else -> error("Operation \"${equalityOperatorCall.operation}\" is not supported in compile time evaluation")
+        }
+
+        return result.toConstExpression(ConstantValueKind.Boolean, equalityOperatorCall)
+    }
+
+    override fun visitBinaryLogicExpression(binaryLogicExpression: FirBinaryLogicExpression, data: Nothing?): FirStatement? {
+        val left = evaluate(binaryLogicExpression.leftOperand)
+        val right = evaluate(binaryLogicExpression.rightOperand)
+
+        val leftBoolean = (left as? FirLiteralExpression<*>)?.value as? Boolean ?: return null
+        val rightBoolean = (right as? FirLiteralExpression<*>)?.value as? Boolean ?: return null
+        val result = when (binaryLogicExpression.kind) {
+            LogicOperationKind.AND -> leftBoolean && rightBoolean
+            LogicOperationKind.OR -> leftBoolean || rightBoolean
+            else -> error("Boolean logic expression of a kind \"${binaryLogicExpression.kind}\" is not supported in compile time evaluation")
+        }
+
+        return result.toConstExpression(ConstantValueKind.Boolean, binaryLogicExpression)
+    }
+
+    override fun visitStringConcatenationCall(stringConcatenationCall: FirStringConcatenationCall, data: Nothing?): FirStatement? {
+        val strings = stringConcatenationCall.argumentList.arguments.map { evaluate(it) as? FirLiteralExpression<*> }
+        if (strings.any { it == null }) return null
+        val result = strings.joinToString(separator = "") { it!!.value.toString() }
+        return result.toConstExpression(ConstantValueKind.String, stringConcatenationCall)
+    }
 }
 
 private fun <T> ConstantValueKind<T>.toCompileTimeType(): CompileTimeType {
@@ -322,11 +379,15 @@ private fun <T> Any?.toConstExpression(
     originalExpression: FirExpression
 ): FirLiteralExpression<T> {
     @Suppress("UNCHECKED_CAST")
-    return (buildLiteralExpression(originalExpression.source, kind, this as T, setType = false))
+    return buildLiteralExpression(
+        originalExpression.source,
+        kind,
+        this as T,
+        originalExpression.annotations.takeIf { it.isNotEmpty() }?.toMutableList(),
+        setType = false,
+    ).apply { replaceConeTypeOrNull(originalExpression.resolvedType) }
 }
 
 private fun <T> FirLiteralExpression<T>.copy(originalExpression: FirExpression): FirLiteralExpression<T> {
-    return buildLiteralExpression(source, kind, value, setType = false).apply {
-        replaceConeTypeOrNull(originalExpression.resolvedType)
-    }
+    return this.value.toConstExpression(this.kind, originalExpression)
 }
