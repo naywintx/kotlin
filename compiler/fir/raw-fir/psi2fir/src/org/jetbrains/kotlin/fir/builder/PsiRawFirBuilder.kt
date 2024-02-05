@@ -1387,12 +1387,35 @@ open class PsiRawFirBuilder(
 
         private fun convertTypeCodeFragmentBlock(file: KtTypeCodeFragment): FirBlock {
             return buildBlock {
-                statements += buildTypeOperatorCall {
-                    operation = FirOperation.IS
-                    conversionTypeRef = file.getContentElement().toFirOrErrorType()
-                    argumentList = buildUnaryArgumentList(
-                        buildLiteralExpression(source = null, ConstantValueKind.Null, value = null, setType = false)
-                    )
+                val functionSymbol = FirAnonymousFunctionSymbol()
+
+                statements += buildAnonymousFunctionExpression {
+                    anonymousFunction = buildAnonymousFunction {
+                        moduleData = baseModuleData
+                        origin = FirDeclarationOrigin.Source
+                        symbol = functionSymbol
+
+                        hasExplicitParameterList = true
+                        isLambda = false
+
+                        valueParameters += buildValueParameter {
+                            moduleData = baseModuleData
+                            origin = FirDeclarationOrigin.Source
+                            name = Name.identifier("value")
+
+                            symbol = FirValueParameterSymbol(name)
+                            containingFunctionSymbol = functionSymbol
+
+                            returnTypeRef = file.getContentElement().toFirOrErrorType()
+                            isCrossinline = false
+                            isNoinline = false
+                            isVararg = false
+                        }
+
+                        returnTypeRef = implicitUnitType
+
+                        body = buildBlock()
+                    }
                 }
             }
         }
