@@ -48,8 +48,6 @@ class FirConstInitializerBodyResolveTransformer(
     implicitTypeOnly = true,
     scopeSession,
 ) {
-    private val firCompileTimeConstantEvaluator = FirCompileTimeConstantEvaluator(session)
-
     // This is required to avoid unnecessary transformation. For example, avoid visiting lambdas in annotation arguments.
     override fun transformDeclarationContent(
         declaration: FirDeclaration,
@@ -61,12 +59,10 @@ class FirConstInitializerBodyResolveTransformer(
     }
 
     override fun transformProperty(property: FirProperty, data: ResolutionMode): FirProperty {
-        property.accept(firCompileTimeConstantEvaluator, null)
-        return property
+        return property.transformSingle(session.compileTimeEvaluator, null)
     }
 
     override fun transformConstructor(constructor: FirConstructor, data: ResolutionMode): FirConstructor {
-        constructor.accept(firCompileTimeConstantEvaluator, null)
-        return constructor
+        return constructor.transformSingle(session.compileTimeEvaluator, null)
     }
 }
