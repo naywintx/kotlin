@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.resolve.transformers
 
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.contracts.description.LogicOperationKind
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.*
@@ -51,6 +52,7 @@ class FirCompileTimeConstantEvaluator(
     private val session: FirSession,
 ) : FirTransformer<Nothing?>(), FirSessionComponent {
     private val evaluator = FirExpressionEvaluator(session)
+    private val intrinsicConstEvaluation = session.languageVersionSettings.supportsFeature(LanguageFeature.IntrinsicConstEvaluation)
 
     override fun <E : FirElement> transformElement(element: E, data: Nothing?): E {
         @Suppress("UNCHECKED_CAST")
@@ -58,7 +60,7 @@ class FirCompileTimeConstantEvaluator(
     }
 
     private fun FirExpression?.canBeEvaluated(expectedType: ConeKotlinType? = null): Boolean {
-        if (this == null || this is FirLazyExpression || !isResolved) return false
+        if (this == null || intrinsicConstEvaluation || this is FirLazyExpression || !isResolved) return false
 
         if (expectedType != null && !resolvedType.isSubtypeOf(expectedType, session)) return false
 
@@ -149,7 +151,7 @@ class FirCompileTimeConstantEvaluator(
     }
 
     private fun FirConstructor.getParametersWithDefaultValueToBeEvaluated(): List<FirValueParameter> {
-        if (!isPrimary) {
+        if (intrinsicConstEvaluation || !isPrimary) {
             return emptyList()
         }
 
