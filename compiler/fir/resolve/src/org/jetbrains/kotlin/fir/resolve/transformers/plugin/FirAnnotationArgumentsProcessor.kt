@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.transformers.AdapterForResolveProcessor
 import org.jetbrains.kotlin.fir.resolve.transformers.FirCompileTimeConstantEvaluator
 import org.jetbrains.kotlin.fir.resolve.transformers.FirTransformerBasedResolveProcessor
+import org.jetbrains.kotlin.fir.resolve.transformers.compileTimeEvaluator
 import org.jetbrains.kotlin.fir.visitors.FirTransformer
 import org.jetbrains.kotlin.fir.withFileAnalysisExceptionWrapping
 
@@ -28,7 +29,7 @@ class FirAnnotationArgumentsProcessor(
 @AdapterForResolveProcessor
 class FirAnnotationArgumentsTransformerAdapter(session: FirSession, scopeSession: ScopeSession) : FirTransformer<Any?>() {
     private val transformer = FirAnnotationArgumentsTransformer(session, scopeSession, FirResolvePhase.ANNOTATION_ARGUMENTS)
-    private val firCompileTimeConstantEvaluator = FirCompileTimeConstantEvaluator(session)
+    private val firCompileTimeConstantEvaluator = session.compileTimeEvaluator
 
     override fun <E : FirElement> transformElement(element: E, data: Any?): E {
         error("Should only be called via transformFile()")
@@ -37,7 +38,7 @@ class FirAnnotationArgumentsTransformerAdapter(session: FirSession, scopeSession
     override fun transformFile(file: FirFile, data: Any?): FirFile {
         return withFileAnalysisExceptionWrapping(file) {
             file.transform<FirFile, ResolutionMode>(transformer, ResolutionMode.ContextIndependent)
-                .apply { accept(firCompileTimeConstantEvaluator, null) }
+                .transform(firCompileTimeConstantEvaluator, null)
         }
     }
 }
