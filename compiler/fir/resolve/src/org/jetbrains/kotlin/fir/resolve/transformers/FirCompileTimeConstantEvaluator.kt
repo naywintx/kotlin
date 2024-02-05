@@ -9,8 +9,12 @@ import org.jetbrains.kotlin.contracts.description.LogicOperationKind
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.containingClassLookupTag
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.FirProperty
+import org.jetbrains.kotlin.fir.declarations.FirValueParameter
+import org.jetbrains.kotlin.fir.declarations.isAnnotationConstructor
+import org.jetbrains.kotlin.fir.declarations.utils.evaluatedDefaultValue
 import org.jetbrains.kotlin.fir.declarations.utils.evaluatedInitializer
 import org.jetbrains.kotlin.fir.declarations.utils.isConst
 import org.jetbrains.kotlin.fir.expressions.*
@@ -24,6 +28,7 @@ import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.resolve.diagnostics.canBeEvaluatedAtCompileTime
 import org.jetbrains.kotlin.fir.resolve.diagnostics.canBeUsedForConstVal
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
+import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
@@ -104,13 +109,35 @@ class FirCompileTimeConstantEvaluator(private val session: FirSession) : FirTran
     }
 
     override fun transformConstructor(constructor: FirConstructor, data: Nothing?): FirStatement {
-        // TODO evaluate default arguments for primary constructor of an annotation
+        // We should evaluate default arguments for primary constructor of an annotation
+        if (!constructor.symbol.isAnnotationConstructor(session)) return super.transformConstructor(constructor, data)
+
+        constructor.getParametersWithDefaultValueToBeEvaluated().forEach { parameter ->
+            val defaultValueToEvaluate = parameter.defaultValue ?: return@forEach
+            parameter.evaluatedDefaultValue = tryToEvaluateExpression(defaultValueToEvaluate)
+        }
+
         return super.transformConstructor(constructor, data)
     }
 
     override fun transformExpression(expression: FirExpression, data: Nothing?): FirStatement {
         // TODO try to evaluate in a special mode
         return super.transformExpression(expression, data)
+    }
+
+    private fun FirConstructor.getParametersWithDefaultValueToBeEvaluated(): List<FirValueParameter> {
+        if (!isPrimary) {
+            return emptyList()
+        }
+
+        return buildList {
+            for (parameter in valueParameters) {
+                val defaultValue = parameter.defaultValue
+                if (defaultValue != null && defaultValue.canBeEvaluated(parameter.returnTypeRef.coneTypeOrNull)) {
+                    add(parameter)
+                }
+            }
+        }
     }
 }
 
