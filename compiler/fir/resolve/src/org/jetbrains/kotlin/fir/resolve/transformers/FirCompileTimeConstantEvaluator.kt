@@ -6,15 +6,16 @@
 package org.jetbrains.kotlin.fir.resolve.transformers
 
 import org.jetbrains.kotlin.contracts.description.LogicOperationKind
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.declarations.utils.isConst
 import org.jetbrains.kotlin.fir.expressions.*
-import org.jetbrains.kotlin.fir.expressions.builder.buildArgumentList
-import org.jetbrains.kotlin.fir.expressions.builder.buildLiteralExpression
+import org.jetbrains.kotlin.fir.expressions.builder.*
 import org.jetbrains.kotlin.fir.expressions.impl.FirResolvedArgumentList
+import org.jetbrains.kotlin.fir.expressions.impl.toAnnotationArgumentMapping
 import org.jetbrains.kotlin.fir.references.FirReference
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
@@ -77,7 +78,22 @@ class FirCompileTimeConstantEvaluator(private val session: FirSession) : FirTran
     }
 
     override fun transformAnnotationCall(annotationCall: FirAnnotationCall, data: Nothing?): FirStatement {
-        // TODO transform argumentList or argumentMapping?
+        if (annotationCall.annotationTypeRef is FirErrorTypeRef) {
+            return super.transformAnnotationCall(annotationCall, data)
+        }
+
+        val argumentList = annotationCall.argumentList as? FirResolvedArgumentList
+            ?: return super.transformAnnotationCall(annotationCall, data)
+
+        if (argumentList.mapping.any { (expression, parameter) -> !expression.canBeEvaluated(parameter.returnTypeRef.coneTypeOrNull) }) {
+            return super.transformAnnotationCall(annotationCall, data)
+        }
+
+        val mappingWithEvaluatedExpressions = argumentList.mapping
+            .mapKeysTo(LinkedHashMap()) { (expression, _) -> tryToEvaluateExpression(expression) }
+        val evaluatedArgumentList = buildResolvedArgumentList(mappingWithEvaluatedExpressions, argumentList.source)
+        annotationCall.replaceArgumentMapping(evaluatedArgumentList.toAnnotationArgumentMapping())
+
         return super.transformAnnotationCall(annotationCall, data)
     }
 
@@ -113,6 +129,10 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
         return resolvedQualifier
     }
 
+    override fun visitGetClassCall(getClassCall: FirGetClassCall, data: Nothing?): FirStatement {
+        return getClassCall
+    }
+
     override fun visitArgumentList(argumentList: FirArgumentList, data: Nothing?): FirArgumentList? {
         when (argumentList) {
             is FirResolvedArgumentList -> return buildResolvedArgumentList(
@@ -123,6 +143,41 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
                 source = argumentList.source
                 arguments.addAll(argumentList.arguments.map { evaluate(it) ?: return null })
             }
+        }
+    }
+
+    override fun visitNamedArgumentExpression(namedArgumentExpression: FirNamedArgumentExpression, data: Nothing?): FirStatement? {
+        return buildNamedArgumentExpression {
+            source = namedArgumentExpression.source
+            annotations.addAll(namedArgumentExpression.annotations)
+            expression = evaluate(namedArgumentExpression.expression) ?: return null
+            isSpread = namedArgumentExpression.isSpread
+            name = namedArgumentExpression.name
+        }
+    }
+
+    override fun visitArrayLiteral(arrayLiteral: FirArrayLiteral, data: Nothing?): FirStatement? {
+        val newArgumentList = visitArgumentList(arrayLiteral.argumentList, data) ?: return null
+        arrayLiteral.replaceArgumentList(newArgumentList)
+        return arrayLiteral
+    }
+
+    @OptIn(UnresolvedExpressionTypeAccess::class)
+    override fun visitVarargArgumentsExpression(varargArgumentsExpression: FirVarargArgumentsExpression, data: Nothing?): FirStatement? {
+        return buildVarargArgumentsExpression {
+            source = varargArgumentsExpression.source
+            coneTypeOrNull = varargArgumentsExpression.coneTypeOrNull
+            annotations.addAll(varargArgumentsExpression.annotations)
+            arguments.addAll(varargArgumentsExpression.arguments.map { evaluate(it) ?: return null })
+            coneElementTypeOrNull = varargArgumentsExpression.coneElementTypeOrNull
+        }
+    }
+
+    override fun visitSpreadArgumentExpression(spreadArgumentExpression: FirSpreadArgumentExpression, data: Nothing?): FirStatement? {
+        return buildSpreadArgumentExpression {
+            source = spreadArgumentExpression.source
+            annotations.addAll(spreadArgumentExpression.annotations)
+            expression = evaluate(spreadArgumentExpression.expression) ?: return null
         }
     }
 
@@ -165,7 +220,7 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
 
         return when (val symbol = calleeReference.resolvedSymbol) {
             is FirNamedFunctionSymbol -> visitNamedFunction(functionCall, symbol)
-            is FirConstructorSymbol -> visitConstructorCall(functionCall, symbol)
+            is FirConstructorSymbol -> visitConstructorCall(functionCall)
             else -> null
         }
     }
@@ -184,9 +239,17 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
         return null
     }
 
-    private fun visitConstructorCall(constructorCall: FirFunctionCall, symbol: FirConstructorSymbol): FirStatement? {
-        // TODO
-        return constructorCall
+    private fun visitConstructorCall(constructorCall: FirFunctionCall): FirStatement? {
+        constructorCall.argumentList.accept(this, null)?.let {
+            constructorCall.replaceArgumentList(it as FirArgumentList)
+        } ?: return null
+
+        val type = constructorCall.resolvedType.fullyExpandedType(session).lowerBoundIfFlexible()
+        when {
+            type.toRegularClassSymbol(session)?.classKind == ClassKind.ANNOTATION_CLASS -> return constructorCall
+            type.isUnsignedType -> TODO()
+            else -> return null
+        }
     }
 
     override fun visitIntegerLiteralOperatorCall(
