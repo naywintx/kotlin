@@ -275,7 +275,10 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
         val type = constructorCall.resolvedType.fullyExpandedType(session).lowerBoundIfFlexible()
         when {
             type.toRegularClassSymbol(session)?.classKind == ClassKind.ANNOTATION_CLASS -> return constructorCall
-            type.isUnsignedType -> TODO()
+            type.isUnsignedType -> {
+                val argument = (constructorCall.argument as? FirLiteralExpression<*>)?.value ?: return null
+                return argument.adjustTypeAndConvertToLiteral(constructorCall)
+            }
             else -> return null
         }
     }
@@ -439,6 +442,11 @@ private fun ClassId.toConstantValueKind(): ConstantValueKind<*>? =
         StandardClassIds.String -> ConstantValueKind.String
         StandardClassIds.Boolean -> ConstantValueKind.Boolean
 
+        "UByte" -> ConstantValueKind.UnsignedByte
+        "UShort" -> ConstantValueKind.UnsignedShort
+        "UInt" -> ConstantValueKind.UnsignedInt
+        "ULong" -> ConstantValueKind.UnsignedLong
+
         else -> null
     }
 
@@ -456,6 +464,11 @@ private fun ConstantValueKind<*>.convertToGivenKind(value: Any?): Any? {
         ConstantValueKind.Int -> (value as Number).toInt()
         ConstantValueKind.Long -> (value as Number).toLong()
         ConstantValueKind.Short -> (value as Number).toShort()
+        ConstantValueKind.UnsignedByte -> (value as Number).toLong().toUByte()
+        ConstantValueKind.UnsignedShort -> (value as Number).toLong().toUShort()
+        ConstantValueKind.UnsignedInt -> (value as Number).toLong().toUInt()
+        ConstantValueKind.UnsignedLong -> (value as Number).toLong().toULong()
+        ConstantValueKind.UnsignedIntegerLiteral -> (value as Number).toLong().toULong()
         else -> null
     }
 }
