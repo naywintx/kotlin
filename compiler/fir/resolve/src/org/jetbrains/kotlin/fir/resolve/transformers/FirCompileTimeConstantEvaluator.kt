@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.fir.resolve.transformers
 
-import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
@@ -28,7 +27,6 @@ import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.visitors.FirTransformer
 import org.jetbrains.kotlin.fir.visitors.FirVisitor
-import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -132,29 +130,42 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
 
     override fun visitPropertyAccessExpression(propertyAccessExpression: FirPropertyAccessExpression, data: Nothing?): FirStatement? {
         val propertySymbol = propertyAccessExpression.toReference(session)?.toResolvedCallableSymbol(discardErrorReference = true)
-            ?: return propertyAccessExpression
+            ?: return null
+
+        fun evaluate(initializer: FirExpression?): FirExpression? {
+            return if (initializer is FirLiteralExpression<*>) {
+                initializer
+            } else {
+                this.evaluate(initializer)
+            }
+        }
+
         return when (propertySymbol) {
             is FirPropertySymbol -> {
-                val initializer = propertySymbol.fir.initializer
-                evaluate(initializer)
+                when {
+                    propertySymbol.callableId.isStringLength || propertySymbol.callableId.isCharCode -> {
+                        evaluate(propertyAccessExpression.explicitReceiver)?.let { receiver ->
+                            evaluateUnary(receiver, propertySymbol.callableId)
+                                ?.adjustTypeAndConvertToLiteral(propertyAccessExpression)
+                        }
+                    }
+                    else -> evaluate(propertySymbol.fir.initializer)
+                }
             }
-            is FirFieldSymbol -> {
-                val initializer = propertySymbol.fir.initializer
-                evaluate(initializer)
-            }
-            is FirEnumEntrySymbol -> TODO()
-            else -> TODO()
-        } ?: propertyAccessExpression
+            is FirFieldSymbol -> evaluate(propertySymbol.fir.initializer)
+            is FirEnumEntrySymbol -> propertyAccessExpression // Can't be evaluated, should be returned as is.
+            else -> error("FIR symbol \"${propertySymbol::class}\" is not supported in constant evaluation")
+        }
     }
 
     override fun visitFunctionCall(functionCall: FirFunctionCall, data: Nothing?): FirElement? {
         val calleeReference = functionCall.calleeReference
-        if (calleeReference !is FirResolvedNamedReference) return functionCall
+        if (calleeReference !is FirResolvedNamedReference) return null
 
         return when (val symbol = calleeReference.resolvedSymbol) {
             is FirNamedFunctionSymbol -> visitNamedFunction(functionCall, symbol)
             is FirConstructorSymbol -> visitConstructorCall(functionCall, symbol)
-            else -> super.visitFunctionCall(functionCall, data)
+            else -> null
         }
     }
 
@@ -163,15 +174,15 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
         val evaluatedArgs = receivers.plus(functionCall.arguments).map { evaluate(it) as? FirLiteralExpression<*> }
         if (evaluatedArgs.any { it == null }) return null
 
-        val opr1 = functionCall.explicitReceiver as? FirLiteralExpression<*> ?: return null
-        evaluate(opr1, symbol.callableId)?.let {
-            return it.adjustType(functionCall.resolvedType)
-        }
+        val opr1 = evaluatedArgs.getOrNull(0) ?: return null
+        evaluateUnary(opr1, symbol.callableId)
+            ?.adjustTypeAndConvertToLiteral(functionCall)
+            ?.let { return it }
 
-        val opr2 = functionCall.arguments.firstOrNull() as? FirLiteralExpression<*> ?: return null
-        evaluate(symbol.callableId, opr1, opr2)?.let {
-            return it.adjustType(functionCall.resolvedType)
-        }
+        val opr2 = evaluatedArgs.getOrNull(1) ?: return null
+        evaluateBinary(opr1, symbol.callableId, opr2)
+            ?.adjustTypeAndConvertToLiteral(functionCall)
+            ?.let { return it }
 
         return null
     }
@@ -180,28 +191,7 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
         // TODO
         return constructorCall
     }
-}
 
-private fun FirLiteralExpression<*>.adjustType(expectedType: ConeKotlinType): FirLiteralExpression<*> {
-    val expectedKind = expectedType.toConstantValueKind()
-    // Note that the resolved type for the const expression is not always matched with the const kind. For example,
-    //   fun foo(x: Int) {
-    //     when (x) {
-    //       -2_147_483_628 -> ...
-    //   } }
-    // That constant is encoded as `unaryMinus` call with the const 2147483628 of long type, while the resolved type is Int.
-    // After computing the compile time constant, we need to adjust its type here.
-    val expression =
-        if (expectedKind != null && expectedKind != kind && value is Number) {
-            val typeAdjustedValue = expectedKind.convertToNumber(value as Number)!!
-            expectedKind.toConstExpression(source, typeAdjustedValue)
-        } else {
-            this
-        }
-    // Lastly, we should preserve the resolved type of the original function call.
-    return expression.apply {
-        replaceConeTypeOrNull(expectedType)
-    }
 }
 
 private fun <T> ConstantValueKind<T>.toCompileTimeType(): CompileTimeType {
@@ -221,73 +211,50 @@ private fun <T> ConstantValueKind<T>.toCompileTimeType(): CompileTimeType {
 }
 
 // Unary operators
-private fun evaluate(arg: FirLiteralExpression<*>, callableId: CallableId): FirLiteralExpression<*>? {
-    if (arg.value == null) return null
-    (arg.value as? String)?.let { opr ->
-        evalUnaryOp(
-            callableId.callableName.asString(),
-            arg.kind.toCompileTimeType(),
-            opr
-        )?.let {
-            return it.toConstantValueKind().toConstExpression(arg.source, it)
-        }
-    }
-    return arg.kind.convertToNumber(arg.value as? Number)?.let { opr ->
-        evalUnaryOp(
-            callableId.callableName.asString(),
-            arg.kind.toCompileTimeType(),
-            opr
-        )?.let {
-            it.toConstantValueKind().toConstExpression(arg.source, it)
-        }
-    }
-}
+private fun evaluateUnary(arg: FirExpression, callableId: CallableId): Any? {
+    if (arg !is FirLiteralExpression<*> || arg.value == null) return null
 
-private fun FirLiteralExpression<*>.evaluateStringLength(): FirLiteralExpression<*>? {
-    return (value as? String)?.length?.let {
-        it.toConstantValueKind().toConstExpression(source, it)
-    }
+    val opr = arg.kind.convertToGivenKind(arg.value) ?: return null
+    return evalUnaryOp(
+        callableId.callableName.asString(),
+        arg.kind.toCompileTimeType(),
+        opr
+    )
 }
 
 // Binary operators
-private fun evaluate(
+private fun evaluateBinary(
+    arg1: FirExpression,
     callableId: CallableId,
-    arg1: FirLiteralExpression<*>,
-    arg2: FirLiteralExpression<*>
-): FirLiteralExpression<*>? {
-    if (arg1.value == null || arg2.value == null) return null
+    arg2: FirExpression
+): Any? {
+    if (arg1 !is FirLiteralExpression<*> || arg1.value == null) return null
+    if (arg2 !is FirLiteralExpression<*> || arg2.value == null) return null
     // NB: some utils accept very general types, and due to the way operation map works, we should up-cast rhs type.
     val rightType = when {
         callableId.isStringEquals -> CompileTimeType.ANY
         callableId.isStringPlus -> CompileTimeType.ANY
         else -> arg2.kind.toCompileTimeType()
     }
-    (arg1.value as? String)?.let { opr1 ->
-        arg2.value?.let { opr2 ->
-            evalBinaryOp(
-                callableId.callableName.asString(),
-                arg1.kind.toCompileTimeType(),
-                opr1,
-                rightType,
-                opr2
-            )?.let {
-                return it.toConstantValueKind().toConstExpression(arg1.source, it)
-            }
-        }
-    }
-    return arg1.kind.convertToNumber(arg1.value as? Number)?.let { opr1 ->
-        arg2.kind.convertToNumber(arg2.value as? Number)?.let { opr2 ->
-            evalBinaryOp(
-                callableId.callableName.asString(),
-                arg1.kind.toCompileTimeType(),
-                opr1,
-                arg2.kind.toCompileTimeType(),
-                opr2
-            )?.let {
-                it.toConstantValueKind().toConstExpression(arg1.source, it)
-            }
-        }
-    }
+
+    val opr1 = arg1.kind.convertToGivenKind(arg1.value) ?: return null
+    val opr2 = arg2.kind.convertToGivenKind(arg2.value) ?: return null
+
+    val functionName = callableId.callableName.asString()
+    return evalBinaryOp(
+        functionName,
+        arg1.kind.toCompileTimeType(),
+        opr1,
+        rightType,
+        opr2
+    )
+}
+
+private fun Any.adjustTypeAndConvertToLiteral(original: FirExpression): FirLiteralExpression<*>? {
+    val expectedType = original.resolvedType
+    val expectedKind = expectedType.toConstantValueKind() ?: return null
+    val typeAdjustedValue = expectedKind.convertToGivenKind(this) ?: return null
+    return typeAdjustedValue.toConstExpression(expectedKind, original)
 }
 
 private val CallableId.isStringLength: Boolean
@@ -298,6 +265,9 @@ private val CallableId.isStringEquals: Boolean
 
 private val CallableId.isStringPlus: Boolean
     get() = classId == StandardClassIds.String && callableName == OperatorNameConventions.PLUS
+
+private val CallableId.isCharCode: Boolean
+    get() = packageName == StandardClassIds.BASE_KOTLIN_PACKAGE && classId == null && callableName.identifierOrNullIfSpecial == "code"
 
 ////// KINDS
 
@@ -328,43 +298,28 @@ private fun ClassId.toConstantValueKind(): ConstantValueKind<*>? =
         else -> null
     }
 
-private fun <T> T.toConstantValueKind(): ConstantValueKind<*> =
-    when (this) {
-        is Byte -> ConstantValueKind.Byte
-        is Double -> ConstantValueKind.Double
-        is Float -> ConstantValueKind.Float
-        is Int -> ConstantValueKind.Int
-        is Long -> ConstantValueKind.Long
-        is Short -> ConstantValueKind.Short
-
-        is Char -> ConstantValueKind.Char
-        is String -> ConstantValueKind.String
-        is Boolean -> ConstantValueKind.Boolean
-
-        null -> ConstantValueKind.Null
-        else -> error("Unknown constant value")
-    }
-
-private fun ConstantValueKind<*>.convertToNumber(value: Number?): Any? {
+private fun ConstantValueKind<*>.convertToGivenKind(value: Any?): Any? {
     if (value == null) {
         return null
     }
     return when (this) {
-        ConstantValueKind.Byte -> value.toByte()
-        ConstantValueKind.Double -> value.toDouble()
-        ConstantValueKind.Float -> value.toFloat()
-        ConstantValueKind.Int -> value.toInt()
-        ConstantValueKind.Long -> value.toLong()
-        ConstantValueKind.Short -> value.toShort()
-        ConstantValueKind.UnsignedByte -> value.toLong().toUByte()
-        ConstantValueKind.UnsignedShort -> value.toLong().toUShort()
-        ConstantValueKind.UnsignedInt -> value.toLong().toUInt()
-        ConstantValueKind.UnsignedLong -> value.toLong().toULong()
-        ConstantValueKind.UnsignedIntegerLiteral -> value.toLong().toULong()
+        ConstantValueKind.Boolean -> value as Boolean
+        ConstantValueKind.Char -> value as Char
+        ConstantValueKind.String -> value as String
+        ConstantValueKind.Byte -> (value as Number).toByte()
+        ConstantValueKind.Double -> (value as Number).toDouble()
+        ConstantValueKind.Float -> (value as Number).toFloat()
+        ConstantValueKind.Int -> (value as Number).toInt()
+        ConstantValueKind.Long -> (value as Number).toLong()
+        ConstantValueKind.Short -> (value as Number).toShort()
         else -> null
     }
 }
 
-private fun <T> ConstantValueKind<T>.toConstExpression(source: KtSourceElement?, value: Any?): FirLiteralExpression<T> =
+private fun <T> Any?.toConstExpression(
+    kind: ConstantValueKind<T>,
+    originalExpression: FirExpression
+): FirLiteralExpression<T> {
     @Suppress("UNCHECKED_CAST")
-    (buildLiteralExpression(source, this, value as T, setType = true))
+    return (buildLiteralExpression(originalExpression.source, kind, this as T, setType = false))
+}
