@@ -710,19 +710,18 @@ class Fir2IrDeclarationStorage(
                 fakeOverrideGenerator::createFirPropertyFakeOverrideIfNeeded
             )
 
-                callablesGenerator.createIrProperty(
-                    firForLazyProperty,
-                    irParent,
-                    symbols,
-                    predefinedOrigin = firForLazyProperty.computeExternalOrigin(),
-                    allowLazyDeclarationsCreation = true
-                ).also {
-                    check(it is Fir2IrLazyProperty)
-                }
-
-                cacheIrPropertySymbols(property, symbols, fakeOverrideOwnerLookupTag)
-                return symbols
+            callablesGenerator.createIrProperty(
+                firForLazyProperty,
+                irParent,
+                symbols,
+                predefinedOrigin = firForLazyProperty.computeExternalOrigin(),
+                allowLazyDeclarationsCreation = true
+            ).also {
+                check(it is Fir2IrLazyProperty)
             }
+
+            cacheIrPropertySymbols(property, symbols, fakeOverrideOwnerLookupTag)
+            return symbols
         }
 
         val symbols = createPropertySymbols(property, fakeOverrideOwnerLookupTag, parentIsExternal = false)
