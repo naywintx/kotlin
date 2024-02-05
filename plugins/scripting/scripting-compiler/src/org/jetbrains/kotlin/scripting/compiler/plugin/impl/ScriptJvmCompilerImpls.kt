@@ -365,7 +365,7 @@ private fun doCompileWithK2(
     )
     val session = prepareJvmSessions(
         sourceFiles, kotlinCompilerConfiguration, projectEnvironment, Name.special("<$rootModuleName>"), extensionRegistrars,
-        librariesScope, libraryList, isCommonSourceForPsi, { it.isScript() },
+        librariesScope, libraryList, isCommonSourceForPsi, { false },
         fileBelongsToModuleForPsi,
         createProviderAndScopeForIncrementalCompilation = { files ->
             createContextForIncrementalCompilation(
