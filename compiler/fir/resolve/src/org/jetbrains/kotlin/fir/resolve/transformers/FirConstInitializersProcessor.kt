@@ -59,10 +59,10 @@ class FirConstInitializerBodyResolveTransformer(
     }
 
     override fun transformProperty(property: FirProperty, data: ResolutionMode): FirProperty {
-        return property.transformSingle(session.compileTimeEvaluator, null)
+        return property.transformSingle(session.compileTimeEvaluator, FirEvaluationMode.ONLY_NECESSARY)
     }
 
     override fun transformConstructor(constructor: FirConstructor, data: ResolutionMode): FirConstructor {
-        return constructor.transformSingle(session.compileTimeEvaluator, null)
+        return constructor.transformSingle(session.compileTimeEvaluator, FirEvaluationMode.ONLY_NECESSARY)
     }
 }
