@@ -25149,6 +25149,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
             }
 
             @Test
+            @TestMetadata("propertySetterAccessorVisibilityIncompatibility.kt")
+            public void testPropertySetterAccessorVisibilityIncompatibility() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/propertySetterAccessorVisibilityIncompatibility.kt");
+            }
+
+            @Test
             @TestMetadata("returnTypeVsGenericsUpperBoundIncompatibility.kt")
             public void testReturnTypeVsGenericsUpperBoundIncompatibility() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/returnTypeVsGenericsUpperBoundIncompatibility.kt");
