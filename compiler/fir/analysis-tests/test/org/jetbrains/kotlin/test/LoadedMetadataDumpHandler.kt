@@ -81,7 +81,8 @@ class JvmLoadedMetadataDumpHandler(testServices: TestServices) : AbstractLoadedM
             extensionRegistrars = emptyList(),
             environment.getSearchScopeForProjectLibraries(),
             libraryList,
-            isCommonSource = { false },,
+            isCommonSource = { false },
+            isScript = { false },
             fileBelongsToModule = { _, _ -> false },
             createProviderAndScopeForIncrementalCompilation = { null }
         )
