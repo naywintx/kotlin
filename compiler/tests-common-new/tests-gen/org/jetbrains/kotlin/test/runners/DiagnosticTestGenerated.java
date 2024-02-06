@@ -24464,6 +24464,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("constValGetWrongConstVal.kt")
+        public void testConstValGetWrongConstVal() {
+          runTest("compiler/testData/diagnostics/tests/modifiers/const/constValGetWrongConstVal.kt");
+        }
+
+        @Test
         @TestMetadata("enumConstName_after.kt")
         public void testEnumConstName_after() {
           runTest("compiler/testData/diagnostics/tests/modifiers/const/enumConstName_after.kt");
