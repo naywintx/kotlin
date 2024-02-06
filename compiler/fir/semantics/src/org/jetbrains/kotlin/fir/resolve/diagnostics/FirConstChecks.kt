@@ -66,6 +66,16 @@ enum class ConstantArgumentKind {
 
 private class FirConstCheckVisitor(private val session: FirSession) : FirVisitor<ConstantArgumentKind, Nothing?>() {
     private val intrinsicConstEvaluation = session.languageVersionSettings.supportsFeature(LanguageFeature.IntrinsicConstEvaluation)
+    private val propertyStack = mutableListOf<FirCallableSymbol<*>>()
+
+    private fun <T> FirCallableSymbol<*>.visit(block: () -> T?): T? {
+        propertyStack += this
+        try {
+            return block()
+        } finally {
+            propertyStack.removeLast()
+        }
+    }
 
     private val compileTimeFunctions = setOf(
         *OperatorNameConventions.BINARY_OPERATION_NAMES.toTypedArray(), *OperatorNameConventions.UNARY_OPERATION_NAMES.toTypedArray(),
@@ -227,6 +237,7 @@ private class FirConstCheckVisitor(private val session: FirSession) : FirVisitor
         propertyAccessExpression: FirPropertyAccessExpression, data: Nothing?
     ): ConstantArgumentKind {
         val propertySymbol = propertyAccessExpression.toReference(session)?.toResolvedCallableSymbol(discardErrorReference = true)
+        if (propertySymbol in propertyStack) return ConstantArgumentKind.NOT_CONST
         when (propertySymbol) {
             // Null symbol means some error occurred.
             // We use the same logic as in `visitErrorExpression`.
@@ -246,12 +257,19 @@ private class FirConstCheckVisitor(private val session: FirSession) : FirVisitor
                     }
                     propertySymbol.isLocal -> return ConstantArgumentKind.NOT_CONST
                     propertyAccessExpression.getExpandedType().classId == StandardClassIds.KClass -> return ConstantArgumentKind.NOT_KCLASS_LITERAL
-                    propertySymbol.isConst -> return ConstantArgumentKind.VALID_CONST
                 }
 
-                // Ok, because we only look at the structure, not resolution-dependent properties.
+                // OK, because:
+                // 1. if const property => we should've resolved its initializer at this point;
+                // 2. if not const => we are going to look only at the structure, not resolution-dependent properties.
                 @OptIn(SymbolInternals::class)
-                return when (propertySymbol.fir.initializer) {
+                val initializer = propertySymbol.fir.initializer
+
+                if (propertySymbol.isConst) {
+                    return propertySymbol.visit { initializer?.accept(this, data) } ?: ConstantArgumentKind.RESOLUTION_ERROR
+                }
+
+                return when (initializer) {
                     is FirLiteralExpression<*> -> when {
                         propertySymbol.isVal -> ConstantArgumentKind.NOT_CONST_VAL_IN_CONST_EXPRESSION
                         else -> ConstantArgumentKind.NOT_CONST
