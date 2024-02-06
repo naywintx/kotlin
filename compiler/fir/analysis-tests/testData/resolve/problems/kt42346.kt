@@ -1,3 +1,6 @@
+// IGNORE_DIAGNOSTIC_API
+// IGNORE_REVERSED_RESOLVE
+// Reason: FIR evaluator is not called in api tests, so we have different dump
 // FILE: MagicConstant.java
 
 public @interface MagicConstant {
