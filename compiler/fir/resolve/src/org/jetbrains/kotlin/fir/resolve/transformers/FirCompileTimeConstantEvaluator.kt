@@ -360,6 +360,15 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
         val result = strings.joinToString(separator = "") { it!!.value.toString() }
         return result.toConstExpression(ConstantValueKind.String, stringConcatenationCall)
     }
+
+    override fun visitTypeOperatorCall(typeOperatorCall: FirTypeOperatorCall, data: Nothing?): FirElement? {
+        if (typeOperatorCall.operation != FirOperation.AS) return null
+        val result = evaluate(typeOperatorCall.argument) as? FirLiteralExpression<*> ?: return null
+        if (result.resolvedType.isSubtypeOf(typeOperatorCall.resolvedType, session)) {
+            return result
+        }
+        return typeOperatorCall
+    }
 }
 
 private fun <T> ConstantValueKind<T>.toCompileTimeType(): CompileTimeType {

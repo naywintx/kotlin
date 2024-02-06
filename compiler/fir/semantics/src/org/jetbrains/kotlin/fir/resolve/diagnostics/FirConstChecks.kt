@@ -100,7 +100,15 @@ private class FirConstCheckVisitor(private val session: FirSession) : FirVisitor
     }
 
     override fun visitTypeOperatorCall(typeOperatorCall: FirTypeOperatorCall, data: Nothing?): ConstantArgumentKind {
-        return if (typeOperatorCall.operation == FirOperation.AS) ConstantArgumentKind.NOT_CONST else ConstantArgumentKind.VALID_CONST
+        if (typeOperatorCall.operation != FirOperation.AS) {
+            return ConstantArgumentKind.NOT_CONST
+        }
+
+        if (!typeOperatorCall.argument.resolvedType.isSubtypeOf(typeOperatorCall.resolvedType, session)) {
+            return ConstantArgumentKind.NOT_CONST
+        }
+
+        return ConstantArgumentKind.VALID_CONST
     }
 
     override fun visitWhenExpression(whenExpression: FirWhenExpression, data: Nothing?): ConstantArgumentKind {
