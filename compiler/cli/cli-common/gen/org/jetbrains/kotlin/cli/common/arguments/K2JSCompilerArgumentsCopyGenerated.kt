@@ -70,6 +70,7 @@ fun copyK2JSCompilerArguments(from: K2JSCompilerArguments, to: K2JSCompilerArgum
     to.wasmDebug = from.wasmDebug
     to.wasmEnableArrayRangeChecks = from.wasmEnableArrayRangeChecks
     to.wasmEnableAsserts = from.wasmEnableAsserts
+    to.wasmEnableCceInGenericFunctionReturn = from.wasmEnableCceInGenericFunctionReturn
     to.wasmGenerateWat = from.wasmGenerateWat
     to.wasmKClassFqn = from.wasmKClassFqn
     to.wasmTarget = from.wasmTarget

@@ -17,6 +17,10 @@ object WasmEnvironmentConfigurationDirectives : SimpleDirectivesContainer() {
         description = "Generate wasm without EH proposal and test in runtime with EH turned off",
     )
 
+    val ENABLE_CCE_ON_GENERIC_FUNCTION_RETURN by directive(
+        description = "Turn on ClassCastException throwing on generic function return",
+    )
+
     // Next directives are used only inside test system and must not be present in test file
 
     val PATH_TO_TEST_DIR by stringDirective(

@@ -57,6 +57,8 @@ where advanced options include:
   -Xwasm-enable-array-range-checks
                              Turn on range checks for array access functions.
   -Xwasm-enable-asserts      Turn on asserts.
+  -Xwasm-cce-on-generic-function-return
+                             Turn on ClassCastException throwing on generic function return.
   -Xwasm-generate-wat        Generate a .wat file.
   -Xwasm-kclass-fqn          Enable support for 'KClass.qualifiedName'.
   -Xwasm-target              Set up the Wasm target (wasm-js or wasm-wasi).

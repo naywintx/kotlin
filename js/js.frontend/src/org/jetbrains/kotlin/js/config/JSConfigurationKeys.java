@@ -122,6 +122,9 @@ public class JSConfigurationKeys {
     public static final CompilerConfigurationKey<Boolean> WASM_ENABLE_ARRAY_RANGE_CHECKS =
             CompilerConfigurationKey.create("enable array range checks");
 
+    public static final CompilerConfigurationKey<Boolean> WASM_ENABLE_CCE_ON_GENERIC_FUNCTION_RETURN =
+            CompilerConfigurationKey.create("enable throwing class cast exception on generic function return");
+
     public static final CompilerConfigurationKey<Boolean> WASM_ENABLE_ASSERTS =
             CompilerConfigurationKey.create("enable asserts");
 

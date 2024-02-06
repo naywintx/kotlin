@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.backend.wasm.WasmBackendContext
 import org.jetbrains.kotlin.ir.backend.js.utils.erasedUpperBound
 import org.jetbrains.kotlin.ir.backend.js.utils.realOverrideTarget
+import org.jetbrains.kotlin.ir.builders.irAs
 import org.jetbrains.kotlin.ir.builders.irImplicitCast
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.expressions.IrCall
@@ -20,12 +21,15 @@ import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.irCall
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
+import org.jetbrains.kotlin.js.config.JSConfigurationKeys
 
 /**
  * This lowering adds implicit casts in places where erased generic function return type
  * differs from expected type on the call site.
  */
 class GenericReturnTypeLowering(val context: WasmBackendContext) : FileLoweringPass {
+    private val isCceEnabled = context.configuration.getBoolean(JSConfigurationKeys.WASM_ENABLE_CCE_ON_GENERIC_FUNCTION_RETURN)
+
     override fun lower(irFile: IrFile) {
         irFile.transformChildrenVoid(object : IrElementTransformerVoidWithContext() {
             override fun visitCall(expression: IrCall): IrExpression =
@@ -45,6 +49,8 @@ class GenericReturnTypeLowering(val context: WasmBackendContext) : FileLoweringP
     }
 
     private fun transformGenericCall(call: IrCall, scopeOwnerSymbol: IrSymbol): IrExpression {
+        if (call.symbol == context.wasmSymbols.wasmArrayNewData0) return call
+
         val function = call.symbol.owner
 
         val erasedReturnType: IrType =
@@ -65,7 +71,11 @@ class GenericReturnTypeLowering(val context: WasmBackendContext) : FileLoweringP
             )
 
             context.createIrBuilder(scopeOwnerSymbol).apply {
-                return irImplicitCast(newCall, call.type)
+                return if (isCceEnabled) {
+                    irAs(newCall, call.type)
+                } else {
+                    irImplicitCast(newCall, call.type)
+                }
             }
         }
         return call

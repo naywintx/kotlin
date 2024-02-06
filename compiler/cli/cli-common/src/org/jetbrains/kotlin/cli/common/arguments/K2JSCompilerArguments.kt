@@ -602,6 +602,13 @@ In combination with '-meta-info', this generates both IR and pre-IR versions of 
             field = value
         }
 
+    @Argument(value = "-Xwasm-cce-on-generic-function-return", description = "Turn on ClassCastException throwing on generic function return.")
+    var wasmEnableCceInGenericFunctionReturn = false
+        set(value) {
+            checkFrozen()
+            field = value
+        }
+
     @Argument(value = "-Xwasm-enable-asserts", description = "Turn on asserts.")
     var wasmEnableAsserts = false
         set(value) {

@@ -50911,6 +50911,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
         }
 
         @Test
+        @TestMetadata("cceOnInvalidCall.kt")
+        public void testCceOnInvalidCall() throws Exception {
+            runTest("compiler/testData/codegen/box/safeCall/cceOnInvalidCall.kt");
+        }
+
+        @Test
         @TestMetadata("genericNull.kt")
         public void testGenericNull() throws Exception {
             runTest("compiler/testData/codegen/box/safeCall/genericNull.kt");
