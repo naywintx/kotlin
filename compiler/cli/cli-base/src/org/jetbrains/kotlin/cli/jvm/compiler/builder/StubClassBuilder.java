@@ -27,7 +27,10 @@ import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.FieldVisitor;
 import org.jetbrains.org.objectweb.asm.MethodVisitor;
 
-import java.util.List;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
 
 public class StubClassBuilder extends AbstractClassBuilder {
     private static final InnerClassSourceStrategy<Object> EMPTY_STRATEGY = new InnerClassSourceStrategy<Object>() {
@@ -75,6 +78,8 @@ public class StubClassBuilder extends AbstractClassBuilder {
         //noinspection ConstantConditions
         v = new StubBuildingVisitor<>(null, EMPTY_STRATEGY, parent, access, calculateShortName(name));
 
+        applyWorkaroundForKtXXXXX();
+
         super.defineClass(origin, version, access, name, signature, superName, interfaces);
 
         if (origin instanceof KtFile) {
@@ -91,6 +96,22 @@ public class StubClassBuilder extends AbstractClassBuilder {
         }
 
         ((StubBase) v.getResult()).putUserData(ClsWrapperStubPsiFactory.ORIGIN, LightElementOriginKt.toLightClassOrigin(origin));
+    }
+
+    private void applyWorkaroundForKtXXXXX() {
+        try {
+            Field field = v.getClass().getDeclaredField("myFirstPassData");
+            field.setAccessible(true);
+            Class<?> fpdClass = Class.forName("com.intellij.psi.impl.compiled.FirstPassData");
+            Constructor<?> fpdConstructor = fpdClass.getDeclaredConstructor(Map.class, String.class, String.class, Set.class, boolean.class, boolean.class);
+            fpdConstructor.setAccessible(true);
+            Object fpd = fpdConstructor.newInstance(new HashMap(), "", null, Collections.emptySet(), true, false);
+            field.set(v, fpd);
+        }
+        catch (NoSuchFieldException | IllegalAccessException | ClassNotFoundException | NoSuchMethodException | InstantiationException |
+               InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Nullable
