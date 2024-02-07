@@ -12,12 +12,14 @@ import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
 import org.jetbrains.kotlin.fir.resolve.providers.*
 import org.jetbrains.kotlin.fir.scopes.FirKotlinScopeProvider
 import org.jetbrains.kotlin.fir.symbols.impl.*
+import org.jetbrains.kotlin.fir.symbols.lazyDeclarationResolver
 import org.jetbrains.kotlin.fir.visitors.FirDefaultVisitor
+import org.jetbrains.kotlin.fir.visitors.transformSingle
 import org.jetbrains.kotlin.name.*
 import org.jetbrains.kotlin.utils.mapToSetOrEmpty
 
 @ThreadSafeMutableState
-class FirProviderImpl(val session: FirSession, val kotlinScopeProvider: FirKotlinScopeProvider) : FirProvider() {
+class FirProviderImpl(val session: FirSession, val kotlinScopeProvider: FirKotlinScopeProvider) : FirProvider(), FirSourcesBasedProvider {
     override val symbolProvider: FirSymbolProvider = SymbolProvider()
 
     override fun getFirCallableContainerFile(symbol: FirCallableSymbol<*>): FirFile? {
@@ -114,6 +116,19 @@ class FirProviderImpl(val session: FirSession, val kotlinScopeProvider: FirKotli
         file.acceptChildren(FirRecorder, FirRecorderData(state, file, session.nameConflictsTracker))
     }
 
+    override fun prepareSourcesForUseAsDependencies() {
+        val expanderVisitor = FirTypealiasExpander(session)
+
+        // By this time the file should have been resolved anyway
+        session.lazyDeclarationResolver.disableLazyResolveContractChecksInside {
+            for (file in state.fileMap.values.flatten()) {
+                if (state.expandedFiles.add(file)) {
+                    file.transformSingle(expanderVisitor, Unit)
+                }
+            }
+        }
+    }
+
     private class FirRecorderData(
         val state: State,
         val file: FirFile,
@@ -208,6 +223,7 @@ class FirProviderImpl(val session: FirSession, val kotlinScopeProvider: FirKotli
 
     private class State {
         val fileMap: MutableMap<FqName, List<FirFile>> = mutableMapOf<FqName, List<FirFile>>()
+        val expandedFiles = mutableSetOf<FirFile>()
         val allSubPackages = mutableSetOf<FqName>()
         val classifierMap = mutableMapOf<ClassId, FirClassLikeDeclaration>()
         val classifierContainerFileMap = mutableMapOf<ClassId, FirFile>()
@@ -222,6 +238,7 @@ class FirProviderImpl(val session: FirSession, val kotlinScopeProvider: FirKotli
 
         fun setFrom(other: State) {
             fileMap.clear()
+            expandedFiles.clear()
             allSubPackages.clear()
             classifierMap.clear()
             classifierContainerFileMap.clear()
@@ -233,6 +250,7 @@ class FirProviderImpl(val session: FirSession, val kotlinScopeProvider: FirKotli
             scriptByFilePathMap.clear()
 
             fileMap.putAll(other.fileMap)
+            expandedFiles.addAll(other.expandedFiles)
             allSubPackages.addAll(other.allSubPackages)
             classifierMap.putAll(other.classifierMap)
             classifierContainerFileMap.putAll(other.classifierContainerFileMap)

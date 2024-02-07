@@ -13,14 +13,11 @@ import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.fir.extensions.FirSwitchableExtensionDeclarationsSymbolProvider
 import org.jetbrains.kotlin.fir.java.FirCliSession
 import org.jetbrains.kotlin.fir.java.FirProjectSessionProvider
-import org.jetbrains.kotlin.fir.resolve.providers.DEPENDENCIES_SYMBOL_PROVIDER_QUALIFIED_KEY
-import org.jetbrains.kotlin.fir.resolve.providers.FirProvider
-import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
+import org.jetbrains.kotlin.fir.resolve.providers.*
 import org.jetbrains.kotlin.fir.resolve.providers.impl.FirCachingCompositeSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.impl.FirExtensionSyntheticFunctionInterfaceProvider
 import org.jetbrains.kotlin.fir.resolve.providers.impl.FirLibrarySessionProvider
 import org.jetbrains.kotlin.fir.resolve.providers.impl.FirProviderImpl
-import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.scopes.FirKotlinScopeProvider
 import org.jetbrains.kotlin.incremental.components.EnumWhenTracker
 import org.jetbrains.kotlin.incremental.components.ImportTracker
@@ -148,11 +145,20 @@ abstract class FirAbstractSessionFactory {
         // dependsOnDependencies can actualize declarations from their dependencies. Because actual declarations can be more specific
         // (e.g. have additional supertypes), the modules must be ordered from most specific (i.e. actual) to most generic (i.e. expect)
         // to prevent false positive resolution errors (see KT-57369 for an example).
-        return (moduleData.dependencies + moduleData.friendDependencies + moduleData.allDependsOnDependencies)
+        val allDependencies = moduleData.dependencies + moduleData.friendDependencies + moduleData.allDependsOnDependencies
+        val (sourceProviders, libraryProviders) = allDependencies
             .mapNotNull { sessionProvider?.getSession(it) }
             .flatMap { it.symbolProvider.flatten() }
             .distinct()
-            .sortedBy { it.session.kind }
+            .partition { it.session.kind == FirSession.Kind.Source }
+
+        for (it in sourceProviders) {
+            val firProvider = it.session.firProvider as? FirSourcesBasedProvider
+                ?: error("Non-source-based provider with a source session: ${it.session.firProvider}")
+            firProvider.prepareSourcesForUseAsDependencies()
+        }
+
+        return sourceProviders + libraryProviders
     }
 
     /* It eliminates dependency and composite providers since the current dependency provider is composite in fact.
