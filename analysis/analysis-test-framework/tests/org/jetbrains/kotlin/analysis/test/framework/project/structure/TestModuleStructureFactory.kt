@@ -48,7 +48,7 @@ private typealias ModulesByName = Map<String, KtModuleWithFiles>
  *   - For [TestModule] A and B, where A has dependency on B, A will never appears earlier than B in the result list.
  */
 private fun sortInDependencyPostOrder(testModules: List<TestModule>): List<TestModule> {
-    val namesToModules = testModules.associateBy { it.name }
+    val namesToModules = buildMap { testModules.forEach { put(it.name, it) } }
     val notVisited = testModules.toMutableSet()
     val sortedModules = mutableListOf<TestModule>()
 
@@ -89,25 +89,38 @@ object TestModuleStructureFactory {
         return KtModuleProjectStructure(modules, libraryCache.values)
     }
 
+    /**
+     * A function to create [KtModuleWithFiles] for the given [moduleStructure]. This function guarantees:
+     *   - For [TestModule] A and B, where A has dependency on B,
+     *     - B will always be created earlier than A.
+     *     - The class path of B will be given to the creation of A's module.
+     *
+     * In particular, it handles unresolved symbol issues caused by building binary libraries.
+     */
     private fun createModules(
         moduleStructure: TestModuleStructure,
         testServices: TestServices,
-        project: Project
+        project: Project,
     ): List<KtModuleWithFiles> {
-        val moduleCount = moduleStructure.modules.size
+        val modulesSortedByDependencies = sortInDependencyPostOrder(moduleStructure.modules)
+        val moduleCount = modulesSortedByDependencies.size
+        val moduleNamesToPaths = mutableMapOf<String, Collection<Path>>()
         val existingModules = HashMap<String, KtModuleWithFiles>(moduleCount)
         val result = ArrayList<KtModuleWithFiles>(moduleCount)
 
-        for (testModule in moduleStructure.modules) {
+        for (testModule in modulesSortedByDependencies) {
             val contextModuleName = testModule.directives.singleOrZeroValue(AnalysisApiTestDirectives.CONTEXT_MODULE)
             val contextModule = contextModuleName?.let(existingModules::getValue)
 
+            val dependencies = testModule.regularDependencies.mapNotNull { moduleNamesToPaths[it.moduleName] }.flatten()
             val moduleWithFiles = testServices
                 .getKtModuleFactoryForTestModule(testModule)
-                .createModule(testModule, contextModule, testServices, project)
+                .createModule(testModule, contextModule, testServices, project, dependencies)
 
             existingModules[testModule.name] = moduleWithFiles
             result.add(moduleWithFiles)
+            val libraryModule = moduleWithFiles.ktModule as? KtLibraryModuleImpl ?: continue
+            moduleNamesToPaths[testModule.name] = libraryModule.getBinaryRoots()
         }
 
         return result
