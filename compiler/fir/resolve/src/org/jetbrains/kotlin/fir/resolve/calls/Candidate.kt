@@ -119,7 +119,7 @@ class Candidate(
     val lambdasAnalyzedWithPCLA = mutableListOf<FirAnonymousFunction>()
     val onCompletionResultsWritingCallbacks = mutableListOf<(ConeSubstitutor) -> Unit>()
 
-    var currentApplicability = CandidateApplicability.RESOLVED
+    var lowestApplicability = CandidateApplicability.RESOLVED
         private set
 
     override var chosenExtensionReceiver: FirExpression? = givenExtensionReceiverOptions.singleOrNull()
@@ -127,7 +127,7 @@ class Candidate(
     var contextReceiverArguments: List<FirExpression>? = null
 
     override val applicability: CandidateApplicability
-        get() = currentApplicability
+        get() = lowestApplicability
 
     private val _diagnostics: MutableList<ResolutionDiagnostic> = mutableListOf()
     override val diagnostics: List<ResolutionDiagnostic>
@@ -135,21 +135,21 @@ class Candidate(
 
     fun addDiagnostic(diagnostic: ResolutionDiagnostic) {
         _diagnostics += diagnostic
-        if (diagnostic.applicability < currentApplicability) {
-            currentApplicability = diagnostic.applicability
+        if (diagnostic.applicability < lowestApplicability) {
+            lowestApplicability = diagnostic.applicability
         }
     }
 
     @CodeFragmentAdjustment
     internal fun resetToResolved() {
-        currentApplicability = CandidateApplicability.RESOLVED
+        lowestApplicability = CandidateApplicability.RESOLVED
         _diagnostics.clear()
     }
 
     /**
-     * Note that [currentApplicability]`.isSuccessful == true` doesn't imply [isSuccessful].
+     * Note that [lowestApplicability]`.isSuccessful == true` doesn't imply [isSuccessful].
      *
-     * This is because [currentApplicability] is equal to the lowest [ResolutionDiagnostic.applicability] of all [diagnostics],
+     * This is because [lowestApplicability] is equal to the lowest [ResolutionDiagnostic.applicability] of all [diagnostics],
      * but in presence of more than one diagnostic, the lowest one can be successful while a higher one isn't, e.g., the combination
      * of [CandidateApplicability.RESOLVED_NEED_PRESERVE_COMPATIBILITY] and [CandidateApplicability.RESOLVED_WITH_ERROR].
      */

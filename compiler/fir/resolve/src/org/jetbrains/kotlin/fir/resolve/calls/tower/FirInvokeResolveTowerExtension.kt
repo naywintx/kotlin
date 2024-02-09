@@ -333,7 +333,7 @@ private fun BodyResolveComponents.createExplicitReceiverForInvokeByCallable(
             explicitReceiver = info.explicitReceiver
         }
 
-        if (candidate.currentApplicability == CandidateApplicability.K2_PROPERTY_AS_OPERATOR) {
+        if (candidate.lowestApplicability == CandidateApplicability.K2_PROPERTY_AS_OPERATOR) {
             nonFatalDiagnostics.add(ConePropertyAsOperator(candidate.symbol as FirPropertySymbol))
         }
         source = fakeSource
