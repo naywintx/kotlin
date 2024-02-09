@@ -152,6 +152,10 @@ class Candidate(
      * This is because [lowestApplicability] is equal to the lowest [ResolutionDiagnostic.applicability] of all [diagnostics],
      * but in presence of more than one diagnostic, the lowest one can be successful while a higher one isn't, e.g., the combination
      * of [CandidateApplicability.RESOLVED_NEED_PRESERVE_COMPATIBILITY] and [CandidateApplicability.RESOLVED_WITH_ERROR].
+     *
+     * Also see [FirNamedReferenceWithCandidate.toResolvedReference] as it contains conditions that
+     * rely on subtle differences between the implementation of this property and
+     * [CandidateApplicability.isThisSingleApplicabilitySuccessful].
      */
     val isSuccessful: Boolean
         get() = diagnostics.all { it.applicability.isThisSingleApplicabilitySuccessful } && (!systemInitialized || !system.hasContradiction)
