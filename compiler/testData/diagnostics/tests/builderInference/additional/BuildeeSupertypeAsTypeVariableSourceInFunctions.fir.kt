@@ -10,17 +10,17 @@ fun test() {
     }
 
     // local function definition with a default parameter value
-    <!NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>build<!> {
+    <!CANNOT_INFER_PARAMETER_TYPE, NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>build<!> {
         fun consumeC(base: BaseBuildee<TargetType> = this) {}
     }
 
     // local function definition with a return type and a block body
-    <!NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>build<!> {
+    <!CANNOT_INFER_PARAMETER_TYPE, NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>build<!> {
         fun consumeD(): BaseBuildee<TargetType> { return this }
     }
 
     // local function definition with a return type and an expression body
-    <!NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>build<!> {
+    <!CANNOT_INFER_PARAMETER_TYPE, NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>build<!> {
         fun consumeE(): BaseBuildee<TargetType> = this
     }
 

@@ -22,7 +22,7 @@ fun test() {
     }
 
     // inheritance via delegation
-    <!NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>build<!> {
+    <!CANNOT_INFER_PARAMETER_TYPE, NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>build<!> {
         class KlassE: BaseBuildee<TargetType> by this@build
     }
 

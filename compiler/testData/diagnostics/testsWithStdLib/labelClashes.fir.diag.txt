@@ -1,7 +1,23 @@
+/labelClashes.fir.kt:(55,59): error: Cannot infer type for this parameter. Please specify it explicitly.
+
+/labelClashes.fir.kt:(64,95): error: Cannot infer type for this parameter. Please specify it explicitly.
+
 /labelClashes.fir.kt:(84,87): error: Unresolved reference 'inc'.
+
+/labelClashes.fir.kt:(119,123): error: Cannot infer type for this parameter. Please specify it explicitly.
+
+/labelClashes.fir.kt:(132,162): error: Cannot infer type for this parameter. Please specify it explicitly.
 
 /labelClashes.fir.kt:(151,154): error: Unresolved reference 'inc'.
 
+/labelClashes.fir.kt:(235,239): error: Cannot infer type for this parameter. Please specify it explicitly.
+
+/labelClashes.fir.kt:(244,283): error: Cannot infer type for this parameter. Please specify it explicitly.
+
 /labelClashes.fir.kt:(268,271): error: Unresolved reference 'foo'.
+
+/labelClashes.fir.kt:(293,297): error: Cannot infer type for this parameter. Please specify it explicitly.
+
+/labelClashes.fir.kt:(307,346): error: Cannot infer type for this parameter. Please specify it explicitly.
 
 /labelClashes.fir.kt:(331,334): error: Unresolved reference 'foo'.
