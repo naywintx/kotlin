@@ -848,8 +848,9 @@ open class FirDeclarationsResolveTransformer(
             val simpleFunction = function as? FirSimpleFunction
             val returnExpression = (body?.statements?.singleOrNull() as? FirReturnExpression)?.result
             val expressionType = returnExpression?.resolvedType
+            val newSource = result.returnTypeRef.source ?: returnExpression?.source?.fakeElement(KtFakeSourceElementKind.ImplicitTypeRef)
             val returnTypeRef = expressionType
-                ?.toFirResolvedTypeRef(result.returnTypeRef.source)
+                ?.toFirResolvedTypeRef(newSource)
                 ?.approximateDeclarationType(
                     session,
                     simpleFunction?.visibilityForApproximation(),
@@ -857,7 +858,7 @@ open class FirDeclarationsResolveTransformer(
                     isInlineFunction = simpleFunction?.isInline == true
                 )
                 ?: buildErrorTypeRef {
-                    source = result.returnTypeRef.source
+                    source = newSource
                     diagnostic = ConeSimpleDiagnostic("empty body", DiagnosticKind.Other)
                 }
             result.transformReturnTypeRef(transformer, withExpectedType(returnTypeRef))
