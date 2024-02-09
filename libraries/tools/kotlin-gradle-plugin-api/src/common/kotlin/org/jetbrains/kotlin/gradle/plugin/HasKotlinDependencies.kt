@@ -15,56 +15,304 @@ import org.gradle.api.logging.Logger
 import org.jetbrains.kotlin.gradle.dsl.KotlinTopLevelExtensionConfig
 import java.io.File
 
-interface KotlinDependencyHandler {
-    val project: Project
+/**
+ * Represents a DSL for managing dependencies for Kotlin entities implementing [HasKotlinDependencies].
+ */
 interface KotlinDependencyHandler : HasProject {
+
+    /**
+     * Adds an API [module dependency](https://docs.gradle.org/current/userguide/declaring_dependencies.html#sub:module_dependencies)
+     * to this entity.
+     *
+     * @see [HasKotlinDependencies.apiConfigurationName]
+     *
+     * @param dependencyNotation The module dependency notation, as per [DependencyHandler.create].
+     * @return The module dependency, or `null` if dependencyNotation is a provider.
+     */
     fun api(dependencyNotation: Any): Dependency?
+
+    /**
+     * Adds an API [module dependency](https://docs.gradle.org/current/userguide/declaring_dependencies.html#sub:module_dependencies)
+     * to this entity.
+     *
+     * @see [HasKotlinDependencies.apiConfigurationName]
+     *
+     * @param dependencyNotation The module dependency notation, as per [DependencyHandler.create].
+     * @param configure additional configuration for the created module dependency.
+     * @return The module dependency, or `null` if dependencyNotation is a provider.
+     */
     fun api(dependencyNotation: String, configure: ExternalModuleDependency.() -> Unit): ExternalModuleDependency
+
+    /**
+     * Adds an API [module dependency](https://docs.gradle.org/current/userguide/declaring_dependencies.html#sub:module_dependencies)
+     * to this entity.
+     *
+     * @see [HasKotlinDependencies.apiConfigurationName]
+     *
+     * @param dependencyNotation The module dependency notation, as per [DependencyHandler.create].
+     * @param configure additional configuration for the created module dependency.
+     * @return The module dependency, or `null` if dependencyNotation is a provider.
+     */
+    fun api(dependencyNotation: String, configure: Action<ExternalModuleDependency>): ExternalModuleDependency = api(dependencyNotation) {
+        configure.execute(this)
+    }
+
+    /**
+     * Adds an API dependency to this entity.
+     *
+     * @see [HasKotlinDependencies.apiConfigurationName]
+     *
+     * @param dependency The dependency to add.
+     * @param configure additional configuration for the [dependency].
+     * @return The added [dependency].
+     */
     fun <T : Dependency> api(dependency: T, configure: T.() -> Unit): T
-    fun api(dependencyNotation: String, configure: Closure<*>) = api(dependencyNotation) { project.configure(this, configure) }
-    fun <T : Dependency> api(dependency: T, configure: Closure<*>) = api(dependency) { project.configure(this, configure) }
 
+    /**
+     * Adds an API dependency to this entity.
+     *
+     * @see [HasKotlinDependencies.apiConfigurationName]
+     *
+     * @param dependency The dependency to add.
+     * @param configure additional configuration for the [dependency].
+     * @return The added [dependency].
+     */
+    fun <T : Dependency> api(dependency: T, configure: Action<T>) = api(dependency) { configure.execute(this) }
+
+    /**
+     * Adds an implementation
+     * [module dependency](https://docs.gradle.org/current/userguide/declaring_dependencies.html#sub:module_dependencies) to this entity.
+     *
+     * @see [HasKotlinDependencies.implementationConfigurationName]
+     *
+     * @param dependencyNotation The module dependency notation, as per [DependencyHandler.create].
+     * @return The module dependency, or `null` if dependencyNotation is a provider.
+     */
     fun implementation(dependencyNotation: Any): Dependency?
-    fun implementation(dependencyNotation: String, configure: ExternalModuleDependency.() -> Unit): ExternalModuleDependency
-    fun <T : Dependency> implementation(dependency: T, configure: T.() -> Unit): T
-    fun implementation(dependencyNotation: String, configure: Closure<*>) =
-        implementation(dependencyNotation) { project.configure(this, configure) }
 
-    fun <T : Dependency> implementation(dependency: T, configure: Closure<*>) =
-        implementation(dependency) { project.configure(this, configure) }
+    /**
+     * Adds an implementation
+     * [module dependency](https://docs.gradle.org/current/userguide/declaring_dependencies.html#sub:module_dependencies) to this entity.
+     *
+     * @see [HasKotlinDependencies.implementationConfigurationName]
+     *
+     * @param dependencyNotation The module dependency notation, as per [DependencyHandler.create].
+     * @param configure additional configuration for the created module dependency.
+     * @return The module dependency, or `null` if dependencyNotation is a provider.
+     */
+    fun implementation(dependencyNotation: String, configure: ExternalModuleDependency.() -> Unit): ExternalModuleDependency
+
+    /**
+     * Adds an implementation
+     * [module dependency](https://docs.gradle.org/current/userguide/declaring_dependencies.html#sub:module_dependencies) to this entity.
+     *
+     * @see [HasKotlinDependencies.implementationConfigurationName]
+     *
+     * @param dependencyNotation The module dependency notation, as per [DependencyHandler.create].
+     * @param configure additional configuration for the created module dependency.
+     * @return The module dependency, or `null` if dependencyNotation is a provider.
+     */
+    fun implementation(dependencyNotation: String, configure: Action<ExternalModuleDependency>) =
+        implementation(dependencyNotation) { configure.execute(this) }
+
+    /**
+     * Adds an implementation dependency to this entity.
+     *
+     * @see [HasKotlinDependencies.implementationConfigurationName]
+     *
+     * @param dependency The dependency to add.
+     * @param configure additional configuration for the [dependency].
+     * @return The added [dependency].
+     */
+    fun <T : Dependency> implementation(dependency: T, configure: T.() -> Unit): T
+
+    /**
+     * Adds an implementation dependency to this entity.
+     *
+     * @see [HasKotlinDependencies.implementationConfigurationName]
+     *
+     * @param dependency The dependency to add.
+     * @param configure additional configuration for the [dependency].
+     * @return The added [dependency].
+     */
     fun <T : Dependency> implementation(dependency: T, configure: Action<T>) =
         implementation(dependency) { configure.execute(this) }
 
+    /**
+     * Adds a compile-only [module dependency](https://docs.gradle.org/current/userguide/declaring_dependencies.html#sub:module_dependencies)
+     * to this entity.
+     *
+     * @see [HasKotlinDependencies.compileOnlyConfigurationName]
+     *
+     * @param dependencyNotation The module dependency notation, as per [DependencyHandler.create].
+     * @return The module dependency, or `null` if dependencyNotation is a provider.
+     */
     fun compileOnly(dependencyNotation: Any): Dependency?
-    fun compileOnly(dependencyNotation: String, configure: ExternalModuleDependency.() -> Unit): ExternalModuleDependency
-    fun <T : Dependency> compileOnly(dependency: T, configure: T.() -> Unit): T
-    fun compileOnly(dependencyNotation: String, configure: Closure<*>) =
-        compileOnly(dependencyNotation) { project.configure(this, configure) }
 
-    fun <T : Dependency> compileOnly(dependency: T, configure: Closure<*>) =
-        compileOnly(dependency) { project.configure(this, configure) }
+    /**
+     * Adds a compile-only [module dependency](https://docs.gradle.org/current/userguide/declaring_dependencies.html#sub:module_dependencies)
+     * to this entity.
+     *
+     * @see [HasKotlinDependencies.compileOnlyConfigurationName]
+     *
+     * @param dependencyNotation The module dependency notation, as per [DependencyHandler.create].
+     * @param configure additional configuration for the created module dependency.
+     * @return The module dependency, or `null` if dependencyNotation is a provider.
+     */
+    fun compileOnly(dependencyNotation: String, configure: ExternalModuleDependency.() -> Unit): ExternalModuleDependency
+
+    /**
+     * Adds a compile-only [module dependency](https://docs.gradle.org/current/userguide/declaring_dependencies.html#sub:module_dependencies)
+     * to this entity.
+     *
+     * @see [HasKotlinDependencies.compileOnlyConfigurationName]
+     *
+     * @param dependencyNotation The module dependency notation, as per [DependencyHandler.create].
+     * @param configure additional configuration for the created module dependency.
+     * @return The module dependency, or `null` if dependencyNotation is a provider.
+     */
+    fun compileOnly(dependencyNotation: String, configure: Action<ExternalModuleDependency>) =
+        compileOnly(dependencyNotation) { configure.execute(this) }
+
+    /**
+     * Adds a compile-only dependency to this entity.
+     *
+     * @see [HasKotlinDependencies.compileOnlyConfigurationName]
+     *
+     * @param dependency The dependency to add.
+     * @param configure additional configuration for the [dependency].
+     * @return The added [dependency].
+     */
+    fun <T : Dependency> compileOnly(dependency: T, configure: T.() -> Unit): T
+
+    /**
+     * Adds a compile-only dependency to this entity.
+     *
+     * @see [HasKotlinDependencies.compileOnlyConfigurationName]
+     *
+     * @param dependency The dependency to add.
+     * @param configure additional configuration for the [dependency].
+     * @return The added [dependency].
+     */
     fun <T : Dependency> compileOnly(dependency: T, configure: Action<T>) =
         compileOnly(dependency) { configure.execute(this) }
 
+    /**
+     * Adds a runtime-only [module dependency](https://docs.gradle.org/current/userguide/declaring_dependencies.html#sub:module_dependencies)
+     * to this entity.
+     *
+     * @see [HasKotlinDependencies.runtimeOnlyConfigurationName]
+     *
+     * @param dependencyNotation The module dependency notation, as per [DependencyHandler.create].
+     * @return The module dependency, or `null` if dependencyNotation is a provider.
+     */
     fun runtimeOnly(dependencyNotation: Any): Dependency?
-    fun runtimeOnly(dependencyNotation: String, configure: ExternalModuleDependency.() -> Unit): ExternalModuleDependency
-    fun <T : Dependency> runtimeOnly(dependency: T, configure: T.() -> Unit): T
-    fun runtimeOnly(dependencyNotation: String, configure: Closure<*>) =
-        runtimeOnly(dependencyNotation) { project.configure(this, configure) }
 
-    fun <T : Dependency> runtimeOnly(dependency: T, configure: Closure<*>) =
-        runtimeOnly(dependency) { project.configure(this, configure) }
+    /**
+     * Adds a runtime-only [module dependency](https://docs.gradle.org/current/userguide/declaring_dependencies.html#sub:module_dependencies)
+     * to this entity.
+     *
+     * @see [HasKotlinDependencies.runtimeOnlyConfigurationName]
+     *
+     * @param dependencyNotation The module dependency notation, as per [DependencyHandler.create].
+     * @param configure additional configuration for the created module dependency.
+     * @return The module dependency, or `null` if dependencyNotation is a provider.
+     */
+    fun runtimeOnly(dependencyNotation: String, configure: ExternalModuleDependency.() -> Unit): ExternalModuleDependency
+
+    /**
+     * Adds a runtime-only [module dependency](https://docs.gradle.org/current/userguide/declaring_dependencies.html#sub:module_dependencies)
+     * to this entity.
+     *
+     * @see [HasKotlinDependencies.runtimeOnlyConfigurationName]
+     *
+     * @param dependencyNotation The module dependency notation, as per [DependencyHandler.create].
+     * @param configure additional configuration for the created module dependency.
+     * @return The module dependency, or `null` if dependencyNotation is a provider.
+     */
+    fun runtimeOnly(dependencyNotation: String, configure: Action<ExternalModuleDependency>) =
+        runtimeOnly(dependencyNotation) { configure.execute(this) }
+
+    /**
+     * Adds a runtime-only dependency to this entity.
+     *
+     * @see [HasKotlinDependencies.runtimeOnlyConfigurationName]
+     *
+     * @param dependency The dependency to add.
+     * @param configure additional configuration for the [dependency].
+     * @return The added [dependency].
+     */
+    fun <T : Dependency> runtimeOnly(dependency: T, configure: T.() -> Unit): T
+
+    /**
+     * Adds a runtime-only dependency to this entity.
+     *
+     * @see [HasKotlinDependencies.runtimeOnlyConfigurationName]
+     *
+     * @param dependency The dependency to add.
+     * @param configure additional configuration for the [dependency].
+     * @return The added [dependency].
+     */
     fun <T : Dependency> runtimeOnly(dependency: T, configure: Action<T>) =
         runtimeOnly(dependency) { configure.execute(this) }
 
+    /**
+     * Creates a dependency to an official Kotlin library with the same version as configured
+     * in [KotlinTopLevelExtensionConfig.coreLibrariesVersion].
+     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * The official Kotlin dependencies always have "org.jetbrains.kotlin" group and module name has "kotlin-" prefix.
+     *
+     * @param simpleModuleName Kotlin module name followed after "kotlin-" prefix. For example, for "kotlin-reflect":
+     * ```
+     * implementation(kotlin("reflect"))
+     * // equivalent to
+     * implementation("org.jetbrains.kotlin:kotlin-reflect")
+     * ```
+     */
     fun kotlin(simpleModuleName: String): ExternalModuleDependency = kotlin(simpleModuleName, null)
+
+    /**
+     * Creates a dependency to an official Kotlin library.
+     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * The official Kotlin dependencies always have "org.jetbrains.kotlin" group and module name has "kotlin-" prefix.
+     *
+     * @param simpleModuleName Kotlin module name followed after "kotlin-" prefix. For example, for "reflect":
+     * ```
+     * implementation(kotlin("reflect", "1.9.0"))
+     * // equivalent to
+     * implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.0")
+     * ```
+     * @param version dependency version or `null` to use the version defined in [KotlinTopLevelExtensionConfig.coreLibrariesVersion].
+     */
     fun kotlin(simpleModuleName: String, version: String?): ExternalModuleDependency
 
+    /**
+     * Creates Gradle project dependency.
+     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * @param path project path
+     * @param configuration optional target configuration in the project
+     */
     fun project(path: String, configuration: String? = null): ProjectDependency =
         project(listOf("path", "configuration").zip(listOfNotNull(path, configuration)).toMap())
 
+    /**
+     * Creates Gradle project dependency.
+     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * @param notation project notation described in [DependencyHandler].
+     * For example:
+     * ```
+     * project(mapOf("path" to ":project-a", "configuration" to "someOtherConfiguration"))
+     * ```
+     */
     fun project(notation: Map<String, Any?>): ProjectDependency
 
+    /**
+     * @suppress
+     */
     @Deprecated(
         "Scheduled for removal in Kotlin 2.0. Check KT-58759",
         replaceWith = ReplaceWith("project.dependencies.enforcedPlatform(notation)")
@@ -72,6 +320,9 @@ interface KotlinDependencyHandler : HasProject {
     fun enforcedPlatform(notation: Any): Dependency =
         project.dependencies.enforcedPlatform(notation)
 
+    /**
+     * @suppress
+     */
     @Deprecated(
         "Scheduled for removal in Kotlin 2.0. Check KT-58759",
         replaceWith = ReplaceWith("project.dependencies.enforcedPlatform(notation, configureAction)")
@@ -79,6 +330,9 @@ interface KotlinDependencyHandler : HasProject {
     fun enforcedPlatform(notation: Any, configureAction: Action<in Dependency>): Dependency =
         project.dependencies.enforcedPlatform(notation, configureAction)
 
+    /**
+     * @suppress
+     */
     @Deprecated(
         "Scheduled for removal in Kotlin 2.0. Check KT-58759",
         replaceWith = ReplaceWith("project.dependencies.platform(notation)")
@@ -86,6 +340,9 @@ interface KotlinDependencyHandler : HasProject {
     fun platform(notation: Any): Dependency =
         project.dependencies.platform(notation)
 
+    /**
+     * @suppress
+     */
     @Deprecated(
         "Scheduled for removal in Kotlin 2.0. Check KT-58759",
         replaceWith = ReplaceWith("project.dependencies.platform(notation, configureAction)")
@@ -93,6 +350,9 @@ interface KotlinDependencyHandler : HasProject {
     fun platform(notation: Any, configureAction: Action<in Dependency>): Dependency =
         project.dependencies.platform(notation, configureAction)
 
+    /**
+     * @suppress
+     */
     @Deprecated("Dukat integration is in redesigning process. Now it does not work.")
     fun npm(
         name: String,
@@ -104,11 +364,24 @@ interface KotlinDependencyHandler : HasProject {
         return npm(name, version)
     }
 
+    /**
+     * Creates a dependency to [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#dependencies) module.
+     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * **Note**: Only relevant for Kotlin entities targeting only [KotlinPlatformType.js] or [KotlinPlatformType.wasm]!
+     *
+     * @param name npm dependency name
+     * @param version npm dependency version
+     */
     fun npm(
         name: String,
         version: String
     ): Dependency
 
+    /**
+     * @suppress
+     */
+    @Deprecated("Dukat integration is in redesigning process. Now it does not work.")
     fun npm(
         name: String,
         directory: File,
@@ -119,11 +392,25 @@ interface KotlinDependencyHandler : HasProject {
         return npm(name, directory)
     }
 
+    /**
+     * Creates a dependency to [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#dependencies) module.
+     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * **Note**: Only relevant for Kotlin entities targeting only [KotlinPlatformType.js] or [KotlinPlatformType.wasm]!
+     *
+     * @param name npm dependency name
+     * @param directory path where dependency files are located
+     * (see NPM [directory](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#local-paths) keyword)
+     */
     fun npm(
         name: String,
         directory: File
     ): Dependency
 
+    /**
+     * @suppress
+     */
+    @Deprecated("Dukat integration is in redesigning process. Now it does not work.")
     fun npm(
         directory: File,
         generateExternals: Boolean
@@ -133,24 +420,67 @@ interface KotlinDependencyHandler : HasProject {
         return npm(directory)
     }
 
+    /**
+     * Creates a dependency to [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#dependencies) module.
+     * The name of the dependency is derived either from `package.json` file located in the [directory] or [directory] name itself.
+     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * **Note**: Only relevant for Kotlin entities targeting [KotlinPlatformType.js] or [KotlinPlatformType.wasm]!
+     *
+     * @param directory path where dependency files are located
+     * (see NPM [directory](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#local-paths) keyword)
+     */
     fun npm(
         directory: File
     ): Dependency
 
+    /**
+     * Creates a dependency to dev [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#devdependencies) module.
+     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * **Note**: Only relevant for Kotlin entities targeting only [KotlinPlatformType.js] or [KotlinPlatformType.wasm]!
+     *
+     * @param name npm dependency name
+     * @param version npm dependency version
+     */
     fun devNpm(
         name: String,
         version: String
     ): Dependency
 
+    /**
+     * Creates a dependency to dev [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#devdependencies) module.
+     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * **Note**: Only relevant for Kotlin entities targeting only [KotlinPlatformType.js] or [KotlinPlatformType.wasm]!
+     *
+     * @param name npm dependency name
+     * @param directory path where dependency files are located
+     * (see NPM [directory](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#local-paths) keyword)
+     */
     fun devNpm(
         name: String,
         directory: File
     ): Dependency
 
+    /**
+     * Creates a dependency to dev [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#devdependencies) module.
+     * The name of the dependency is derived either from `package.json` file located in the [directory] or [directory] name itself.
+     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * **Note**: Only relevant for Kotlin entities targeting only [KotlinPlatformType.js] or [KotlinPlatformType.wasm]!
+     *
+     * @param directory path where dependency files are located
+     * (see NPM [directory](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#repository) keyword)
+     */
     fun devNpm(
         directory: File
     ): Dependency
 
+    /**
+     * @suppress
+     */
+    @Deprecated("Dukat integration is in redesigning process. Now it does not work.")
     fun optionalNpm(
         name: String,
         version: String,
@@ -161,11 +491,24 @@ interface KotlinDependencyHandler : HasProject {
         return optionalNpm(name, version)
     }
 
+    /**
+     * Creates a dependency to optional [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#optionaldependencies) module.
+     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * **Note**: Only relevant for Kotlin entities targeting only [KotlinPlatformType.js] or [KotlinPlatformType.wasm]!
+     *
+     * @param name npm dependency name
+     * @param version npm dependency version
+     */
     fun optionalNpm(
         name: String,
         version: String
     ): Dependency
 
+    /**
+     * @suppress
+     */
+    @Deprecated("Dukat integration is in redesigning process. Now it does not work.")
     fun optionalNpm(
         name: String,
         directory: File,
@@ -176,11 +519,25 @@ interface KotlinDependencyHandler : HasProject {
         return optionalNpm(name, directory)
     }
 
+    /**
+     * Creates a dependency to optional [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#optionaldependencies) module.
+     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * **Note**: Only relevant for Kotlin entities targeting only [KotlinPlatformType.js] or [KotlinPlatformType.wasm]!
+     *
+     * @param name npm dependency name
+     * @param directory path where dependency files are located
+     * (see NPM [directory](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#local-paths) keyword)
+     */
     fun optionalNpm(
         name: String,
         directory: File
     ): Dependency
 
+    /**
+     * @suppress
+     */
+    @Deprecated("Dukat integration is in redesigning process. Now it does not work.")
     fun optionalNpm(
         directory: File,
         generateExternals: Boolean
@@ -190,10 +547,29 @@ interface KotlinDependencyHandler : HasProject {
         return optionalNpm(directory)
     }
 
+    /**
+     * Creates a dependency to optional [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#optionaldependencies) module.
+     * The name of the dependency is derived either from `package.json` file located in the [directory] or [directory] name itself.
+     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * **Note**: Only relevant for Kotlin entities targeting only [KotlinPlatformType.js] or [KotlinPlatformType.wasm]!
+     *
+     * @param directory path where dependency files are located
+     * (see NPM [directory](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#local-paths) keyword)
+     */
     fun optionalNpm(
         directory: File
     ): Dependency
 
+    /**
+     * Creates a dependency to peer [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#peerdependencies) module.
+     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * **Note**: Only relevant for Kotlin entities targeting only [KotlinPlatformType.js] or [KotlinPlatformType.wasm]!
+     *
+     * @param name npm dependency name
+     * @param version npm dependency version
+     */
     fun peerNpm(
         name: String,
         version: String
@@ -206,51 +582,57 @@ interface KotlinDependencyHandler : HasProject {
 interface HasKotlinDependencies {
 
     /**
-     * Configure dependencies for this entity.
+     * Configures dependencies for this entity.
      */
     fun dependencies(configure: KotlinDependencyHandler.() -> Unit)
 
     /**
-     * Configure dependencies for this entity.
+     * Configures dependencies for this entity.
      */
     fun dependencies(configure: Action<KotlinDependencyHandler>)
 
     /**
-     * The name of the API Gradle configuration for this entity.
+     * The name of the Gradle [Configuration]
+     * containing [API](https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_separation) dependencies.
      *
-     * The API configuration contains dependencies which are exported by this entity, and is not transitive by default.
+     * The Gradle API configuration should be used to declare dependencies which are exported by the project API.
      *
-     * This configuration is not meant to be resolved.
+     * This Gradle configuration is not meant to be resolved.
      */
     val apiConfigurationName: String
 
     /**
-     * The name of the implementation Gradle configuration for this entity.
+     * The name of the Gradle [Configuration]
+     * containing [implementation](https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_separation)
+     * dependencies.
      *
-     * The implementation configuration should contain dependencies which are specific to the implementation of the component
-     * (internal APIs).
+     * The Gradle implementation configuration should be used to declare dependencies which are internal to the component (internal APIs).
      *
-     * This configuration is not meant to be resolved.
+     * This Gradle configuration is not meant to be resolved.
      */
     val implementationConfigurationName: String
 
     /**
-     * The name of the compile-only Gradle configuration for this entity.
+     * The name of the Gradle [Configuration]
+     * containing [compile-only](https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_configurations_graph)
+     * dependencies.
      *
-     * The compile-only configuration contains dependencies which are participating in compilation,
-     * but should be added explicitly in the runtime.
+     * The Gradle compile-only configuration should be used to declare dependencies which are participating in compilation,
+     * but should be added explicitly by consumers in the runtime.
      *
-     * This configuration is not meant to be resolved.
+     * This Gradle configuration is not meant to be resolved.
      */
     val compileOnlyConfigurationName: String
 
     /**
-     * The name of the runtime-only Gradle configuration for this entity.
+     * The name of the Gradle [Configuration]
+     * containing [compile-only](https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_configurations_graph)
+     * dependencies.
      *
-     * The runtime-only configuration contains dependencies which are not participating in the compilation,
+     * The Gradle runtime-only configuration should be used to declare dependencies which are not participating in the compilation,
      * but added in the runtime.
      *
-     * This configuration is not meant to be resolved.
+     * This Gradle configuration is not meant to be resolved.
      */
     val runtimeOnlyConfigurationName: String
 }
