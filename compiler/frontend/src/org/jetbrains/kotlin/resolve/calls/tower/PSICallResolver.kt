@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.resolve.calls.tower
 
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.contracts.EffectSystem
@@ -351,7 +350,7 @@ class PSICallResolver(
 
     private fun Collection<ResolutionCandidate>.areAllFailed() =
         all {
-            !it.resultingApplicability.isSuccess
+            !it.resultingApplicability.isThisSingleApplicabilitySuccessful
         }
 
     private fun Collection<ResolutionCandidate>.areAllFailedWithInapplicableWrongReceiver() =

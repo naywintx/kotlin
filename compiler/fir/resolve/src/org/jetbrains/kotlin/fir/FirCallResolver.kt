@@ -52,7 +52,7 @@ import org.jetbrains.kotlin.resolve.calls.inference.runTransaction
 import org.jetbrains.kotlin.resolve.calls.results.TypeSpecificityComparator
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
 import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability
-import org.jetbrains.kotlin.resolve.calls.tower.isSuccess
+import org.jetbrains.kotlin.resolve.calls.tower.isThisSingleApplicabilitySuccessful
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.CodeFragmentAdjustment
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -220,7 +220,7 @@ class FirCallResolver(
 
         val candidates = collector.bestCandidates()
 
-        if (collector.currentApplicability.isSuccess) {
+        if (collector.currentApplicability.isThisSingleApplicabilitySuccessful) {
             return chooseMostSpecific(candidates) to null
         }
 
@@ -276,7 +276,7 @@ class FirCallResolver(
 
         // Even if it's not receiver, it makes sense to continue qualifier if resolution is unsuccessful
         // just to try to resolve to package/class and then report meaningful error at FirStandaloneQualifierChecker
-        if (isUsedAsReceiver || !basicResult.applicability.isSuccess) {
+        if (isUsedAsReceiver || !basicResult.applicability.isThisSingleApplicabilitySuccessful) {
             (qualifiedAccess.explicitReceiver as? FirResolvedQualifier)
                 ?.continueQualifier(
                     callee,
@@ -302,7 +302,7 @@ class FirCallResolver(
             //     A // should resolved to D.A
             //     A.B // should be resolved to A.B
             // }
-            if (!result.applicability.isSuccess || (isUsedAsReceiver && result.candidates.all { it.symbol is FirClassLikeSymbol })) {
+            if (!result.applicability.isThisSingleApplicabilitySuccessful || (isUsedAsReceiver && result.candidates.all { it.symbol is FirClassLikeSymbol })) {
                 components.resolveRootPartOfQualifier(
                     callee, qualifiedAccess, nonFatalDiagnosticFromExpression,
                 )?.let { return it }
@@ -799,7 +799,7 @@ class FirCallResolver(
                                             }?.coneType ?: coneType
                                         )
                                     }
-                                    singleExpectedCandidate != null && !singleExpectedCandidate.lowestApplicability.isSuccess -> {
+                                    singleExpectedCandidate != null && !singleExpectedCandidate.lowestApplicability.isThisSingleApplicabilitySuccessful -> {
                                         createConeDiagnosticForCandidateWithError(
                                             singleExpectedCandidate.lowestApplicability,
                                             singleExpectedCandidate
@@ -894,7 +894,7 @@ class FirCallResolver(
     private fun needTreatErrorCandidateAsResolved(candidate: Candidate): Boolean {
         return if (candidate.isCodeFragmentVisibilityError) {
             components.resolutionStageRunner.fullyProcessCandidate(candidate, transformer.resolutionContext)
-            candidate.diagnostics.all { it.applicability.isSuccess || it.applicability == CandidateApplicability.K2_VISIBILITY_ERROR }
+            candidate.diagnostics.all { it.applicability.isThisSingleApplicabilitySuccessful || it.applicability == CandidateApplicability.K2_VISIBILITY_ERROR }
         } else false
     }
 

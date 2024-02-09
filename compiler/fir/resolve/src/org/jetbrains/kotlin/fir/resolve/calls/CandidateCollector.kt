@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.fir.resolve.calls
 import org.jetbrains.kotlin.fir.resolve.BodyResolveComponents
 import org.jetbrains.kotlin.fir.resolve.calls.tower.TowerGroup
 import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability
-import org.jetbrains.kotlin.resolve.calls.tower.isSuccess
+import org.jetbrains.kotlin.resolve.calls.tower.isThisSingleApplicabilitySuccessful
 import org.jetbrains.kotlin.resolve.calls.tower.shouldStopResolve
 
 open class CandidateCollector(
@@ -67,5 +67,5 @@ open class CandidateCollector(
         get() = currentApplicability.shouldStopResolve
 
     val isSuccess: Boolean
-        get() = currentApplicability.isSuccess
+        get() = currentApplicability.isThisSingleApplicabilitySuccessful
 }

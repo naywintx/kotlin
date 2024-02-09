@@ -126,8 +126,9 @@ enum class CandidateApplicability {
 /**
  * This property determines that the considered candidate is "successful" in terms of having no resolve errors.
  * Note that it does not necessarily mean tower resolve should stop on this candidate.
+ * Neither does it mean that the candidate itself is successful because there is RESOLVED_WITH_ERROR.
  */
-val CandidateApplicability.isSuccess: Boolean
+val CandidateApplicability.isThisSingleApplicabilitySuccessful: Boolean
     get() = this >= CandidateApplicability.RESOLVED_LOW_PRIORITY && this != CandidateApplicability.RESOLVED_WITH_ERROR
 
 /**

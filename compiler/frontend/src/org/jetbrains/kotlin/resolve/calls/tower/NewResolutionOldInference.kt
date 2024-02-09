@@ -433,7 +433,7 @@ class NewResolutionOldInference(
             // Only applicable for new inference
         }
 
-        override val isSuccessful = getResultApplicability(eagerDiagnostics).isSuccess
+        override val isSuccessful = getResultApplicability(eagerDiagnostics).isThisSingleApplicabilitySuccessful
     }
 
     private inner class CandidateFactoryImpl(
@@ -541,7 +541,7 @@ class NewResolutionOldInference(
                 invoke.resolvedCall as MutableResolvedCall<FunctionDescriptor>,
                 variable.resolvedCall as MutableResolvedCall<VariableDescriptor>
             )
-            assert(variable.resultingApplicability.isSuccess) {
+            assert(variable.resultingApplicability.isThisSingleApplicabilitySuccessful) {
                 "Variable call must be success: $variable"
             }
 
