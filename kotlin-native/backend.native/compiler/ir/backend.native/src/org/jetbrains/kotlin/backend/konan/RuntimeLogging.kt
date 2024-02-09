@@ -31,6 +31,7 @@ enum class LoggingTag(val ord: Int) {
     Balancing(7),
     Barriers(8),
     GCMark(9),
+    Profiler(10),
     ;
 
     companion object {

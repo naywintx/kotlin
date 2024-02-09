@@ -98,6 +98,11 @@ private:
 
 size_t CombineHash(size_t seed, size_t value);
 
+template<typename T, template<typename> typename Hasher = std::hash>
+std::size_t hashOf(const T& x) {
+    return Hasher<T>{}(x);
+}
+
 #define ownerOf(type, field, ref) *reinterpret_cast<type*>(reinterpret_cast<char*>(&ref) - offsetof(type, field))
 
 // Returns `true` if the entire `span` is zeroed.
