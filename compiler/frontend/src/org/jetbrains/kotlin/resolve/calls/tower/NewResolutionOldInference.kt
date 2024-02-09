@@ -433,7 +433,6 @@ class NewResolutionOldInference(
             // Only applicable for new inference
         }
 
-        @OptIn(ApplicabilityDetail::class)
         override val isSuccessful = getResultApplicability(eagerDiagnostics).isSuccess
     }
 
@@ -542,7 +541,6 @@ class NewResolutionOldInference(
                 invoke.resolvedCall as MutableResolvedCall<FunctionDescriptor>,
                 variable.resolvedCall as MutableResolvedCall<VariableDescriptor>
             )
-            @OptIn(ApplicabilityDetail::class)
             assert(variable.resultingApplicability.isSuccess) {
                 "Variable call must be success: $variable"
             }

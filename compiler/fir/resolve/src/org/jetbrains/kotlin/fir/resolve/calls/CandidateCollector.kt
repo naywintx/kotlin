@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.fir.resolve.calls
 
 import org.jetbrains.kotlin.fir.resolve.BodyResolveComponents
 import org.jetbrains.kotlin.fir.resolve.calls.tower.TowerGroup
-import org.jetbrains.kotlin.resolve.calls.tower.ApplicabilityDetail
 import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability
 import org.jetbrains.kotlin.resolve.calls.tower.isSuccess
 import org.jetbrains.kotlin.resolve.calls.tower.shouldStopResolve
@@ -67,7 +66,6 @@ open class CandidateCollector(
     val shouldStopResolve: Boolean
         get() = currentApplicability.shouldStopResolve
 
-    @OptIn(ApplicabilityDetail::class)
     val isSuccess: Boolean
         get() = currentApplicability.isSuccess
 }

@@ -51,7 +51,6 @@ import org.jetbrains.kotlin.resolve.calls.inference.ConstraintSystemBuilder
 import org.jetbrains.kotlin.resolve.calls.inference.runTransaction
 import org.jetbrains.kotlin.resolve.calls.results.TypeSpecificityComparator
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
-import org.jetbrains.kotlin.resolve.calls.tower.ApplicabilityDetail
 import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability
 import org.jetbrains.kotlin.resolve.calls.tower.isSuccess
 import org.jetbrains.kotlin.types.Variance
@@ -221,7 +220,6 @@ class FirCallResolver(
 
         val candidates = collector.bestCandidates()
 
-        @OptIn(ApplicabilityDetail::class)
         if (collector.currentApplicability.isSuccess) {
             return chooseMostSpecific(candidates) to null
         }
@@ -278,7 +276,6 @@ class FirCallResolver(
 
         // Even if it's not receiver, it makes sense to continue qualifier if resolution is unsuccessful
         // just to try to resolve to package/class and then report meaningful error at FirStandaloneQualifierChecker
-        @OptIn(ApplicabilityDetail::class)
         if (isUsedAsReceiver || !basicResult.applicability.isSuccess) {
             (qualifiedAccess.explicitReceiver as? FirResolvedQualifier)
                 ?.continueQualifier(
@@ -305,7 +302,6 @@ class FirCallResolver(
             //     A // should resolved to D.A
             //     A.B // should be resolved to A.B
             // }
-            @OptIn(ApplicabilityDetail::class)
             if (!result.applicability.isSuccess || (isUsedAsReceiver && result.candidates.all { it.symbol is FirClassLikeSymbol })) {
                 components.resolveRootPartOfQualifier(
                     callee, qualifiedAccess, nonFatalDiagnosticFromExpression,
@@ -803,7 +799,7 @@ class FirCallResolver(
                                             }?.coneType ?: coneType
                                         )
                                     }
-                                    singleExpectedCandidate != null && !singleExpectedCandidate.isSuccessful -> {
+                                    singleExpectedCandidate != null && !singleExpectedCandidate.lowestApplicability.isSuccess -> {
                                         createConeDiagnosticForCandidateWithError(
                                             singleExpectedCandidate.lowestApplicability,
                                             singleExpectedCandidate
@@ -898,7 +894,6 @@ class FirCallResolver(
     private fun needTreatErrorCandidateAsResolved(candidate: Candidate): Boolean {
         return if (candidate.isCodeFragmentVisibilityError) {
             components.resolutionStageRunner.fullyProcessCandidate(candidate, transformer.resolutionContext)
-            @OptIn(ApplicabilityDetail::class)
             candidate.diagnostics.all { it.applicability.isSuccess || it.applicability == CandidateApplicability.K2_VISIBILITY_ERROR }
         } else false
     }

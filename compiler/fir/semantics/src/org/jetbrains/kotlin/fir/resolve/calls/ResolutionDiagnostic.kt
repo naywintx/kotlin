@@ -20,10 +20,8 @@ import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.ConeTypeVariable
 import org.jetbrains.kotlin.resolve.ForbiddenNamedArgumentsTarget
 import org.jetbrains.kotlin.resolve.calls.inference.model.ConstraintSystemError
-import org.jetbrains.kotlin.resolve.calls.tower.ApplicabilityDetail
 import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability
 import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability.*
-import org.jetbrains.kotlin.resolve.calls.tower.isSuccess
 import org.jetbrains.kotlin.types.EmptyIntersectionTypeKind
 
 abstract class ResolutionDiagnostic(val applicability: CandidateApplicability)
@@ -166,7 +164,3 @@ class TypeVariableAsExplicitReceiver(
     val explicitReceiver: FirExpression,
     val typeParameter: FirTypeParameter,
 ) : ResolutionDiagnostic(RESOLVED_WITH_ERROR)
-
-@OptIn(ApplicabilityDetail::class)
-val Collection<ResolutionDiagnostic>.anyUnsuccessful: Boolean get() = any { !it.applicability.isSuccess }
-val Collection<ResolutionDiagnostic>.allSuccessful: Boolean get() = !anyUnsuccessful

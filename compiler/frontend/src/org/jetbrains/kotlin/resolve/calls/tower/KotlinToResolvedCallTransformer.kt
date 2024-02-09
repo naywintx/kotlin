@@ -552,7 +552,6 @@ class KotlinToResolvedCallTransformer(
             val shouldReportMissingDiagnostic = !trackingTrace.reported && !dontRecordToTraceAsIs
             if (shouldReportMissingDiagnostic && REPORT_MISSING_NEW_INFERENCE_DIAGNOSTIC) {
                 val factory =
-                    @OptIn(ApplicabilityDetail::class)
                     if (diagnostic.candidateApplicability.isSuccess) Errors.NEW_INFERENCE_DIAGNOSTIC else Errors.NEW_INFERENCE_ERROR
                 trace.report(factory.on(diagnosticReporter.psiKotlinCall.psiCall.callElement, "Missing diagnostic: $diagnostic"))
             }

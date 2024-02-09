@@ -36,7 +36,6 @@ import org.jetbrains.kotlin.fir.resolve.calls.UnsafeCall
 import org.jetbrains.kotlin.fir.resolve.diagnostics.*
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
-import org.jetbrains.kotlin.resolve.calls.tower.ApplicabilityDetail
 import org.jetbrains.kotlin.resolve.calls.tower.isSuccess
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
@@ -107,11 +106,10 @@ object FirForLoopChecker : FirBlockChecker(MppCheckerKind.Common) {
         when {
             calleeReference.isError() -> {
                 when (val diagnostic = calleeReference.diagnostic) {
-                    is ConeAmbiguityError -> @OptIn(ApplicabilityDetail::class) when {
-                        diagnostic.applicability.isSuccess ->
-                            reporter.reportOn(reportSource, ambiguityFactory, diagnostic.candidates.map { it.symbol }, context)
-                        noneApplicableFactory != null ->
-                            reporter.reportOn(reportSource, noneApplicableFactory, diagnostic.candidates.map { it.symbol }, context)
+                    is ConeAmbiguityError -> if (diagnostic.applicability.isSuccess) {
+                        reporter.reportOn(reportSource, ambiguityFactory, diagnostic.candidates.map { it.symbol }, context)
+                    } else if (noneApplicableFactory != null) {
+                        reporter.reportOn(reportSource, noneApplicableFactory, diagnostic.candidates.map { it.symbol }, context)
                     }
                     is ConeUnresolvedNameError -> {
                         reporter.reportOn(reportSource, missingFactory, context)
