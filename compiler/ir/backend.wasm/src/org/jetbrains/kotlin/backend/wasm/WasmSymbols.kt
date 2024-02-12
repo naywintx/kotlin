@@ -388,6 +388,9 @@ class WasmSymbols(
 
         internal val throwAsJsException: IrSimpleFunctionSymbol =
             getInternalFunction("throwAsJsException")
+
+        val jsException = getIrClass(FqName("kotlin.JsException"))
+        val throwJsException = getInternalFunction("throwJsException")
     }
 
     private val wasmExportClass = getIrClass(FqName("kotlin.wasm.WasmExport"))

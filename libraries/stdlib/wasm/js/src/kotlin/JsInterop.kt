@@ -20,3 +20,8 @@ package kotlin
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)
 @Retention(AnnotationRetention.BINARY)
 public annotation class JsFun(val code: String)
+
+/**
+ * Exception thrown by the JavaScript code.
+ */
+public class JsException : Throwable()
