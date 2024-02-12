@@ -87,11 +87,6 @@ open class AbstractIrJsCodegenBoxTest : AbstractJsIrTest(
     testGroupOutputDirPrefix = "codegen/irBox/"
 )
 
-open class AbstractIrJsCodegenBoxErrorTest : AbstractJsIrTest(
-    pathToTestDir = "compiler/testData/codegen/boxError/",
-    testGroupOutputDirPrefix = "codegen/irBoxError/"
-)
-
 open class AbstractIrJsCodegenInlineTest : AbstractJsIrTest(
     pathToTestDir = "compiler/testData/codegen/boxInline/",
     testGroupOutputDirPrefix = "codegen/irBoxInline/"
