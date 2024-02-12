@@ -13,6 +13,7 @@ import com.intellij.psi.impl.compiled.SignatureParsing
 import com.intellij.psi.impl.compiled.StubBuildingVisitor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.analysis.api.components.KtPsiTypeProvider
 import org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.findPsi
@@ -58,6 +59,7 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.psi
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.toKtPsiSourceElement
 import org.jetbrains.kotlin.types.model.SimpleTypeMarker
 import org.jetbrains.kotlin.types.updateArgumentModeFromAnnotations
 import java.text.StringCharacterIterator
@@ -134,11 +136,13 @@ internal class KtFirPsiTypeProvider(
     ): KtType? {
         val javaElementSourceFactory = JavaElementSourceFactory.getInstance(project)
         val javaType = JavaTypeImpl.create(psiType, javaElementSourceFactory.createTypeSource(psiType))
+        val source = useSitePosition.toKtPsiSourceElement(KtFakeSourceElementKind.Enhancement)
 
         val javaTypeRef = buildJavaTypeRef {
             //TODO KT-62351
             annotationBuilder = { emptyList() }
             type = javaType
+            this.source = source
         }
 
         val javaTypeParameterStack = MutableJavaTypeParameterStack()
@@ -180,7 +184,7 @@ internal class KtFirPsiTypeProvider(
                 }
             }
         }
-        val firTypeRef = javaTypeRef.resolveIfJavaType(analysisSession.useSiteSession, javaTypeParameterStack)
+        val firTypeRef = javaTypeRef.resolveIfJavaType(analysisSession.useSiteSession, javaTypeParameterStack, source)
         val coneKotlinType = (firTypeRef as? FirResolvedTypeRef)?.type ?: return null
         return coneKotlinType.asKtType()
     }
