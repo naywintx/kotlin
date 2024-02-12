@@ -5,10 +5,10 @@
 
 package kotlin.native.concurrent
 
-import kotlin.native.internal.GCUnsafeCall
-
 /**
  * Exception thrown whenever freezing is not possible.
+ *
+ * No standard library code throws this exception.
  *
  * @param toFreeze an object intended to be frozen.
  * @param blocker an object preventing freezing, usually one marked with [ensureNeverFrozen] earlier.
@@ -20,41 +20,34 @@ public class FreezingException(toFreeze: Any, blocker: Any) :
 /**
  * Exception thrown whenever we attempt to mutate frozen objects.
  *
+ * No standard library code throws this exception.
+ *
  * @param where a frozen object that was attempted to mutate
  */
 @FreezingIsDeprecated
 public class InvalidMutabilityException(message: String) : RuntimeException(message)
 
 /**
- * Freezes object subgraph reachable from this object. Frozen objects can be freely
- * shared between threads/workers.
+ * This is deprecated and does nothing.
  *
- * @throws FreezingException if freezing is not possible
  * @return the object itself
- * @see ensureNeverFrozen
  */
 @FreezingIsDeprecated
 public fun <T> T.freeze(): T {
-    freezeInternal(this)
     return this
 }
 
 /**
- * Checks if given object is null or frozen or permanent (i.e. instantiated at compile-time).
+ * This is deprecated and always returns false.
  *
- * @return true if given object is null or frozen or permanent
+ * @return false
  */
 @FreezingIsDeprecated
 public val Any?.isFrozen: Boolean
-    get() = isFrozenInternal(this)
+    get() = false
 
 /**
- * This function ensures that if we see such an object during freezing attempt - freeze fails and
- * [FreezingException] is thrown.
- *
- * @throws FreezingException thrown immediately if this object is already frozen
- * @see freeze
+ * This is deprecated and does nothing.
  */
-@GCUnsafeCall("Kotlin_Worker_ensureNeverFrozen")
 @FreezingIsDeprecated
-public external fun Any.ensureNeverFrozen()
+public fun Any.ensureNeverFrozen(): Unit = Unit

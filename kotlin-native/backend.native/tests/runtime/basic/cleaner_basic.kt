@@ -21,10 +21,6 @@ import kotlin.native.runtime.GC
 class AtomicBoolean(initialValue: Boolean) {
     private val impl = AtomicInt(if (initialValue) 1 else 0)
 
-    init {
-        freeze()
-    }
-
     public var value: Boolean
         get() = impl.value != 0
         set(new) { impl.value = if (new) 1 else 0 }
@@ -43,7 +39,7 @@ fun testCleanerLambda() {
     var cleanerWeak: WeakReference<Cleaner>? = null
     {
         val cleaner = {
-            val funBox = FunBox { called.value = true }.freeze()
+            val funBox = FunBox { called.value = true }
             funBoxWeak = WeakReference(funBox)
             createCleaner(funBox) { it.call() }
         }()
@@ -62,10 +58,6 @@ fun testCleanerLambda() {
 
 @Test
 fun testCleanerNonSharedLambda() {
-    // Only for experimental MM.
-    if (Platform.memoryModel != MemoryModel.EXPERIMENTAL) {
-        return
-    }
     val called = AtomicBoolean(false);
     var funBoxWeak: WeakReference<FunBox>? = null
     var cleanerWeak: WeakReference<Cleaner>? = null
@@ -95,7 +87,7 @@ fun testCleanerAnonymousFunction() {
     var cleanerWeak: WeakReference<Cleaner>? = null
     {
         val cleaner = {
-            val funBox = FunBox { called.value = true }.freeze()
+            val funBox = FunBox { called.value = true }
             funBoxWeak = WeakReference(funBox)
             createCleaner(funBox, fun (it: FunBox) { it.call() })
         }()
@@ -114,10 +106,6 @@ fun testCleanerAnonymousFunction() {
 
 @Test
 fun testCleanerNonSharedAnonymousFunction() {
-    // Only for experimental MM.
-    if (Platform.memoryModel != MemoryModel.EXPERIMENTAL) {
-        return
-    }
     val called = AtomicBoolean(false);
     var funBoxWeak: WeakReference<FunBox>? = null
     var cleanerWeak: WeakReference<Cleaner>? = null
@@ -147,7 +135,7 @@ fun testCleanerFunctionReference() {
     var cleanerWeak: WeakReference<Cleaner>? = null
     {
         val cleaner = {
-            val funBox = FunBox { called.value = true }.freeze()
+            val funBox = FunBox { called.value = true }
             funBoxWeak = WeakReference(funBox)
             createCleaner(funBox, FunBox::call)
         }()
@@ -166,10 +154,6 @@ fun testCleanerFunctionReference() {
 
 @Test
 fun testCleanerNonSharedFunctionReference() {
-    // Only for experimental MM.
-    if (Platform.memoryModel != MemoryModel.EXPERIMENTAL) {
-        return
-    }
     val called = AtomicBoolean(false);
     var funBoxWeak: WeakReference<FunBox>? = null
     var cleanerWeak: WeakReference<Cleaner>? = null
@@ -194,10 +178,6 @@ fun testCleanerNonSharedFunctionReference() {
 
 @Test
 fun testCleanerFailWithNonShareableArgument() {
-    // Only for legacy MM.
-    if (Platform.memoryModel == MemoryModel.EXPERIMENTAL) {
-        return
-    }
     val funBox = FunBox {}
     assertFailsWith<IllegalArgumentException> {
         createCleaner(funBox) {}
@@ -211,12 +191,12 @@ fun testCleanerCleansWithoutGC() {
     var cleanerWeak: WeakReference<Cleaner>? = null
     {
         val cleaner = {
-            val funBox = FunBox { called.value = true }.freeze()
+            val funBox = FunBox { called.value = true }
             funBoxWeak = WeakReference(funBox)
             createCleaner(funBox) { it.call() }
         }()
         GC.collect()  // Make sure local funBox reference is gone
-        cleaner.freeze()
+        cleaner
         cleanerWeak = WeakReference(cleaner)
         assertFalse(called.value)
     }()
@@ -228,12 +208,6 @@ fun testCleanerCleansWithoutGC() {
     waitCleanerWorker()
 
     assertTrue(called.value)
-
-    // Only for legacy MM.
-    if (Platform.memoryModel != MemoryModel.EXPERIMENTAL) {
-        // If this fails, GC has somehow ran on the cleaners worker.
-        assertNotNull(funBoxWeak!!.value)
-    }
 }
 
 val globalInt = AtomicInt(0)
@@ -244,7 +218,7 @@ fun testCleanerWithInt() {
     {
         val cleaner = createCleaner(42) {
             globalInt.value = it
-        }.freeze()
+        }
         cleanerWeak = WeakReference(cleaner)
         assertEquals(0, globalInt.value)
     }()
@@ -282,7 +256,7 @@ fun testCleanerWithException() {
     var funBoxWeak: WeakReference<FunBox>? = null
     var cleanerWeak: WeakReference<Cleaner>? = null
     {
-        val funBox = FunBox { called.value = true }.freeze()
+        val funBox = FunBox { called.value = true }
         funBoxWeak = WeakReference(funBox)
         val cleaner = createCleaner(funBox) {
             it.call()

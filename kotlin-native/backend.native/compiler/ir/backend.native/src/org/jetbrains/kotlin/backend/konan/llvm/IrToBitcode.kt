@@ -70,8 +70,7 @@ internal class NativeCodeGeneratorException(val declarations: List<IrElement>, c
 }
 
 internal enum class FieldStorageKind {
-    GLOBAL, // In the old memory model these are only accessible from the "main" thread.
-    SHARED_FROZEN,
+    GLOBAL,
     THREAD_LOCAL
 }
 
@@ -79,36 +78,14 @@ internal enum class FieldStorageKind {
 internal fun IrField.storageKind(context: Context): FieldStorageKind {
     // TODO: Is this correct?
     val annotations = correspondingPropertySymbol?.owner?.annotations ?: annotations
-    val isLegacyMM = context.memoryModel != MemoryModel.EXPERIMENTAL
-    // TODO: simplify, once IR types are fully there.
-    val typeAnnotations = (type.classifierOrNull?.owner as? IrAnnotationContainer)?.annotations
-    val typeFrozen = typeAnnotations?.hasAnnotation(KonanFqNames.frozen) == true ||
-        (typeAnnotations?.hasAnnotation(KonanFqNames.frozenLegacyMM) == true && isLegacyMM)
-    return when {
-        annotations.hasAnnotation(KonanFqNames.threadLocal) -> FieldStorageKind.THREAD_LOCAL
-        !isLegacyMM && !context.config.freezing.freezeImplicit -> FieldStorageKind.GLOBAL
-        !isFinal -> FieldStorageKind.GLOBAL
-        annotations.hasAnnotation(KonanFqNames.sharedImmutable) -> FieldStorageKind.SHARED_FROZEN
-        typeFrozen -> FieldStorageKind.SHARED_FROZEN
-        else -> FieldStorageKind.GLOBAL
-    }
+    return if (annotations.hasAnnotation(KonanFqNames.threadLocal)) FieldStorageKind.THREAD_LOCAL else FieldStorageKind.GLOBAL
 }
 
-internal fun IrField.needsGCRegistration(context: Context) =
-        context.memoryModel == MemoryModel.EXPERIMENTAL && // only for the new MM
-                type.binaryTypeIsReference() && // only for references
+internal val IrField.needsGCRegistration
+    get() =
+        type.binaryTypeIsReference() && // only for references
                 (hasNonConstInitializer || // which are initialized from heap object
                         !isFinal) // or are not final
-
-
-internal fun IrField.isGlobalNonPrimitive(context: Context) = when  {
-        type.computePrimitiveBinaryTypeOrNull() != null -> false
-        else -> storageKind(context) == FieldStorageKind.GLOBAL
-    }
-
-
-internal fun IrField.shouldBeFrozen(context: Context): Boolean =
-        this.storageKind(context) == FieldStorageKind.SHARED_FROZEN
 
 internal fun IrFunction.shouldGenerateBody(): Boolean = when {
     this is IrConstructor && constructedClass.isInlined() -> false
@@ -399,14 +376,11 @@ internal class CodeGeneratorVisitor(
     private fun FunctionGenerationContext.initGlobalField(irField: IrField) {
         val address = staticFieldPtr(irField, this)
         val initialValue = if (irField.hasNonConstInitializer) {
-            val initialization = evaluateExpression(irField.initializer!!.expression)
-            if (irField.shouldBeFrozen(context))
-                freeze(initialization, currentCodeContext.exceptionHandler)
-            initialization
+            evaluateExpression(irField.initializer!!.expression)
         } else {
             null
         }
-        if (irField.needsGCRegistration(context)) {
+        if (irField.needsGCRegistration) {
             call(llvm.initAndRegisterGlobalFunction, listOf(address, initialValue
                     ?: kNullObjHeaderPtr))
         } else if (initialValue != null) {
@@ -1366,8 +1340,7 @@ internal class CodeGeneratorVisitor(
             functionGenerationContext.condBr(condition, loopBody, loopScope.loopExit)
 
             functionGenerationContext.positionAtEnd(loopBody)
-            if (context.memoryModel == MemoryModel.EXPERIMENTAL)
-                call(llvm.Kotlin_mm_safePointWhileLoopBody, emptyList())
+            call(llvm.Kotlin_mm_safePointWhileLoopBody, emptyList())
             loop.body?.generate()
 
             functionGenerationContext.br(loopScope.loopCheck)
@@ -1387,8 +1360,7 @@ internal class CodeGeneratorVisitor(
             functionGenerationContext.br(loopBody)
 
             functionGenerationContext.positionAtEnd(loopBody)
-            if (context.memoryModel == MemoryModel.EXPERIMENTAL)
-                call(llvm.Kotlin_mm_safePointWhileLoopBody, emptyList())
+            call(llvm.Kotlin_mm_safePointWhileLoopBody, emptyList())
             loop.body?.generate()
             functionGenerationContext.br(loopScope.loopCheck)
 
@@ -1761,9 +1733,6 @@ internal class CodeGeneratorVisitor(
                 return evaluateConst(value.symbol.owner.initializer?.expression as IrConst<*>).llvm
             }
             else -> {
-                if (context.config.threadsAreAllowed && value.symbol.owner.isGlobalNonPrimitive(context)) {
-                    functionGenerationContext.checkGlobalsAccessible(currentCodeContext.exceptionHandler)
-                }
                 fieldAddress = staticFieldPtr(value.symbol.owner, functionGenerationContext)
                 alignment = generationState.llvmDeclarations.forStaticField(value.symbol.owner).alignment
             }
@@ -1779,17 +1748,6 @@ internal class CodeGeneratorVisitor(
     }
 
     //-------------------------------------------------------------------------//
-    private fun needMutationCheck(irField: IrField): Boolean {
-        // For now we omit mutation checks on immutable types, as this allows initialization in constructor
-        // and it is assumed that API doesn't allow to change them.
-        return context.config.freezing.enableFreezeChecks && !irField.parentAsClass.isFrozen(context) && !irField.hasAnnotation(KonanFqNames.volatile)
-    }
-
-    private fun needLifetimeConstraintsCheck(valueToAssign: LLVMValueRef, irClass: IrClass): Boolean {
-        // TODO: Likely, we don't need isFrozen check here at all.
-        return context.config.memoryModel != MemoryModel.EXPERIMENTAL
-                && functionGenerationContext.isObjectType(valueToAssign.type) && !irClass.isFrozen(context)
-    }
 
     private fun isZeroConstValue(value: IrExpression): Boolean {
         if (value !is IrConst<*>) return false
@@ -1827,23 +1785,10 @@ internal class CodeGeneratorVisitor(
             require(thisPtr.type == codegen.kObjHeaderPtr) {
                 LLVMPrintTypeToString(thisPtr.type)?.toKString().toString()
             }
-            val parentAsClass = value.symbol.owner.parentAsClass
-            if (needMutationCheck(value.symbol.owner)) {
-                functionGenerationContext.call(llvm.mutationCheck,
-                        listOf(functionGenerationContext.bitcast(codegen.kObjHeaderPtr, thisPtr)),
-                        Lifetime.IRRELEVANT, currentCodeContext.exceptionHandler)
-            }
-            if (needLifetimeConstraintsCheck(valueToAssign, parentAsClass)) {
-                functionGenerationContext.call(llvm.checkLifetimesConstraint, listOf(thisPtr, valueToAssign))
-            }
             address = fieldPtrOfClass(thisPtr, value.symbol.owner)
             alignment = generationState.llvmDeclarations.forField(value.symbol.owner).alignment
         } else {
             require(value.symbol.owner.isStatic) { "A receiver expected for a non-static field: ${value.render()}" }
-            if (context.config.threadsAreAllowed && value.symbol.owner.storageKind(context) == FieldStorageKind.GLOBAL)
-                functionGenerationContext.checkGlobalsAccessible(currentCodeContext.exceptionHandler)
-            if (value.symbol.owner.shouldBeFrozen(context) && value.origin != ObjectClassLowering.IrStatementOriginFieldPreInit)
-                functionGenerationContext.freeze(valueToAssign, currentCodeContext.exceptionHandler)
             address = staticFieldPtr(value.symbol.owner, functionGenerationContext)
             alignment = generationState.llvmDeclarations.forStaticField(value.symbol.owner).alignment
         }
@@ -2412,16 +2357,7 @@ internal class CodeGeneratorVisitor(
             val result = evaluateExpression(expression.result, resultSlot)
 
             functionGenerationContext.appendingTo(bbDispatch) {
-                if (context.config.indirectBranchesAreAllowed)
-                    functionGenerationContext.indirectBr(suspensionPointId, resumePoints)
-                else {
-                    val bbElse = functionGenerationContext.basicBlock("else", null) {
-                        functionGenerationContext.unreachable()
-                    }
-
-                    val cases = resumePoints.withIndex().map { llvm.int32(it.index + 1) to it.value }
-                    functionGenerationContext.switch(functionGenerationContext.ptrToInt(suspensionPointId, llvm.int32Type), cases, bbElse)
-                }
+                functionGenerationContext.indirectBr(suspensionPointId, resumePoints)
             }
             return result
         }
@@ -2432,10 +2368,7 @@ internal class CodeGeneratorVisitor(
                                              val bbResumeId: Int): InnerScopeImpl() {
         override fun genGetValue(value: IrValueDeclaration, resultSlot: LLVMValueRef?): LLVMValueRef {
             if (value == suspensionPointId) {
-                return if (context.config.indirectBranchesAreAllowed)
-                           functionGenerationContext.blockAddress(bbResume)
-                       else
-                           functionGenerationContext.intToPtr(llvm.int32(bbResumeId + 1), llvm.int8PtrType)
+                return functionGenerationContext.blockAddress(bbResume)
             }
             return super.genGetValue(value, resultSlot)
         }
@@ -2698,7 +2631,7 @@ internal class CodeGeneratorVisitor(
     private val IrFunction.needsNativeThreadState: Boolean
         get() {
             // We assume that call site thread state switching is required for interop calls only.
-            val result = context.memoryModel == MemoryModel.EXPERIMENTAL && origin == CBridgeOrigin.KOTLIN_TO_C_BRIDGE
+            val result = origin == CBridgeOrigin.KOTLIN_TO_C_BRIDGE
             if (result) {
                 check(isExternal)
                 check(!annotations.hasAnnotation(KonanFqNames.gcUnsafeCall))
@@ -2792,10 +2725,8 @@ internal class CodeGeneratorVisitor(
         if (!context.config.isFinalBinary)
             return
 
-        overrideRuntimeGlobal("Kotlin_destroyRuntimeMode", llvm.constInt32(context.config.destroyRuntimeMode.value))
         overrideRuntimeGlobal("Kotlin_gcMutatorsCooperate", llvm.constInt32(if (context.config.gcMutatorsCooperate) 1 else 0))
         overrideRuntimeGlobal("Kotlin_auxGCThreads", llvm.constInt32(context.config.auxGCThreads.toInt()))
-        overrideRuntimeGlobal("Kotlin_workerExceptionHandling", llvm.constInt32(context.config.workerExceptionHandling.value))
         overrideRuntimeGlobal("Kotlin_suspendFunctionsFromAnyThreadFromObjC", llvm.constInt32(if (context.config.suspendFunctionsFromAnyThreadFromObjC) 1 else 0))
         val getSourceInfoFunctionName = when (context.config.sourceInfoType) {
             SourceInfoType.NOOP -> null
@@ -3031,8 +2962,6 @@ internal fun NativeGenerationState.generateRuntimeConstantsModule() : LLVMModule
         config.runtimeLogs[it]!!.ord.let { llvm.constInt32(it) }
     })
     setRuntimeConstGlobal("Kotlin_runtimeLogs", runtimeLogs)
-    setRuntimeConstGlobal("Kotlin_freezingEnabled", llvm.constInt32(if (config.freezing.enableFreezeAtRuntime) 1 else 0))
-    setRuntimeConstGlobal("Kotlin_freezingChecksEnabled", llvm.constInt32(if (config.freezing.enableFreezeChecks) 1 else 0))
     setRuntimeConstGlobal("Kotlin_concurrentWeakSweep", llvm.constInt32(if (context.config.concurrentWeakSweep) 1 else 0))
     setRuntimeConstGlobal("Kotlin_gcMarkSingleThreaded", llvm.constInt32(if (config.gcMarkSingleThreaded) 1 else 0))
 

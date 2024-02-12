@@ -44,29 +44,16 @@ fun testGlobalAccessOnWorker() {
 
     val worker = Worker.start()
     val future = worker.execute(TransferMode.SAFE, {}) {
-        if (Platform.memoryModel == MemoryModel.EXPERIMENTAL) {
-            assertEquals(global2.value, global2.valueOrNull)
-            global2.value.a
-        } else {
-            val local = global2
-            assertFailsWith<IncorrectDereferenceException> {
-                local.value
-            }
-            assertEquals(null, local.valueOrNull)
-            null
-        }
+        assertEquals(global2.value, global2.valueOrNull)
+        global2.value.a
     }
 
     val value = future.result
-    if (Platform.memoryModel == MemoryModel.EXPERIMENTAL) {
-        assertEquals(3, value)
-    } else {
-        assertEquals(null, value)
-    }
+    assertEquals(3, value)
     worker.requestTermination().result
 }
 
-val global3: WorkerBoundReference<A> = WorkerBoundReference(A(3).freeze())
+val global3: WorkerBoundReference<A> = WorkerBoundReference(A(3))
 
 @Test
 fun testGlobalAccessOnWorkerFrozenInitially() {
@@ -88,7 +75,7 @@ val global4: WorkerBoundReference<A> = WorkerBoundReference(A(3))
 @Test
 fun testGlobalAccessOnWorkerFrozenBeforePassing() {
     assertEquals(3, global4.value.a)
-    global4.value.freeze()
+    global4.value
 
     val worker = Worker.start()
     val future = worker.execute(TransferMode.SAFE, {}) {
@@ -119,7 +106,7 @@ fun testGlobalAccessOnWorkerFrozenBeforeAccess() {
 
     while (semaphore.value < 1) {
     }
-    global5.value.freeze()
+    global5.value
     semaphore.incrementAndGet()
 
     val value = future.result
@@ -180,7 +167,7 @@ fun testLocal() {
 
 @Test
 fun testLocalFrozen() {
-    val local = WorkerBoundReference(A(3)).freeze()
+    val local = WorkerBoundReference(A(3))
     assertEquals(3, local.value.a)
     assertEquals(3, local.valueOrNull?.a)
 
@@ -197,35 +184,23 @@ fun testLocalFrozen() {
 
 @Test
 fun testLocalAccessOnWorkerFrozen() {
-    val local = WorkerBoundReference(A(3)).freeze()
+    val local = WorkerBoundReference(A(3))
     assertEquals(3, local.value.a)
 
     val worker = Worker.start()
     val future = worker.execute(TransferMode.SAFE, { local }) { local ->
-        if (Platform.memoryModel == MemoryModel.EXPERIMENTAL) {
-            assertEquals(local.value, local.valueOrNull)
-            local.value.a
-        } else {
-            assertFailsWith<IncorrectDereferenceException> {
-                local.value
-            }
-            assertEquals(null, local.valueOrNull)
-            null
-        }
+        assertEquals(local.value, local.valueOrNull)
+        local.value.a
     }
 
     val value = future.result
-    if (Platform.memoryModel == MemoryModel.EXPERIMENTAL) {
-        assertEquals(3, value)
-    } else {
-        assertEquals(null, value)
-    }
+    assertEquals(3, value)
     worker.requestTermination().result
 }
 
 @Test
 fun testLocalAccessOnWorkerFrozenInitiallyFrozen() {
-    val local = WorkerBoundReference(A(3).freeze()).freeze()
+    val local = WorkerBoundReference(A(3))
     assertEquals(3, local.value.a)
     assertEquals(3, local.valueOrNull?.a)
 
@@ -241,9 +216,9 @@ fun testLocalAccessOnWorkerFrozenInitiallyFrozen() {
 
 @Test
 fun testLocalAccessOnWorkerFrozenBeforePassingFrozen() {
-    val local = WorkerBoundReference(A(3)).freeze()
+    val local = WorkerBoundReference(A(3))
     assertEquals(3, local.value.a)
-    local.value.freeze()
+    local.value
 
     val worker = Worker.start()
     val future = worker.execute(TransferMode.SAFE, { local }) { local ->
@@ -259,7 +234,7 @@ fun testLocalAccessOnWorkerFrozenBeforePassingFrozen() {
 fun testLocalAccessOnWorkerFrozenBeforeAccessFrozen() {
     val semaphore: AtomicInt = AtomicInt(0)
 
-    val local = WorkerBoundReference(A(3)).freeze()
+    val local = WorkerBoundReference(A(3))
     assertEquals(3, local.value.a)
 
     val worker = Worker.start()
@@ -273,7 +248,7 @@ fun testLocalAccessOnWorkerFrozenBeforeAccessFrozen() {
 
     while (semaphore.value < 1) {
     }
-    local.value.freeze()
+    local.value
     semaphore.incrementAndGet()
 
     val value = future.result
@@ -297,19 +272,12 @@ fun testLocalAccessOnMainThread() {
 fun testLocalAccessOnMainThreadFrozen() {
     val worker = Worker.start()
     val future = worker.execute(TransferMode.SAFE, {}) {
-        WorkerBoundReference(A(3)).freeze()
+        WorkerBoundReference(A(3))
     }
 
     val value = future.result
-    if (Platform.memoryModel == MemoryModel.EXPERIMENTAL) {
-        assertEquals(3, value.value.a)
-        assertEquals(value.value, value.valueOrNull)
-    } else {
-        assertFailsWith<IncorrectDereferenceException> {
-            value.value
-        }
-        assertEquals(null, value.valueOrNull)
-    }
+    assertEquals(3, value.value.a)
+    assertEquals(value.value, value.valueOrNull)
 
     worker.requestTermination().result
 }
@@ -318,7 +286,7 @@ fun testLocalAccessOnMainThreadFrozen() {
 fun testLocalModificationFrozen() {
     val semaphore: AtomicInt = AtomicInt(0)
 
-    val local = WorkerBoundReference(A(3)).freeze()
+    val local = WorkerBoundReference(A(3))
     assertEquals(3, local.value.a)
 
     val worker = Worker.start()
@@ -342,7 +310,7 @@ fun testLocalModificationFrozen() {
 
 @Test
 fun testLocalGetWorkerFrozen() {
-    val local = WorkerBoundReference(A(3)).freeze()
+    val local = WorkerBoundReference(A(3))
 
     val ownerId = Worker.current.id
     assertEquals(ownerId, local.worker.id)
@@ -378,7 +346,7 @@ fun testLocalForeignGetWorkerFrozen() {
     val worker = Worker.start()
     val ownerId = worker.id
     val future = worker.execute(TransferMode.SAFE, { ownerId }) { ownerId ->
-        val local = WorkerBoundReference(A(3)).freeze()
+        val local = WorkerBoundReference(A(3))
         assertEquals(ownerId, local.worker.id)
         local
     }
@@ -393,7 +361,7 @@ class Wrapper(val ref: WorkerBoundReference<A>)
 
 @Test
 fun testLocalWithWrapperFrozen() {
-    val local = Wrapper(WorkerBoundReference(A(3))).freeze()
+    val local = Wrapper(WorkerBoundReference(A(3)))
     assertEquals(3, local.ref.value.a)
 
     val worker = Worker.start()
@@ -408,29 +376,18 @@ fun testLocalWithWrapperFrozen() {
 
 @Test
 fun testLocalAccessWithWrapperFrozen() {
-    val local = Wrapper(WorkerBoundReference(A(3))).freeze()
+    val local = Wrapper(WorkerBoundReference(A(3)))
     assertEquals(3, local.ref.value.a)
 
     val worker = Worker.start()
     val future = worker.execute(TransferMode.SAFE, { local }) { local ->
-        if (Platform.memoryModel == MemoryModel.EXPERIMENTAL) {
-            assertEquals(local.ref.value, local.ref.valueOrNull)
-            local.ref.value.a
-        } else {
-            assertFailsWith<IncorrectDereferenceException> {
-                local.ref.value
-            }
-            assertEquals(null, local.ref.valueOrNull)
-            null
-        }
+        assertEquals(local.ref.value, local.ref.valueOrNull)
+        local.ref.value.a
     }
 
     val value = future.result
-    if (Platform.memoryModel == MemoryModel.EXPERIMENTAL) {
-        assertEquals(3, value)
-    } else {
-        assertEquals(null, value)
-    }
+    assertEquals(3, value)
+
     worker.requestTermination().result
 }
 
@@ -456,7 +413,7 @@ fun testCollect() {
 }
 
 fun getOwnerAndWeaksFrozen(initial: Int): Triple<AtomicReference<WorkerBoundReference<A>?>, WeakReference<WorkerBoundReference<A>>, WeakReference<A>> {
-    val ref = WorkerBoundReference(A(initial)).freeze()
+    val ref = WorkerBoundReference(A(initial))
     val refOwner: AtomicReference<WorkerBoundReference<A>?> = AtomicReference(ref)
     val refWeak = WeakReference(ref)
     val refValueWeak = WeakReference(ref.value)
@@ -469,14 +426,10 @@ fun testCollectFrozen() {
     val (refOwner, refWeak, refValueWeak) = getOwnerAndWeaksFrozen(3)
 
     refOwner.value = null
-    if (Platform.memoryModel == MemoryModel.EXPERIMENTAL) {
-        // This runs the finalizer on the WorkerBoundReference<A>, which schedules removing A from the root set
-        GC.collect()
-        // This actually frees A
-        GC.collect()
-    } else {
-        GC.collect()
-    }
+    // This runs the finalizer on the WorkerBoundReference<A>, which schedules removing A from the root set
+    GC.collect()
+    // This actually frees A
+    GC.collect()
 
     // Last reference to WorkerBoundReference is gone, so it and it's referent are destroyed.
     assertNull(refWeak.value)
@@ -523,7 +476,7 @@ fun testCollectInWorkerFrozen() {
 }
 
 fun doNotCollectInWorkerFrozen(worker: Worker, semaphore: AtomicInt): Future<WorkerBoundReference<A>> {
-    val ref = WorkerBoundReference(A(3)).freeze()
+    val ref = WorkerBoundReference(A(3))
 
     return worker.execute(TransferMode.SAFE, { Pair(ref, semaphore) }) { (ref, semaphore) ->
         semaphore.incrementAndGet()
@@ -583,11 +536,11 @@ fun collectCyclicGarbage() {
 }
 
 fun createCyclicGarbageFrozen(): Triple<AtomicReference<WorkerBoundReference<B1>?>, WeakReference<B1>, WeakReference<B2>> {
-    val ref1 = WorkerBoundReference(B1()).freeze()
+    val ref1 = WorkerBoundReference(B1())
     val ref1Owner: AtomicReference<WorkerBoundReference<B1>?> = AtomicReference(ref1)
     val ref1Weak = WeakReference(ref1.value)
 
-    val ref2 = WorkerBoundReference(B2(ref1)).freeze()
+    val ref2 = WorkerBoundReference(B2(ref1))
     val ref2Weak = WeakReference(ref2.value)
 
     ref1.value.b2 = ref2
@@ -611,12 +564,12 @@ fun doesNotCollectCyclicGarbageFrozen() {
 fun createCrossThreadCyclicGarbageFrozen(
         worker: Worker
 ): Triple<AtomicReference<WorkerBoundReference<B1>?>, WeakReference<B1>, WeakReference<B2>> {
-    val ref1 = WorkerBoundReference(B1()).freeze()
+    val ref1 = WorkerBoundReference(B1())
     val ref1Owner: AtomicReference<WorkerBoundReference<B1>?> = AtomicReference(ref1)
     val ref1Weak = WeakReference(ref1.value)
 
     val future = worker.execute(TransferMode.SAFE, { ref1 }) { ref1 ->
-        val ref2 = WorkerBoundReference(B2(ref1)).freeze()
+        val ref2 = WorkerBoundReference(B2(ref1))
         Pair(ref2, WeakReference(ref2.value))
     }
     val (ref2, ref2Weak) = future.result
@@ -655,10 +608,10 @@ class C1 {
 data class C2(val c1: AtomicReference<WorkerBoundReference<C1>>)
 
 fun createCyclicGarbageWithAtomicsFrozen(): Triple<AtomicReference<WorkerBoundReference<C1>?>, WeakReference<C1>, WeakReference<C2>> {
-    val ref1 = WorkerBoundReference(C1()).freeze()
+    val ref1 = WorkerBoundReference(C1())
     val ref1Weak = WeakReference(ref1.value)
 
-    val ref2 = WorkerBoundReference(C2(AtomicReference(ref1))).freeze()
+    val ref2 = WorkerBoundReference(C2(AtomicReference(ref1)))
     val ref2Weak = WeakReference(ref2.value)
 
     ref1.value.c2 = AtomicReference(ref2)
@@ -689,16 +642,12 @@ fun collectCyclicGarbageWithAtomicsFrozen() {
     val (ref1Owner, ref1Weak, ref2Weak) = createCyclicGarbageWithAtomicsFrozen()
 
     dispose(ref1Owner)
-    if (Platform.memoryModel == MemoryModel.EXPERIMENTAL) {
-        // Finalizes WorkerBoundReference<C2> and schedules C2 removal from the root set
-        GC.collect()
-        // Frees C2, finalizes WorkerBoundReference<C1> and schedules C1 removal from the root set
-        GC.collect()
-        // Frees C1
-        GC.collect()
-    } else {
-        GC.collect()
-    }
+    // Finalizes WorkerBoundReference<C2> and schedules C2 removal from the root set
+    GC.collect()
+    // Frees C2, finalizes WorkerBoundReference<C1> and schedules C1 removal from the root set
+    GC.collect()
+    // Frees C1
+    GC.collect()
 
     assertNull(ref1Weak.value)
     assertNull(ref2Weak.value)
@@ -707,11 +656,11 @@ fun collectCyclicGarbageWithAtomicsFrozen() {
 fun createCrossThreadCyclicGarbageWithAtomicsFrozen(
         worker: Worker
 ): Triple<AtomicReference<WorkerBoundReference<C1>?>, WeakReference<C1>, WeakReference<C2>> {
-    val ref1 = WorkerBoundReference(C1()).freeze()
+    val ref1 = WorkerBoundReference(C1())
     val ref1Weak = WeakReference(ref1.value)
 
     val future = worker.execute(TransferMode.SAFE, { ref1 }) { ref1 ->
-        val ref2 = WorkerBoundReference(C2(AtomicReference(ref1))).freeze()
+        val ref2 = WorkerBoundReference(C2(AtomicReference(ref1)))
         Pair(ref2, WeakReference(ref2.value))
     }
     val (ref2, ref2Weak) = future.result
@@ -764,7 +713,7 @@ fun concurrentAccessFrozen() {
     val workerCount = 10
     val workerUnlocker = AtomicInt(0)
 
-    val ref = WorkerBoundReference(A(3)).freeze()
+    val ref = WorkerBoundReference(A(3))
     assertEquals(3, ref.value.a)
 
     val workers = Array(workerCount) {
@@ -775,73 +724,17 @@ fun concurrentAccessFrozen() {
             while (workerUnlocker.value < 1) {
             }
 
-            if (Platform.memoryModel == MemoryModel.EXPERIMENTAL) {
-                ref.value.a
-            } else {
-                assertFailsWith<IncorrectDereferenceException> {
-                    ref.value
-                }
-                null
-            }
+            ref.value.a
         }
     }
     workerUnlocker.incrementAndGet()
 
     for (future in futures) {
         val value = future.result
-        if (Platform.memoryModel == MemoryModel.EXPERIMENTAL) {
-            assertEquals(3, value)
-        } else {
-            assertEquals(null, value)
-        }
+        assertEquals(3, value)
     }
 
     for (worker in workers) {
         worker.requestTermination().result
     }
-}
-
-@Test
-fun testExceptionMessageFrozen() {
-    // Only for legacy MM
-    if (Platform.memoryModel == MemoryModel.EXPERIMENTAL) {
-        return
-    }
-
-    val worker = Worker.start()
-    val future = worker.execute(TransferMode.SAFE, {}) {
-        WorkerBoundReference(A(3)).freeze()
-    }
-    val value = future.result
-
-    val ownerName = worker.name
-    val messagePattern = Regex("illegal attempt to access non-shared runtime\\.concurrent\\.worker_bound_reference0\\.A@[a-f0-9]+ bound to `$ownerName` from `${Worker.current.name}`")
-
-    val exception = assertFailsWith<IncorrectDereferenceException> {
-        value.value
-    }
-    assertTrue(messagePattern matches exception.message!!)
-
-    worker.requestTermination().result
-}
-
-@Test
-fun testDoubleFreeze() {
-    val ref = WorkerBoundReference(A(3))
-    val wrapper = Wrapper(ref)
-    ref.freeze()
-    ref.freeze()
-    wrapper.freeze()
-}
-
-@Test
-fun testDoubleFreezeWithFreezeBlocker() {
-    if (!Platform.isFreezingEnabled) return
-    val ref = WorkerBoundReference(A(3))
-    val wrapper = Wrapper(ref)
-    wrapper.ensureNeverFrozen()
-    assertFailsWith<FreezingException> {
-        wrapper.freeze()
-    }
-    ref.freeze()
 }

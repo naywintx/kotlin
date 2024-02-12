@@ -84,10 +84,6 @@ void BackRefFromAssociatedObject::releaseRef() {
     mm::ObjCBackRef::reinterpret(ref_).release();
 }
 
-void BackRefFromAssociatedObject::detach() {
-    RuntimeFail("Legacy MM only");
-}
-
 void BackRefFromAssociatedObject::dealloc() {
     // This will wait for all `tryAddRef` to finish.
     std::unique_lock guard(*deallocMutex_);

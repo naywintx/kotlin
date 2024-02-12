@@ -124,6 +124,6 @@ internal class StaticInitializersLowering(val context: Context) : FileLoweringPa
     }
 
     private val IrField.needsInitializationAtRuntime: Boolean
-        get() = hasNonConstInitializer || needsGCRegistration(context)
+        get() = hasNonConstInitializer || needsGCRegistration
 
 }

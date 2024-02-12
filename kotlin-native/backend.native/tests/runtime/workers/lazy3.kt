@@ -10,14 +10,9 @@ fun main() {
 }
 
 fun test1() {
-    ensureGetsCollectedFrozenAndNotFrozen { LazyCapturesThis() }
-    ensureGetsCollectedFrozenAndNotFrozen {
-        val l = LazyCapturesThis()
-        l.bar
-        l
-    }
+    ensureGetsCollected { LazyCapturesThis() }
     ensureGetsCollected {
-        val l = LazyCapturesThis().freeze()
+        val l = LazyCapturesThis()
         l.bar
         l
     }
@@ -29,22 +24,12 @@ class LazyCapturesThis {
 }
 
 fun test2() {
-    ensureGetsCollectedFrozenAndNotFrozen { Throwable() }
-    ensureGetsCollectedFrozenAndNotFrozen {
+    ensureGetsCollected { Throwable() }
+    ensureGetsCollected {
         val throwable = Throwable()
         throwable.getStackTrace()
         throwable
     }
-    ensureGetsCollected {
-        val throwable = Throwable().freeze()
-        throwable.getStackTrace()
-        throwable
-    }
-}
-
-fun ensureGetsCollectedFrozenAndNotFrozen(create: () -> Any) {
-    ensureGetsCollected { create().freeze() }
-    ensureGetsCollected(create)
 }
 
 fun ensureGetsCollected(create: () -> Any) {

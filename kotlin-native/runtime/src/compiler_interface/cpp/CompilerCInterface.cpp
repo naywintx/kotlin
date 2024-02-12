@@ -48,11 +48,6 @@ touchFunction(LeaveFrame)
 touchFunction(SetCurrentFrame)
 touchFunction(CheckCurrentFrame)
 
-touchFunction(MutationCheck)
-touchFunction(CheckLifetimesConstraint)
-touchFunction(FreezeSubgraph)
-touchFunction(CheckGlobalsAccessible)
-
 touchFunction(LookupInterfaceTableRecord)
 touchFunction(IsSubtype)
 touchFunction(IsSubclassFast)

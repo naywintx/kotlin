@@ -78,9 +78,9 @@ internal class ObjCExportFunctionGenerationContext(
     }
 
     fun objcReleaseFromRunnableThreadState(objCReference: LLVMValueRef) {
-        switchThreadStateIfExperimentalMM(ThreadState.Native)
+        switchThreadState(ThreadState.Native)
         objcReleaseFromNativeThreadState(objCReference)
-        switchThreadStateIfExperimentalMM(ThreadState.Runnable)
+        switchThreadState(ThreadState.Runnable)
     }
 
     fun objcReleaseFromNativeThreadState(objCReference: LLVMValueRef) {
@@ -1258,7 +1258,7 @@ private fun ObjCExportCodeGenerator.generateKotlinToObjCBridge(
             }
         }
 
-        switchThreadStateIfExperimentalMM(ThreadState.Native)
+        switchThreadState(ThreadState.Native)
 
         val retainAutoreleasedTargetResult = methodBridge.returnBridge.isAutoreleasedObjCReference()
 
@@ -1279,7 +1279,7 @@ private fun ObjCExportCodeGenerator.generateKotlinToObjCBridge(
             objcReleaseFromNativeThreadState(it)
         }
 
-        switchThreadStateIfExperimentalMM(ThreadState.Runnable)
+        switchThreadState(ThreadState.Runnable)
 
         assert(baseMethod.symbol !is IrConstructorSymbol)
 

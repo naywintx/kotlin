@@ -5,19 +5,14 @@
 package kotlin.native
 
 import kotlin.experimental.ExperimentalNativeApi
-import kotlin.native.concurrent.InvalidMutabilityException
-import kotlin.native.internal.ExportForCppRuntime
 import kotlin.native.internal.GCUnsafeCall
 import kotlin.native.internal.UnhandledExceptionHookHolder
-import kotlin.native.internal.runUnhandledExceptionHook
-import kotlin.native.internal.ReportUnhandledException
 
 /**
  * Initializes Kotlin runtime for the current thread, if not inited already.
  */
-@GCUnsafeCall("Kotlin_initRuntimeIfNeededFromKotlin")
 @Deprecated("Initializing runtime is not possible in the new memory model.", level = DeprecationLevel.WARNING)
-external public fun initRuntimeIfNeeded(): Unit
+public fun initRuntimeIfNeeded(): Unit = Unit
 
 /**
  * Deinitializes Kotlin runtime for the current thread, if was inited.
@@ -25,7 +20,7 @@ external public fun initRuntimeIfNeeded(): Unit
  */
 @GCUnsafeCall("Kotlin_deinitRuntimeIfNeeded")
 @Deprecated("Deinit runtime can not be called from Kotlin", level = DeprecationLevel.ERROR)
-external public fun deinitRuntimeIfNeeded(): Unit
+public fun deinitRuntimeIfNeeded(): Unit = Unit
 
 /**
  * Exception thrown when top level variable is accessed from incorrect execution context.
@@ -55,35 +50,22 @@ public typealias ReportUnhandledExceptionHook = Function1<Throwable, Unit>
  * be consistent with a default behaviour when no hooks are set.
  *
  * Set or default hook is also invoked by [processUnhandledException].
- * With the legacy MM the hook must be a frozen lambda so that it could be called from any thread/worker.
  */
 @ExperimentalNativeApi
-@OptIn(FreezingIsDeprecated::class)
-public fun setUnhandledExceptionHook(hook: ReportUnhandledExceptionHook?): ReportUnhandledExceptionHook? {
-    try {
-        return UnhandledExceptionHookHolder.hook.getAndSet(hook)
-    } catch (e: InvalidMutabilityException) {
-        throw InvalidMutabilityException("Unhandled exception hook must be frozen")
-    }
-}
+public fun setUnhandledExceptionHook(hook: ReportUnhandledExceptionHook?): ReportUnhandledExceptionHook? =
+        UnhandledExceptionHookHolder.hook.getAndSet(hook)
 
 @Suppress("CONFLICTING_OVERLOADS")
 @Deprecated("Provided for binary compatibility", level = DeprecationLevel.HIDDEN)
-@OptIn(FreezingIsDeprecated::class, ExperimentalNativeApi::class)
-public fun setUnhandledExceptionHook(hook: ReportUnhandledExceptionHook): ReportUnhandledExceptionHook? {
-    try {
-        return UnhandledExceptionHookHolder.hook.getAndSet(hook)
-    } catch (e: InvalidMutabilityException) {
-        throw InvalidMutabilityException("Unhandled exception hook must be frozen")
-    }
-}
+@OptIn(ExperimentalNativeApi::class)
+public fun setUnhandledExceptionHook(hook: ReportUnhandledExceptionHook): ReportUnhandledExceptionHook? =
+        UnhandledExceptionHookHolder.hook.getAndSet(hook)
 
 /**
  * Returns a user-defined unhandled exception hook set by [setUnhandledExceptionHook] or `null` if no user-defined hooks were set.
  */
 @ExperimentalNativeApi
 @SinceKotlin("1.6")
-@OptIn(FreezingIsDeprecated::class)
 public fun getUnhandledExceptionHook(): ReportUnhandledExceptionHook? {
     return UnhandledExceptionHookHolder.hook.value
 }

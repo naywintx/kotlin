@@ -128,7 +128,7 @@ fun setCErrorHandler(callback: CPointer<CFunction<(CPointer<ByteVar>) -> Unit>>?
             callback!!(throwable.toString().cstr.ptr)
         }
         kotlin.system.exitProcess(0)
-    }.freeze())
+    })
 }
 
 fun throwException() {

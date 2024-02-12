@@ -249,15 +249,6 @@ class RingLauncher : Launcher() {
                     "WeakRefBenchmark.deadReference" to BenchmarkEntryWithInitAndValidation.create(::WeakRefBenchmark, { deadReference() }, { clean() }),
                     "WeakRefBenchmark.dyingReference" to BenchmarkEntryWithInitAndValidation.create(::WeakRefBenchmark, { dyingReference() }, { clean() }),
             )
-
-    init {
-        @OptIn(kotlin.ExperimentalStdlibApi::class)
-        if (!isExperimentalMM()) {
-            baseBenchmarksSet -= listOf("SplayWithWorkers")
-            baseBenchmarksSet -= listOf("SplayWithMarkHelpers")
-            extendedBenchmarksSet -= listOf("LifeWithMarkHelpers")
-        }
-    }
 }
 
 fun main(args: Array<String>) {

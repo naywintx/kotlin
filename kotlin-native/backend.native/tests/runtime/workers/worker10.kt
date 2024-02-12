@@ -48,7 +48,7 @@ val topSharedData = Data(43)
         false
     }
     }).consume {
-        result -> assertEquals(Platform.memoryModel != MemoryModel.STRICT, result)
+        result -> assertEquals(true, result)
     }
 
     worker.execute(TransferMode.SAFE, { -> }, {
@@ -68,7 +68,7 @@ val topSharedData = Data(43)
             false
         }
     }).consume {
-        result -> assertEquals(Platform.memoryModel != MemoryModel.STRICT, result)
+        result -> assertEquals(true, result)
     }
 
     worker.execute(TransferMode.SAFE, { -> }, {
@@ -85,8 +85,8 @@ val topSharedData = Data(43)
     println("OK")
 }
 
-val atomicRef = AtomicReference<Any?>(Any().freeze())
-val stableRef = StableRef.create(Any().freeze())
+val atomicRef = AtomicReference<Any?>(Any())
+val stableRef = StableRef.create(Any())
 val semaphore = AtomicInt(0)
 
 @Test fun runTest2() {
@@ -127,7 +127,7 @@ fun <T: Any> ensureWeakIs(weak: WeakReference<T>, expected: T?) {
     assertEquals(expected, weak.get())
 }
 
-val stableHolder1 = StableRef.create(("hello" to "world").freeze())
+val stableHolder1 = StableRef.create(("hello" to "world"))
 
 @Test fun runTest4() {
     val worker = Worker.start()
@@ -147,7 +147,7 @@ val stableHolder1 = StableRef.create(("hello" to "world").freeze())
     worker.requestTermination().result
 }
 
-val stableHolder2 = StableRef.create(("hello" to "world").freeze())
+val stableHolder2 = StableRef.create(("hello" to "world"))
 
 @Test fun runTest5() {
     val worker = Worker.start()
@@ -167,7 +167,7 @@ val stableHolder2 = StableRef.create(("hello" to "world").freeze())
     worker.requestTermination().result
 }
 
-val atomicRef2 = AtomicReference<Any?>(Any().freeze())
+val atomicRef2 = AtomicReference<Any?>(Any())
 @Test fun runTest6() {
     semaphore.value = 0
     val worker = Worker.start()

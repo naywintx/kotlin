@@ -257,9 +257,8 @@ fun IC2?.getValueOrNull2() = this?.value
 fun IC3.getValue3() = value
 fun IC3?.getValueOrNull3() = this?.value
 
-fun isFrozen(obj: Any): Boolean = obj.isFrozen
-@OptIn(kotlin.experimental.ExperimentalNativeApi::class)
-fun isFreezingEnabled() = Platform.isFreezingEnabled
+fun isFrozen(obj: Any): Boolean = false
+fun isFreezingEnabled() = false
 fun kotlinLambda(block: (Any) -> Any): Any = block
 
 fun multiply(int: Int, long: Long) = int * long
@@ -480,10 +479,6 @@ class GH2931 {
 
     class Holder {
         val data = Data()
-
-        init {
-            freeze()
-        }
     }
 }
 
@@ -819,9 +814,7 @@ fun gc() {
 }
 
 class TestWeakRefs(private val frozen: Boolean) {
-    private var obj: Any? = Any().also {
-        if (frozen) it.freeze()
-    }
+    private var obj: Any? = Any()
 
     fun getObj() = obj!!
 
@@ -833,8 +826,6 @@ class TestWeakRefs(private val frozen: Boolean) {
         val node1 = Node(null)
         val node2 = Node(node1)
         node1.next = node2
-
-        if (frozen) node1.freeze()
 
         return listOf(node1, node2)
     }
@@ -863,11 +854,11 @@ class SharedRefs {
     }
 
     @OptIn(FreezingIsDeprecated::class)
-    fun createFrozenRegularObject() = createRegularObject().freeze()
+    fun createFrozenRegularObject() = createRegularObject()
     @OptIn(FreezingIsDeprecated::class)
-    fun createFrozenLambda() = createLambda().freeze()
+    fun createFrozenLambda() = createLambda()
     @OptIn(FreezingIsDeprecated::class)
-    fun createFrozenCollection() = createCollection().freeze()
+    fun createFrozenCollection() = createCollection()
 
     fun hasAliveObjects(): Boolean {
         kotlin.native.runtime.GC.collect()
@@ -896,10 +887,6 @@ class KT49497Model {
 
     // Wrapping `this` to make the strongly connected component non-trival, just in case:
     private val selfRef = SelfRef(this)
-
-    init {
-        freeze()
-    }
 }
 
 open class ClassForTypeCheck
@@ -1029,4 +1016,4 @@ fun callFoo_FakeOverrideInInterface(obj: Bar_FakeOverrideInInterface) {
 }
 
 val isExperimentalMM: Boolean
-    get() = kotlin.native.Platform.memoryModel == kotlin.native.MemoryModel.EXPERIMENTAL
+    get() = true

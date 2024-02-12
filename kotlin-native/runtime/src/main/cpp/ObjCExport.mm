@@ -138,14 +138,10 @@ extern "C" id Kotlin_ObjCExport_CreateRetainedNSStringFromKString(ObjHeader* str
       length:numBytes
       encoding:NSUTF16LittleEndianStringEncoding];
 
-    if (!isShareable(str)) {
-      SetAssociatedObject(str, candidate);
-    } else {
-      id old = AtomicCompareAndSwapAssociatedObject(str, nullptr, candidate);
-      if (old != nullptr) {
+    id old = AtomicCompareAndSwapAssociatedObject(str, nullptr, candidate);
+    if (old != nullptr) {
         objc_release(candidate);
         return objc_retain(old);
-      }
     }
 
     return objc_retain(candidate);
@@ -649,10 +645,7 @@ static const TypeInfo* createTypeInfo(
     result->instanceSize_ = superType->instanceSize_;
     result->instanceAlignment_ = superType->instanceAlignment_;
     result->objOffsets_ = superType->objOffsets_;
-    result->objOffsetsCount_ = superType->objOffsetsCount_; // So TF_IMMUTABLE can also be inherited:
-    if ((superType->flags_ & TF_IMMUTABLE) != 0) {
-      result->flags_ |= TF_IMMUTABLE;
-    }
+    result->objOffsetsCount_ = superType->objOffsetsCount_;
     result->processObjectInMark = superType->processObjectInMark;
   } else {
     result->instanceSize_ = fieldsInfo->instanceSize_;

@@ -8,8 +8,6 @@ package org.jetbrains.kotlin.backend.konan.llvm
 import llvm.*
 import org.jetbrains.kotlin.backend.konan.*
 import org.jetbrains.kotlin.backend.konan.ir.*
-import org.jetbrains.kotlin.backend.konan.ir.isArray
-import org.jetbrains.kotlin.backend.konan.ir.isFrozen
 import org.jetbrains.kotlin.backend.konan.lower.FunctionReferenceLowering.Companion.isLoweredFunctionReference
 import org.jetbrains.kotlin.backend.konan.lower.getObjectClassInstanceFunction
 import org.jetbrains.kotlin.builtins.PrimitiveType
@@ -22,49 +20,8 @@ internal class RTTIGenerator(
         override val generationState: NativeGenerationState,
         private val referencedFunctions: Set<IrFunction>?,
 ) : ContextUtils {
-
-    private val acyclicCache = mutableMapOf<IrType, Boolean>()
-    private val safeAcyclicFieldTypes = setOf(
-            context.irBuiltIns.stringClass,
-            context.irBuiltIns.booleanClass, context.irBuiltIns.charClass,
-            context.irBuiltIns.byteClass, context.irBuiltIns.shortClass, context.irBuiltIns.intClass,
-            context.irBuiltIns.longClass,
-            context.irBuiltIns.floatClass, context.irBuiltIns.doubleClass) +
-            context.ir.symbols.primitiveTypesToPrimitiveArrays.values +
-            context.ir.symbols.unsignedTypesToUnsignedArrays.values
-
-    // TODO: extend logic here by taking into account final acyclic classes.
-    private fun checkAcyclicFieldType(type: IrType): Boolean = acyclicCache.getOrPut(type) {
-        when {
-            type.isInterface() -> false
-            type.computePrimitiveBinaryTypeOrNull() != null -> true
-            else -> {
-                val classifier = type.classifierOrNull
-                (classifier != null && classifier in safeAcyclicFieldTypes)
-            }
-        }
-    }
-
-    private fun checkAcyclicClass(irClass: IrClass): Boolean = when {
-        irClass.symbol == context.ir.symbols.array -> false
-        irClass.isArray -> true
-        context.getLayoutBuilder(irClass).getFields(llvm).all { checkAcyclicFieldType(it.type) } -> true
-        else -> false
-    }
-
     private fun flagsFromClass(irClass: IrClass): Int {
         var result = 0
-        if (irClass.isFrozen(context))
-            result = result or TF_IMMUTABLE
-        // TODO: maybe perform deeper analysis to find surely acyclic types.
-        if (!irClass.isInterface && !irClass.isAbstract() && !irClass.isAnnotationClass) {
-            if (checkAcyclicClass(irClass)) {
-                result = result or TF_ACYCLIC
-            }
-        }
-        if (irClass.hasAnnotation(KonanFqNames.leakDetectorCandidate)) {
-            result = result or TF_LEAK_DETECTOR_CANDIDATE
-        }
         if (irClass.isInterface)
             result = result or TF_INTERFACE
 
@@ -74,10 +31,6 @@ internal class RTTIGenerator(
 
         if (irClass.hasAnnotation(KonanFqNames.hasFinalizer)) {
             result = result or TF_HAS_FINALIZER
-        }
-
-        if (irClass.hasAnnotation(KonanFqNames.hasFreezeHook)) {
-            result = result or TF_HAS_FREEZE_HOOK
         }
 
         return result
@@ -500,8 +453,7 @@ internal class RTTIGenerator(
     fun generateSyntheticInterfaceImpl(
             irClass: IrClass,
             methodImpls: Map<IrFunction, ConstPointer>,
-            bodyType: LLVMTypeRef,
-            immutable: Boolean = false
+            bodyType: LLVMTypeRef
     ): ConstPointer {
         assert(irClass.isInterface)
 
@@ -566,7 +518,7 @@ internal class RTTIGenerator(
                 interfaceTableSize = interfaceTableSize, interfaceTable = interfaceTablePtr,
                 packageName = ReflectionInfo.EMPTY.packageName,
                 relativeName = ReflectionInfo.EMPTY.relativeName,
-                flags = flagsFromClass(irClass) or (if (immutable) TF_IMMUTABLE else 0),
+                flags = flagsFromClass(irClass),
                 classId = typeHierarchyInfo.classIdLo,
                 writableTypeInfo = writableTypeInfo,
                 associatedObjects = null,
@@ -636,13 +588,9 @@ internal class RTTIGenerator(
 }
 
 // Keep in sync with Konan_TypeFlags in TypeInfo.h.
-private const val TF_IMMUTABLE = 1
-private const val TF_ACYCLIC   = 2
 private const val TF_INTERFACE = 4
 private const val TF_OBJC_DYNAMIC = 8
-private const val TF_LEAK_DETECTOR_CANDIDATE = 16
 private const val TF_SUSPEND_FUNCTION = 32
 private const val TF_HAS_FINALIZER = 64
-private const val TF_HAS_FREEZE_HOOK = 128
 private const val TF_REFLECTION_SHOW_PKG_NAME = 256
 private const val TF_REFLECTION_SHOW_REL_NAME = 512

@@ -8,7 +8,6 @@
 
 package kotlinx.cinterop
 
-import kotlin.native.*
 import kotlin.native.internal.*
 import kotlin.native.internal.InternalForKotlinNative
 
@@ -25,8 +24,6 @@ public typealias ObjCObjectMeta = ObjCClass
 public interface ObjCProtocol : ObjCObject
 
 @ExportTypeInfo("theForeignObjCObjectTypeInfo")
-@OptIn(FreezingIsDeprecated::class)
-@kotlin.native.internal.Frozen
 internal open class ForeignObjCObject : kotlin.native.internal.ObjCObjectWrapper
 
 @BetaInteropApi

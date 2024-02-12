@@ -436,10 +436,6 @@ internal class CodegenLlvmHelpers(private val generationState: NativeGenerationS
     val addTLSRecord = importRtFunction("AddTLSRecord")
     val lookupTLS = importRtFunction("LookupTLS")
     val initRuntimeIfNeeded = importRtFunction("Kotlin_initRuntimeIfNeeded")
-    val mutationCheck = importRtFunction("MutationCheck")
-    val checkLifetimesConstraint = importRtFunction("CheckLifetimesConstraint")
-    val freezeSubgraph = importRtFunction("FreezeSubgraph")
-    val checkGlobalsAccessible = importRtFunction("CheckGlobalsAccessible")
     val Kotlin_getExceptionObject = importRtFunction("Kotlin_getExceptionObject")
 
     val kRefSharedHolderInitLocal = importRtFunction("KRefSharedHolder_initLocal")

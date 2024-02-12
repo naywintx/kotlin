@@ -37,11 +37,6 @@ void EnsureDeclarationsEmitted() {
     ensureUsed(CheckCurrentFrame);
     ensureUsed(AddTLSRecord);
     ensureUsed(LookupTLS);
-    ensureUsed(MutationCheck);
-    ensureUsed(CheckLifetimesConstraint);
-    ensureUsed(FreezeSubgraph);
-    ensureUsed(FreezeSubgraph);
-    ensureUsed(CheckGlobalsAccessible);
     ensureUsed(Kotlin_mm_switchThreadStateNative);
     ensureUsed(Kotlin_mm_switchThreadStateRunnable);
     ensureUsed(Kotlin_mm_safePointFunctionPrologue);

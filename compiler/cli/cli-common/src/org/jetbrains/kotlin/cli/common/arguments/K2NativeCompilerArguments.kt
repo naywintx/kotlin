@@ -397,7 +397,6 @@ The default value is 1."""
     @Argument(value = "-Xir-property-lazy-initialization", valueDescription = "{disable|enable}", description = "Initialize top level properties lazily per file.")
     var propertyLazyInitialization: String? = null
 
-    // TODO: Remove when legacy MM is gone.
     @Argument(
         value = "-Xworker-exception-handling",
         valueDescription = "<mode>",

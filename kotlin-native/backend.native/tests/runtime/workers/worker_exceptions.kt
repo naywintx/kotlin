@@ -11,7 +11,7 @@ fun testExecuteAfterStartQuiet() {
     val worker = Worker.start(errorReporting = false)
     worker.executeAfter(0L, {
         throw Error("testExecuteAfterStartQuiet error")
-    }.freeze())
+    })
     worker.requestTermination().result
 }
 

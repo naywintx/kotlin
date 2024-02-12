@@ -97,9 +97,7 @@ static void injectToRuntime();
 
   if (!permanent) { // TODO: permanent objects should probably be supported as custom types.
     candidate->refHolder.initAndAddRef(obj);
-    if (!isShareable(obj)) {
-      SetAssociatedObject(obj, candidate);
-    } else {
+    {
       id old = AtomicCompareAndSwapAssociatedObject(obj, nullptr, candidate);
       if (old != nullptr) {
         {
@@ -143,44 +141,17 @@ static void injectToRuntime();
 }
 
 -(void)releaseAsAssociatedObject {
-  RuntimeAssert(!permanent, "Cannot be called on permanent objects");
-
-  if (CurrentMemoryModel == MemoryModel::kExperimental) {
+    RuntimeAssert(!permanent, "Cannot be called on permanent objects");
     // No need for any special handling. Weak reference handling machinery
     // has already cleaned up the reference to Kotlin object.
     [super release];
-    return;
-  }
-
-  // This function is called by the GC. It made a decision to reclaim Kotlin object, and runs
-  // deallocation hooks at the moment, including deallocation of the "associated object" ([self])
-  // using the [super release] call below.
-
-  // The deallocation involves running [self dealloc] which can contain arbitrary code.
-  // In particular, this code can retain and release [self]. Obj-C and Swift runtimes handle this
-  // gracefully (unless the object gets accessed after the deallocation of course), but Kotlin doesn't.
-  // Generally retaining and releasing Kotlin object that is being deallocated would lead to
-  // use-after-dispose and double-dispose problems (with unpredictable consequences) or to an assertion failure.
-  // To workaround this, detach the back ref from the Kotlin object:
-  refHolder.detach();
-
-  // So retain/release/etc. on [self] won't affect the Kotlin object, and an attempt to get
-  // the reference to it (e.g. when calling Kotlin method on [self]) would crash.
-  // The latter is generally ok because can be triggered only by user-defined Swift/Obj-C
-  // subclasses of Kotlin classes.
-  [super release];
 }
 
 -(void)dealloc {
-  if (CurrentMemoryModel == MemoryModel::kExperimental) {
     if (!permanent) {
-      refHolder.dealloc();
+        refHolder.dealloc();
     }
     [super dealloc];
-    return;
-  }
-
-  [super dealloc];
 }
 
 - (instancetype)copyWithZone:(NSZone *)zone {

@@ -5,7 +5,6 @@ import kotlin.native.concurrent.*
 import objcTests.*
 
 fun Worker.runInWorker(block: () -> Unit) {
-    block.freeze()
     val future = this.execute(TransferMode.SAFE, { block }) {
         it()
     }

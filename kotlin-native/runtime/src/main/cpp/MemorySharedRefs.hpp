@@ -36,10 +36,7 @@ class KRefSharedHolder {
 
  private:
   ObjHeader* obj_;
-  union {
-    ForeignRefContext context_; // Legacy MM.
-    kotlin::mm::RawSpecialRef* ref_; // New MM.
-  };
+  kotlin::mm::RawSpecialRef* ref_;
 };
 
 static_assert(std::is_trivially_destructible_v<KRefSharedHolder>, "KRefSharedHolder destructor is not guaranteed to be called.");
@@ -60,10 +57,6 @@ class BackRefFromAssociatedObject {
 
   void releaseRef();
 
-  // This does nothing with the new MM.
-  void detach();
-
-  // This does nothing with legacy MM.
   void dealloc();
 
   // Error if called from the wrong worker with non-frozen obj_.
@@ -75,15 +68,10 @@ class BackRefFromAssociatedObject {
  private:
   union {
     struct {
-      ObjHeader* obj_; // May be null before [initAndAddRef] or after [detach].
-      ForeignRefContext context_;
-      volatile int refCount;
-    }; // Legacy MM
-    struct {
       kotlin::mm::RawSpecialRef* ref_;
       kotlin::ManuallyScoped<kotlin::RWSpinLock<kotlin::MutexThreadStateHandling::kIgnore>> deallocMutex_;
-    }; // New MM. Regular object.
-    ObjHeader* permanentObj_; // New MM. Permanent object.
+    }; // Regular object.
+    ObjHeader* permanentObj_; // Permanent object.
   };
 };
 

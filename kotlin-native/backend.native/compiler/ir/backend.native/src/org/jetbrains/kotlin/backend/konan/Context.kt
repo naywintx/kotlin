@@ -107,8 +107,6 @@ internal class Context(
 
     val targetAbiInfo = config.target.abiInfo
 
-    val memoryModel = config.memoryModel
-
     override fun dispose() {}
 
     override val partialLinkageSupport = createPartialLinkageSupportForLowerings(

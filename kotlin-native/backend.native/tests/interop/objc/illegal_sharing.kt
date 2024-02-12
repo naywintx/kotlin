@@ -6,7 +6,7 @@ import platform.Foundation.*
 import platform.darwin.NSObject
 
 fun Worker.runInWorker(block: () -> Unit) {
-    this.execute(TransferMode.SAFE, { block.freeze() }) {
+    this.execute(TransferMode.SAFE, { block }) {
         it()
     }.result
 }
@@ -21,8 +21,6 @@ fun main() = withWorker {
     val array: NSArray = NSMutableArray().apply {
         addObject(obj)
     }
-
-    assertFalse(obj.isFrozen)
 
     println("Before")
     runInWorker {

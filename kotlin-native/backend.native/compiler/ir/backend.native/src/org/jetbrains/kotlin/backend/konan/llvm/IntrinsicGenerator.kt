@@ -2,7 +2,6 @@ package org.jetbrains.kotlin.backend.konan.llvm
 
 import llvm.*
 import org.jetbrains.kotlin.backend.konan.KonanFqNames
-import org.jetbrains.kotlin.backend.konan.MemoryModel
 import org.jetbrains.kotlin.backend.konan.RuntimeNames
 import org.jetbrains.kotlin.backend.konan.ir.isConstantConstructorIntrinsic
 import org.jetbrains.kotlin.backend.konan.ir.isTypedIntrinsic
@@ -65,7 +64,6 @@ internal enum class IntrinsicType {
     IMMUTABLE_BLOB,
     INIT_INSTANCE,
     IS_SUBTYPE,
-    IS_EXPERIMENTAL_MM,
     THE_UNIT_INSTANCE,
     // Enums
     ENUM_VALUES,
@@ -265,7 +263,6 @@ internal class IntrinsicGenerator(private val environment: IntrinsicGeneratorEnv
                 IntrinsicType.INTEROP_GET_NATIVE_NULL_PTR -> emitGetNativeNullPtr()
                 IntrinsicType.IDENTITY -> emitIdentity(args)
                 IntrinsicType.INTEROP_MEMORY_COPY -> emitMemoryCopy(callSite, args)
-                IntrinsicType.IS_EXPERIMENTAL_MM -> emitIsExperimentalMM()
                 IntrinsicType.THE_UNIT_INSTANCE -> theUnitInstanceRef.llvm
                 IntrinsicType.ATOMIC_GET_FIELD -> reportNonLoweredIntrinsic(intrinsicType)
                 IntrinsicType.ATOMIC_SET_FIELD -> reportNonLoweredIntrinsic(intrinsicType)
@@ -333,9 +330,6 @@ internal class IntrinsicGenerator(private val environment: IntrinsicGeneratorEnv
     private fun FunctionGenerationContext.emitIdentity(args: List<LLVMValueRef>): LLVMValueRef =
             args.single()
 
-    private fun FunctionGenerationContext.emitIsExperimentalMM(): LLVMValueRef =
-            llvm.int1(context.memoryModel == MemoryModel.EXPERIMENTAL)
-
     // cmpxcgh llvm instruction return pair. idnex is index of required element of this pair
     enum class CmpExchangeMode(val index:Int) {
         SWAP(0),
@@ -345,7 +339,6 @@ internal class IntrinsicGenerator(private val environment: IntrinsicGeneratorEnv
     private fun FunctionGenerationContext.emitCmpExchange(callSite: IrCall, args: List<LLVMValueRef>, mode: CmpExchangeMode, resultSlot: LLVMValueRef?): LLVMValueRef {
         require(args.size == 3) { "The call to ${callSite.symbol.owner.name.asString()} expects 3 value arguments." }
         return if (isObjectRef(args[1])) {
-            require(context.memoryModel == MemoryModel.EXPERIMENTAL)
             when (mode) {
                 CmpExchangeMode.SET -> call(llvm.CompareAndSetVolatileHeapRef, args)
                 CmpExchangeMode.SWAP -> call(llvm.CompareAndSwapVolatileHeapRef, args,
@@ -366,7 +359,6 @@ internal class IntrinsicGenerator(private val environment: IntrinsicGeneratorEnv
         require(args.size == 2) { "The call to ${callSite.symbol.owner.name.asString()} expects 2 value arguments." }
         return if (isObjectRef(args[1])) {
             require(op == LLVMAtomicRMWBinOp.LLVMAtomicRMWBinOpXchg)
-            require(context.memoryModel == MemoryModel.EXPERIMENTAL)
             call(llvm.GetAndSetVolatileHeapRef, args,
                     environment.calculateLifetime(callSite), resultSlot = resultSlot)
         } else {

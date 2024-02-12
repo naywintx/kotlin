@@ -30,15 +30,6 @@ private fun testObjCWeakRef0(deallocListener: DeallocListener) = withWorker {
 
     assertFalse(deallocListener.deallocExecutorIsNil())
 
-//    TODO: can't actually test, Obj-C runtime doesn't expect _tryRetain throwing an exception.
-//    runInWorker {
-//        assertFailsWith<IncorrectDereferenceException> {
-//            deallocListener.deallocExecutorIsNil()
-//        }
-//    }
-
-    obj.freeze()
-
     runInWorker {
         // [deallocListener.deallocExecutorIsNil()] calls deallocExecutor getter, which retains [obj] and either
         // puts it to autoreleasepool or releases it immediately (Obj-C ARC optimization).

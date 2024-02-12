@@ -9,7 +9,6 @@ package coroutines
 import kotlin.coroutines.*
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.intrinsics.*
-import kotlin.native.concurrent.isFrozen
 import kotlin.native.internal.ObjCErrorException
 import kotlin.test.*
 import kotlin.reflect.*

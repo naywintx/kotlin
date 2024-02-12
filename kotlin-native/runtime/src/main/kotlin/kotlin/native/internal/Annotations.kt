@@ -54,14 +54,6 @@ internal annotation class ExportForCompiler
 internal annotation class Frozen
 
 /**
- * Similar to `@Frozen`, but works only for legacy MM. On the new MM this has no effect.
- */
-@Target(AnnotationTarget.CLASS)
-@Retention(AnnotationRetention.BINARY)
-@FreezingIsDeprecated
-internal annotation class FrozenLegacyMM
-
-/**
  * Fields of annotated class won't be sorted.
  */
 @Target(AnnotationTarget.CLASS)
@@ -151,13 +143,6 @@ internal annotation class HasFinalizer
 @RequiresOptIn(level = RequiresOptIn.Level.ERROR)
 @Retention(value = AnnotationRetention.BINARY)
 internal annotation class InternalForKotlinNative
-
-/**
- * Marks a class that has a freeze hook.
- */
-@Target(AnnotationTarget.CLASS)
-@FreezingIsDeprecated
-internal annotation class HasFreezeHook
 
 /**
  * Indicates that calls of this function will be replaced with calls to the

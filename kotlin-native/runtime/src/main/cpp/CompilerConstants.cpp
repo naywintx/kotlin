@@ -18,10 +18,8 @@ using Kotlin_getSourceInfo_FunctionType = int(*)(void * /*addr*/, SourceInfo* /*
  * This is one is variables defined by overrideRuntimeGlobals in IrToBitcode.kt. They are *not* eligible for runtime optimizations,
  * but can be changed after compiling caches. So use this way for variables, which will be rarely accessed.
  */
-RUNTIME_WEAK int32_t Kotlin_destroyRuntimeMode = 1;
 RUNTIME_WEAK int32_t Kotlin_gcMutatorsCooperate = 0;
 RUNTIME_WEAK uint32_t Kotlin_auxGCThreads = 0;
-RUNTIME_WEAK int32_t Kotlin_workerExceptionHandling = 0;
 RUNTIME_WEAK int32_t Kotlin_suspendFunctionsFromAnyThreadFromObjC = 0;
 RUNTIME_WEAK Kotlin_getSourceInfo_FunctionType Kotlin_getSourceInfo_Function = nullptr;
 #ifdef KONAN_ANDROID
@@ -36,20 +34,12 @@ RUNTIME_WEAK int32_t Kotlin_objcDisposeWithRunLoop = 1;
 RUNTIME_WEAK int32_t Kotlin_enableSafepointSignposts = 0;
 RUNTIME_WEAK int32_t Kotlin_globalDataLazyInit = 1;
 
-ALWAYS_INLINE compiler::DestroyRuntimeMode compiler::destroyRuntimeMode() noexcept {
-    return static_cast<compiler::DestroyRuntimeMode>(Kotlin_destroyRuntimeMode);
-}
-
 ALWAYS_INLINE bool compiler::gcMutatorsCooperate() noexcept {
     return Kotlin_gcMutatorsCooperate != 0;
 }
 
 ALWAYS_INLINE uint32_t compiler::auxGCThreads() noexcept {
     return Kotlin_auxGCThreads;
-}
-
-ALWAYS_INLINE compiler::WorkerExceptionHandling compiler::workerExceptionHandling() noexcept {
-    return static_cast<compiler::WorkerExceptionHandling>(Kotlin_workerExceptionHandling);
 }
 
 

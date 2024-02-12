@@ -12,9 +12,6 @@ fun setHookAndThrow() {
     val hook = { throwable: Throwable ->
         print("Kotlin hook: ${throwable::class.simpleName}. Runnable state: ${Debugging.isThreadStateRunnable}")
     }
-    if (Platform.memoryModel != MemoryModel.EXPERIMENTAL) {
-        hook.freeze()
-    }
 
     setUnhandledExceptionHook(hook)
 

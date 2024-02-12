@@ -90,8 +90,6 @@ RuntimeState* initRuntime() {
   RuntimeCheck(!isValidRuntime(), "No active runtimes allowed");
   ::runtimeState = result;
 
-  RuntimeAssert(compiler::destroyRuntimeMode() == compiler::DestroyRuntimeMode::kOnShutdown, "Legacy mode is not supported");
-
   // First update `aliveRuntimesCount` and then update `globalRuntimeStatus`, for synchronization with
   // runtime shutdown, which does it the other way around.
   atomicAdd(&aliveRuntimesCount, 1);
@@ -123,16 +121,7 @@ void deinitRuntime(RuntimeState* state, bool destroyRuntime) {
   // This may be called after TLS is zeroed out, so ::runtimeState and ::memoryState in Memory cannot be trusted.
   // TODO: This may in fact reallocate TLS without guarantees that it'll be deallocated again.
   ::runtimeState = state;
-  RestoreMemory(state->memoryState);
-  bool lastRuntime = atomicAdd(&aliveRuntimesCount, -1) == 0;
-  switch (kotlin::compiler::destroyRuntimeMode()) {
-    case kotlin::compiler::DestroyRuntimeMode::kLegacy:
-      destroyRuntime = lastRuntime;
-      break;
-    case kotlin::compiler::DestroyRuntimeMode::kOnShutdown:
-      // Nothing to do.
-      break;
-  }
+  atomicAdd(&aliveRuntimesCount, -1);
   ClearTLS(state->memoryState);
   if (destroyRuntime)
     InitOrDeinitGlobalVariables(DEINIT_GLOBALS, state->memoryState);
@@ -207,15 +196,7 @@ void Kotlin_shutdownRuntime() {
     auto* runtime = ::runtimeState;
     RuntimeAssert(runtime != kInvalidRuntime, "Current thread must have Kotlin runtime initialized on it");
 
-    bool needsFullShutdown = false;
-    switch (kotlin::compiler::destroyRuntimeMode()) {
-        case kotlin::compiler::DestroyRuntimeMode::kLegacy:
-            needsFullShutdown = true;
-            break;
-        case kotlin::compiler::DestroyRuntimeMode::kOnShutdown:
-            needsFullShutdown = Kotlin_forceCheckedShutdown() || Kotlin_memoryLeakCheckerEnabled() || Kotlin_cleanersLeakCheckerEnabled();
-            break;
-    }
+    bool needsFullShutdown = Kotlin_forceCheckedShutdown() || Kotlin_memoryLeakCheckerEnabled() || Kotlin_cleanersLeakCheckerEnabled();
     if (!needsFullShutdown) {
         auto lastStatus = compareAndSwap(&globalRuntimeStatus, kGlobalRuntimeRunning, kGlobalRuntimeShutdown);
         RuntimeAssert(lastStatus == kGlobalRuntimeRunning, "Invalid runtime status for shutdown");
@@ -323,16 +304,8 @@ KInt Konan_Platform_getCpuArchitecture() {
 #endif
 }
 
-KInt Konan_Platform_getMemoryModel() {
-    return static_cast<KInt>(CurrentMemoryModel);
-}
-
 KBoolean Konan_Platform_isDebugBinary() {
   return kotlin::compiler::shouldContainDebugInfo();
-}
-
-KBoolean Konan_Platform_isFreezingEnabled() {
-  return kotlin::compiler::freezingChecksEnabled();
 }
 
 bool Kotlin_memoryLeakCheckerEnabled() {
@@ -393,13 +366,6 @@ KBoolean Kotlin_Debugging_getForceCheckedShutdown() {
 }
 
 void Kotlin_Debugging_setForceCheckedShutdown(KBoolean value) {
-    switch (kotlin::compiler::destroyRuntimeMode()) {
-        case kotlin::compiler::DestroyRuntimeMode::kLegacy:
-            // Only applicable to ON_SHUTDOWN modes.
-            return;
-        case kotlin::compiler::DestroyRuntimeMode::kOnShutdown:
-            break;
-    }
     g_forceCheckedShutdown = value;
 }
 
@@ -417,16 +383,6 @@ KBoolean Kotlin_Debugging_isPermanent(KRef obj) {
 
 RUNTIME_NOTHROW KBoolean Kotlin_Debugging_isLocal(KRef obj) {
     return obj->local();
-}
-
-RUNTIME_NOTHROW void Kotlin_initRuntimeIfNeededFromKotlin() {
-    switch (CurrentMemoryModel) {
-        case MemoryModel::kExperimental:
-            return;
-        case MemoryModel::kStrict:
-        case MemoryModel::kRelaxed:
-            Kotlin_initRuntimeIfNeeded();
-    }
 }
 
 static void CallInitGlobalAwaitInitialized(int *state) {

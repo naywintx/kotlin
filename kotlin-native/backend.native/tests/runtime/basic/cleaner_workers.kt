@@ -20,10 +20,6 @@ import kotlin.native.runtime.GC
 class AtomicBoolean(initialValue: Boolean) {
     private val impl = AtomicInt(if (initialValue) 1 else 0)
 
-    init {
-        freeze()
-    }
-
     public var value: Boolean
         get() = impl.value != 0
         set(new) { impl.value = if (new) 1 else 0 }
@@ -43,7 +39,7 @@ fun testCleanerDestroyInChild() {
     var funBoxWeak: WeakReference<FunBox>? = null
     var cleanerWeak: WeakReference<Cleaner>? = null
     worker.execute(TransferMode.SAFE, {
-        val funBox = FunBox { called.value = true }.freeze()
+        val funBox = FunBox { called.value = true }
         funBoxWeak = WeakReference(funBox)
         val cleaner = createCleaner(funBox) { it.call() }
         cleanerWeak = WeakReference(cleaner)
@@ -71,7 +67,7 @@ fun testCleanerDestroyWithChild() {
     var funBoxWeak: WeakReference<FunBox>? = null
     var cleanerWeak: WeakReference<Cleaner>? = null
     worker.execute(TransferMode.SAFE, {
-        val funBox = FunBox { called.value = true }.freeze()
+        val funBox = FunBox { called.value = true }
         funBoxWeak = WeakReference(funBox)
         val cleaner = createCleaner(funBox) { it.call() }
         cleanerWeak = WeakReference(cleaner)
@@ -100,7 +96,7 @@ fun testCleanerDestroyInMain() {
     var cleanerWeak: WeakReference<Cleaner>? = null
     {
         val result = worker.execute(TransferMode.SAFE, { called }) { called ->
-            val funBox = FunBox { called.value = true }.freeze()
+            val funBox = FunBox { called.value = true }
             val cleaner = createCleaner(funBox) { it.call() }
             Triple(cleaner, WeakReference(funBox), WeakReference(cleaner))
         }.result
@@ -130,7 +126,7 @@ fun testCleanerDestroyShared() {
     var cleanerWeak: WeakReference<Cleaner>? = null
     val cleanerHolder: AtomicReference<Cleaner?> = AtomicReference(null);
     {
-        val funBox = FunBox { called.value = true }.freeze()
+        val funBox = FunBox { called.value = true }
         funBoxWeak = WeakReference(funBox)
         val cleaner = createCleaner(funBox) { it.call() }
         cleanerWeak = WeakReference(cleaner)

@@ -12,8 +12,6 @@ import kotlin.native.ref.*
 
 @OptIn(kotlin.native.runtime.NativeRuntimeApi::class)
 @Test fun runTest() {
-    // TODO: make it work in relaxed model as well.
-    if (Platform.memoryModel == MemoryModel.RELAXED) return
     val weakRefToTrashCycle = createLoop()
     kotlin.native.runtime.GC.collect()
     assertNull(weakRefToTrashCycle.get())

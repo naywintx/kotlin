@@ -29,31 +29,17 @@ extern "C" const int32_t Kotlin_disableAllocatorOverheadEstimate;
 extern "C" const int32_t Kotlin_runtimeLogs[];
 extern "C" const int32_t Kotlin_concurrentWeakSweep;
 extern "C" const int32_t Kotlin_gcMarkSingleThreaded;
-extern "C" const int32_t Kotlin_freezingEnabled;
-extern "C" const int32_t Kotlin_freezingChecksEnabled;
 
 class SourceInfo;
 
 namespace kotlin {
 namespace compiler {
 
-// Must match DestroyRuntimeMode in DestroyRuntimeMode.kt
-enum class DestroyRuntimeMode : int32_t {
-    kLegacy = 0,
-    kOnShutdown = 1,
-};
-
 // Must match RuntimeAssertsMode in RuntimeAssertsMode.kt
 enum class RuntimeAssertsMode : int32_t {
     kIgnore = 0,
     kLog = 1,
     kPanic = 2,
-};
-
-// Must match WorkerExceptionHandling in WorkerExceptionHandling.kt
-enum class WorkerExceptionHandling : int32_t {
-    kLegacy = 0,
-    kUseHook = 1,
 };
 
 // Must match AppStateTracking in AppStateTracking.kt
@@ -86,14 +72,6 @@ ALWAYS_INLINE inline const int32_t* runtimeLogs() noexcept {
     return Kotlin_runtimeLogs;
 }
 
-ALWAYS_INLINE inline bool freezingEnabled() noexcept {
-    return Kotlin_freezingEnabled != 0;
-}
-
-ALWAYS_INLINE inline bool freezingChecksEnabled() noexcept {
-    return Kotlin_freezingChecksEnabled != 0;
-}
-
 ALWAYS_INLINE inline bool concurrentWeakSweep() noexcept {
     return Kotlin_concurrentWeakSweep != 0;
 }
@@ -102,9 +80,6 @@ ALWAYS_INLINE inline bool gcMarkSingleThreaded() noexcept {
     return Kotlin_gcMarkSingleThreaded != 0;
 }
 
-
-WorkerExceptionHandling workerExceptionHandling() noexcept;
-DestroyRuntimeMode destroyRuntimeMode() noexcept;
 bool gcMutatorsCooperate() noexcept;
 uint32_t auxGCThreads() noexcept;
 bool suspendFunctionsFromAnyThreadFromObjCEnabled() noexcept;
