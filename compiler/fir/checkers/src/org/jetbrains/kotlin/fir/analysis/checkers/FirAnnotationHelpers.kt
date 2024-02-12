@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.analysis.checkers
 
+import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
@@ -107,11 +108,12 @@ fun checkRepeatedAnnotation(
     annotation: FirAnnotation,
     context: CheckerContext,
     reporter: DiagnosticReporter,
+    annotationSource: KtSourceElement?,
 ) {
     val duplicated = useSiteTarget in existingTargetsForAnnotation
             || existingTargetsForAnnotation.any { (it == null) != (useSiteTarget == null) }
     if (duplicated && !annotation.isRepeatable(context.session)) {
-        reporter.reportOn(annotation.source, FirErrors.REPEATED_ANNOTATION, context)
+        reporter.reportOn(annotationSource, FirErrors.REPEATED_ANNOTATION, context)
     }
 }
 
@@ -153,7 +155,9 @@ fun checkRepeatedAnnotation(
     annotationContainer: FirAnnotationContainer?,
     annotations: List<FirAnnotation>,
     context: CheckerContext,
-    reporter: DiagnosticReporter
+    reporter: DiagnosticReporter,
+    annotationSources: Map<FirAnnotation, KtSourceElement?>,
+    defaultSource: KtSourceElement?,
 ) {
     if (annotations.size <= 1) return
 
@@ -164,7 +168,8 @@ fun checkRepeatedAnnotation(
         val expandedType = annotation.annotationTypeRef.coneType.fullyExpandedType(context.session)
         val existingTargetsForAnnotation = annotationsMap.getOrPut(expandedType) { arrayListOf() }
 
-        checkRepeatedAnnotation(useSiteTarget, existingTargetsForAnnotation, annotation, context, reporter)
+        val source = annotationSources[annotation] ?: defaultSource
+        checkRepeatedAnnotation(useSiteTarget, existingTargetsForAnnotation, annotation, context, reporter, source)
         existingTargetsForAnnotation.add(useSiteTarget)
     }
 }
