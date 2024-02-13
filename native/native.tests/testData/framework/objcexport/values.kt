@@ -1014,6 +1014,3 @@ interface Bar_FakeOverrideInInterface : Foo_FakeOverrideInInterface<String>
 fun callFoo_FakeOverrideInInterface(obj: Bar_FakeOverrideInInterface) {
     obj.foo(null)
 }
-
-val isExperimentalMM: Boolean
-    get() = true

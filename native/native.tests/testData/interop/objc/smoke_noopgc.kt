@@ -75,7 +75,7 @@ fun run() {
     }
     if (foo.hashCode() == hash) {
         // toString (virtually):
-        println(map.keys.map { it.toString() }.minOrNull() == foo.description())
+        println(map.keys.map { it.toString() } == listOf(foo.description(), pair.description()))
     }
     println(globalString)
     autoreleasepool {

@@ -177,14 +177,6 @@ fun testCleanerNonSharedFunctionReference() {
 }
 
 @Test
-fun testCleanerFailWithNonShareableArgument() {
-    val funBox = FunBox {}
-    assertFailsWith<IllegalArgumentException> {
-        createCleaner(funBox) {}
-    }
-}
-
-@Test
 fun testCleanerCleansWithoutGC() {
     val called = AtomicBoolean(false);
     var funBoxWeak: WeakReference<FunBox>? = null
