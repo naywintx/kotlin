@@ -2,7 +2,7 @@
 // MODULE: common
 // TARGET_PLATFORM: Common
 
-class Foo
+class <!PACKAGE_OR_CLASSIFIER_REDECLARATION!>Foo<!>
 
 // MODULE: intermediate()()(common)
 // TARGET_PLATFORM: Common
