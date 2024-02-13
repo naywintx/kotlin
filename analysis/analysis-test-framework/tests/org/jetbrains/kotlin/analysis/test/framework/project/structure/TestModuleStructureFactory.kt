@@ -42,6 +42,31 @@ private typealias LibraryCache = MutableMap<Set<Path>, KtBinaryModule>
 
 private typealias ModulesByName = Map<String, KtModuleWithFiles>
 
+/**
+ * A function to run the topological sort (or post-order sort) for [TestModule]s based on the dependency graph.
+ * This function guarantees:
+ *   - For [TestModule] A and B, where A has dependency on B, A will never appears earlier than B in the result list.
+ */
+private fun sortInDependencyPostOrder(testModules: List<TestModule>): List<TestModule> {
+    val namesToModules = testModules.associateBy { it.name }
+    val notVisited = testModules.toMutableSet()
+    val sortedModules = mutableListOf<TestModule>()
+
+    fun dfsWalk(module: TestModule) {
+        notVisited.remove(module)
+        for (dependency in module.regularDependencies) {
+            val dependencyAsModule = namesToModules[dependency.moduleName] ?: error("Module ${dependency.moduleName} is missing")
+            if (dependencyAsModule in notVisited) dfsWalk(dependencyAsModule)
+        }
+        sortedModules.add(module)
+    }
+
+    while (notVisited.isNotEmpty()) {
+        dfsWalk(notVisited.first())
+    }
+    return sortedModules
+}
+
 object TestModuleStructureFactory {
     fun createProjectStructureByTestStructure(
         moduleStructure: TestModuleStructure,
