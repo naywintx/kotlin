@@ -750,9 +750,9 @@ tasks {
         }
     }
     val wasmWasiNodeTest by existing {
-        if (!kotlinBuildProperties.getBoolean("kotlin.stdlib.wasi.tests")) {
-            enabled = false
-        }
+//        if (!kotlinBuildProperties.getBoolean("kotlin.stdlib.wasi.tests")) {
+//            enabled = false
+//        }
     }
 
     /*
