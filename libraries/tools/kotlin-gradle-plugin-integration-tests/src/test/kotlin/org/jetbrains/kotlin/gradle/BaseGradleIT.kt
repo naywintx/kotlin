@@ -11,6 +11,7 @@ import org.gradle.api.logging.configuration.WarningMode
 import org.gradle.internal.logging.LoggingConfigurationBuildOptions.StacktraceOption
 import org.gradle.tooling.GradleConnector
 import org.gradle.util.GradleVersion
+import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.gradle.model.ModelContainer
 import org.jetbrains.kotlin.gradle.model.ModelFetcherBuildAction
 import org.jetbrains.kotlin.gradle.report.BuildReportType
@@ -151,7 +152,7 @@ abstract class BaseGradleIT {
         fun prepareWrapper(
             version: String,
             environmentVariables: Map<String, String> = mapOf(),
-            withDaemon: Boolean = true
+            withDaemon: Boolean = true,
         ): File {
             val wrapper = gradleWrappers.getOrPut(version) { createNewWrapperDir(version) }
 
@@ -285,7 +286,7 @@ abstract class BaseGradleIT {
         val verbose: Boolean,
         val incrementalKapt: Boolean = false,
         val includeCompileClasspath: Boolean = true,
-        val classLoadersCacheSize: Int? = null
+        val classLoadersCacheSize: Int? = null,
     )
 
     open inner class Project(
@@ -293,7 +294,7 @@ abstract class BaseGradleIT {
         val gradleVersionRequirement: GradleVersionRequired = defaultGradleVersion,
         directoryPrefix: String? = null,
         val minLogLevel: LogLevel = LogLevel.DEBUG,
-        val addHeapDumpOptions: Boolean = true
+        val addHeapDumpOptions: Boolean = true,
     ) {
         internal val testCase = this@BaseGradleIT
 
@@ -301,7 +302,11 @@ abstract class BaseGradleIT {
         open val resourcesRoot = File(resourcesRootFile, "testProject/$resourceDirName")
         val projectDir = File(workingDir.canonicalFile, projectName)
 
-        open fun setupWorkingDir(enableCacheRedirector: Boolean = true, applyAndroidTestFixes: Boolean = true, applyLanguageVersion: Boolean = true) {
+        open fun setupWorkingDir(
+            enableCacheRedirector: Boolean = true,
+            applyAndroidTestFixes: Boolean = true,
+            applyLanguageVersion: Boolean = true,
+        ) {
             if (!projectDir.isDirectory || projectDir.listFiles().isEmpty()) {
                 copyRecursively(this.resourcesRoot, workingDir)
                 if (addHeapDumpOptions) {
@@ -385,7 +390,7 @@ abstract class BaseGradleIT {
         vararg params: String,
         debugPort: Int = 5006,
         options: BuildOptions = defaultBuildOptions(),
-        check: CompiledProject.() -> Unit
+        check: CompiledProject.() -> Unit,
     ) {
         build(*params, options = options.copy(kotlinDaemonDebugPort = debugPort), check = check)
     }
@@ -394,7 +399,7 @@ abstract class BaseGradleIT {
         vararg params: String,
         options: BuildOptions = defaultBuildOptions(),
         projectDir: File = File(workingDir, projectName),
-        check: CompiledProject.() -> Unit
+        check: CompiledProject.() -> Unit,
     ) {
         val wrapperVersion = chooseWrapperVersionOrFinishTest()
 
@@ -497,14 +502,18 @@ abstract class BaseGradleIT {
         return this
     }
 
-    fun CompiledProject.assertContains(vararg expected: String, ignoreCase: Boolean = false, errorMessage: String? = null): CompiledProject {
+    fun CompiledProject.assertContains(
+        vararg expected: String,
+        ignoreCase: Boolean = false,
+        errorMessage: String? = null,
+    ): CompiledProject {
         for (str in expected) {
             assertTrue(output.contains(str.normalize(), ignoreCase), errorMessage ?: "Output should contain '$str'")
         }
         return this
     }
 
-    fun CompiledProject.assertContainsRegex(expected: Regex): CompiledProject {
+    fun CompiledProject.assertContains(expected: Regex): CompiledProject {
         assertTrue(expected.containsMatchIn(output), "Output should contain pattern '$expected'")
         return this
     }
@@ -557,7 +566,7 @@ abstract class BaseGradleIT {
 
     fun CompiledProject.assertSingleFileExists(
         directory: String = "",
-        filePath: String = ""
+        filePath: String = "",
     ): CompiledProject {
         val directoryFile = fileInWorkingDir(directory)
         assertTrue(
@@ -606,7 +615,7 @@ abstract class BaseGradleIT {
 
     fun CompiledProject.assertTasksExecuted(tasks: Iterable<String>) {
         for (task in tasks) {
-            assertContainsRegex("(Executing actions for task|Executing task) '$task'".toRegex())
+            assertContains("(Executing actions for task|Executing task) '$task'".toRegex())
         }
     }
 
@@ -618,7 +627,7 @@ abstract class BaseGradleIT {
 
     fun CompiledProject.assertTasksExecutedByPrefix(taskPrefixes: Iterable<String>) {
         for (prefix in taskPrefixes) {
-            assertContainsRegex("(Executing actions for task|Executing task) '$prefix\\w*'".toRegex())
+            assertContains("(Executing actions for task|Executing task) '$prefix\\w*'".toRegex())
         }
     }
 
@@ -680,7 +689,7 @@ abstract class BaseGradleIT {
 
     fun CompiledProject.assertTasksRegisteredRegex(vararg tasks: String) {
         for (task in tasks) {
-            assertContainsRegex("'Register task $task'".toRegex())
+            assertContains("'Register task $task'".toRegex())
         }
     }
 
@@ -692,7 +701,7 @@ abstract class BaseGradleIT {
 
     fun CompiledProject.assertTasksRegisteredByPrefix(taskPrefixes: Iterable<String>) {
         for (prefix in taskPrefixes) {
-            assertContainsRegex("'Register task $prefix\\w*'".toRegex())
+            assertContains("'Register task $prefix\\w*'".toRegex())
         }
     }
 
@@ -722,7 +731,7 @@ abstract class BaseGradleIT {
 
     fun CompiledProject.assertTasksSkippedByPrefix(taskPrefixes: Iterable<String>) {
         for (prefix in taskPrefixes) {
-            assertContainsRegex("Skipping task '$prefix\\w*'".toRegex())
+            assertContains("Skipping task '$prefix\\w*'".toRegex())
         }
     }
 
@@ -730,7 +739,7 @@ abstract class BaseGradleIT {
         expectedSourcesRelativePaths: Iterable<String>,
         weakTesting: Boolean = false,
         output: String = this.output,
-        suffix: String = ""
+        suffix: String = "",
     ): CompiledProject {
         val messagePrefix = "Compiled Kotlin files differ${suffix}:\n"
         val actualSources = extractCompiledKotlinFiles(output)
@@ -753,7 +762,7 @@ abstract class BaseGradleIT {
 
     fun CompiledProject.assertCompiledJavaSources(
         sources: Iterable<String>,
-        weakTesting: Boolean = false
+        weakTesting: Boolean = false,
     ): CompiledProject {
         val messagePrefix = "Compiled Java files differ:\n"
         val actualSources = extractCompiledJavaFiles(project.projectDir, output)
@@ -812,12 +821,17 @@ abstract class BaseGradleIT {
             }
         }
 
+    @get:Language("properties")
+    var Project.gradleProperties: String
+        get() = gradleProperties().readText()
+        set(value) = gradleProperties().writeText(value)
+
     /**
      * @param assertionFileName path to xml with expected test results, relative to test resources root
      */
     fun CompiledProject.assertTestResults(
         @TestDataFile assertionFileName: String,
-        vararg testReportNames: String
+        vararg testReportNames: String,
     ) = assertTestResults(
         resourcesRootFile.resolve(assertionFileName),
         *testReportNames
@@ -825,7 +839,7 @@ abstract class BaseGradleIT {
 
     fun CompiledProject.assertTestResults(
         assertionXmlFile: File,
-        vararg testReportNames: String
+        vararg testReportNames: String,
     ) {
         val projectDir = project.projectDir
         val testReportDirs = testReportNames.map { projectDir.resolve("build/test-results/$it").toPath() }
@@ -1065,7 +1079,7 @@ fun BaseGradleIT.BuildOptions.withFreeCommandLineArgument(argument: String) = co
 
 fun BaseGradleIT.BuildOptions.suppressDeprecationWarningsOn(
     @Suppress("UNUSED_PARAMETER") reason: String, // just to require specifying a reason for suppressing
-    predicate: (BaseGradleIT.BuildOptions) -> Boolean
+    predicate: (BaseGradleIT.BuildOptions) -> Boolean,
 ) =
     if (predicate(this)) {
         copy(warningMode = WarningMode.Summary)
@@ -1076,7 +1090,7 @@ fun BaseGradleIT.BuildOptions.suppressDeprecationWarningsOn(
 fun BaseGradleIT.BuildOptions.suppressDeprecationWarningsSinceGradleVersion(
     gradleVersion: String,
     currentGradleVersion: String,
-    reason: String
+    reason: String,
 ) = suppressDeprecationWarningsOn(reason) {
     GradleVersion.version(currentGradleVersion) >= GradleVersion.version(gradleVersion)
 }
@@ -1088,7 +1102,7 @@ internal fun BaseGradleIT.transformProjectWithPluginsDsl(
     projectName: String,
     wrapperVersion: GradleVersionRequired = defaultGradleVersion,
     directoryPrefix: String? = null,
-    minLogLevel: LogLevel = LogLevel.DEBUG
+    minLogLevel: LogLevel = LogLevel.DEBUG,
 ): BaseGradleIT.Project {
 
     val result = Project(projectName, wrapperVersion, directoryPrefix, minLogLevel)

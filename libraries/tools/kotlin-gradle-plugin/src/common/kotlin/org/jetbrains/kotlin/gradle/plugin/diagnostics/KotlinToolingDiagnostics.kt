@@ -12,9 +12,12 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinSourceSetConvention.isRegisteredByK
 import org.jetbrains.kotlin.gradle.dsl.NativeTargetShortcutTrace
 import org.jetbrains.kotlin.gradle.internal.KOTLIN_BUILD_TOOLS_API_IMPL
 import org.jetbrains.kotlin.gradle.internal.KOTLIN_MODULE_GROUP
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType.*
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
+import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.KOTLIN_IGNORE_INCORRECT_COMPILE_ONLY_DEPENDENCIES
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_MPP_APPLY_DEFAULT_HIERARCHY_TEMPLATE
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_NATIVE_IGNORE_DISABLED_TARGETS
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_NATIVE_SUPPRESS_EXPERIMENTAL_ARTIFACTS_DSL_WARNING
@@ -61,12 +64,12 @@ object KotlinToolingDiagnostics {
     object DeprecatedJvmWithJavaPresetDiagnostic : ToolingDiagnosticFactory(ERROR) {
         operator fun invoke() = build(
             """
-                The 'jvmWithJava' preset is deprecated and will be removed soon. Please use an ordinary JVM target with Java support: 
+                The 'jvmWithJava' preset is deprecated and will be removed soon. Please use an ordinary JVM target with Java support:
 
-                    kotlin { 
-                        jvm { 
-                            withJava() 
-                        } 
+                    kotlin {
+                        jvm {
+                            withJava()
+                        }
                     }
             
                 After this change, please move the Java sources to the Kotlin source set directories. 
@@ -182,11 +185,11 @@ object KotlinToolingDiagnostics {
                 KotlinSourceSet with name '$nameOfRequestedSourceSet' not found:
                 The SourceSet requested ('$nameOfRequestedSourceSet') was renamed in Kotlin 1.9.0
                 
-                In order to migrate you might want to replace: 
+                In order to migrate you might want to replace:
                 sourceSets.getByName("androidTest") -> sourceSets.getByName("androidUnitTest")
                 sourceSets.getByName("androidAndroidTest") -> sourceSets.getByName("androidInstrumentedTest")
                 
-                Learn more about the new Kotlin/Android SourceSet Layout: 
+                Learn more about the new Kotlin/Android SourceSet Layout:
                 https://kotl.in/android-source-set-layout-v2
             """.trimIndent()
         )
@@ -613,7 +616,7 @@ object KotlinToolingDiagnostics {
     object KotlinCompilationSourceDeprecation : ToolingDiagnosticFactory(WARNING) {
         operator fun invoke(trace: Throwable?) = build(
             """
-                `KotlinCompilation.source(KotlinSourceSet)` method is deprecated 
+                `KotlinCompilation.source(KotlinSourceSet)` method is deprecated
                 and will be removed in upcoming Kotlin releases.
 
                 See https://kotl.in/compilation-source-deprecation for details.
@@ -692,16 +695,57 @@ object KotlinToolingDiagnostics {
         }
     }
 
-    object IncorrectNativeDependenciesWarning : ToolingDiagnosticFactory(WARNING) {
-        operator fun invoke(targetName: String, compilationName: String, dependencies: List<String>) = build(
-            """
-                A compileOnly dependency is used in the Kotlin/Native target '${targetName}':
-                Compilation: $compilationName
-                
-                Dependencies:
-                ${dependencies.joinToString(separator = "\n")}
-            """.trimIndent()
-        )
+    object IncorrectCompileOnlyDependencyWarning : ToolingDiagnosticFactory(WARNING) {
+        operator fun invoke(
+            targetPlatform: KotlinPlatformType,
+            targetName: String,
+            compilationName: String,
+            defaultSourceSetName: String,
+            dependencies: List<String>,
+        ): ToolingDiagnostic {
+            val platformName = when (targetPlatform) {
+                common -> "Kotlin/Common"
+                jvm -> "Kotlin/JVM"
+                js -> "Kotlin/JS"
+                androidJvm -> "Kotlin/Android"
+                native -> "Kotlin/Native"
+                wasm -> "Kotlin/Wasm"
+            }
+
+            return build( /* language=text */ """
+                |A compileOnly dependency is used in the $platformName target '${targetName}':
+                |Compilation: $compilationName
+                |
+                |Dependencies:
+                |${dependencies.joinToString(separator = "\n")}
+                |
+                |Using compileOnly dependencies in $platformName targets is currently not supported. This is because
+                |compileOnly dependencies are required during the compilation of projects that depend on this project.
+                |
+                |To share compileOnly dependencies with consumers, expose the dependency as an `api()` dependency. 
+                |
+                |    kotlin {
+                |        sourceSets {
+                |            commonMain {
+                |                dependencies {
+                |                    compileOnly("org.example:lib:1.2.3")
+                |                }
+                |            }
+                |            $defaultSourceSetName {
+                |                dependencies {
+                |                    // additionally add the dependency as an `api()` dependency:
+                |                    api("org.example:lib:1.2.3")
+                |                }
+                |            }
+                |        }
+                |    }
+                |
+                |To suppress this warning, put the following in your gradle.properties:
+                |    ${KOTLIN_IGNORE_INCORRECT_COMPILE_ONLY_DEPENDENCIES}=true
+                |
+                """.trimMargin()
+            )
+        }
     }
 
     object DependencyDoesNotPhysicallyExist : ToolingDiagnosticFactory(WARNING) {

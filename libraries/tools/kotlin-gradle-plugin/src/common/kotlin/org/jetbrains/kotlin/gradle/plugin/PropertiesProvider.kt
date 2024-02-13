@@ -20,8 +20,8 @@ import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLI
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_COMPILER_USE_PRECISE_COMPILATION_RESULTS_BACKUP
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_CREATE_ARCHIVE_TASKS_FOR_CUSTOM_COMPILATIONS
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_CREATE_DEFAULT_MULTIPLATFORM_PUBLICATIONS
-import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_INCREMENTAL_USE_CLASSPATH_SNAPSHOT
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_EXPERIMENTAL_TRY_NEXT
+import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_INCREMENTAL_USE_CLASSPATH_SNAPSHOT
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_INTERNAL_DIAGNOSTICS_SHOW_STACKTRACE
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_INTERNAL_DIAGNOSTICS_USE_PARSABLE_FORMATTING
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_JS_KARMA_BROWSERS
@@ -226,8 +226,12 @@ internal class PropertiesProvider private constructor(private val project: Proje
     val ignoreDisabledCInteropCommonization: Boolean
         get() = booleanProperty("$KOTLIN_MPP_ENABLE_CINTEROP_COMMONIZATION.nowarn") ?: false
 
+    // TODO deprecate old property?
     val ignoreIncorrectNativeDependencies: Boolean?
         get() = booleanProperty(KOTLIN_NATIVE_IGNORE_INCORRECT_DEPENDENCIES)
+
+    val ignoreIncorrectCompileOnlyDependencies: Boolean?
+        get() = booleanProperty(KOTLIN_IGNORE_INCORRECT_COMPILE_ONLY_DEPENDENCIES)
 
     val publishJvmEnvironmentAttribute: Boolean
         get() = booleanProperty(KOTLIN_PUBLISH_JVM_ENVIRONMENT_ATTRIBUTE) ?: false
@@ -689,7 +693,9 @@ internal class PropertiesProvider private constructor(private val project: Proje
 
         private const val CACHED_PROVIDER_EXT_NAME = "kotlin.properties.provider"
 
+        // TODO deprecate old property?
         internal const val KOTLIN_NATIVE_IGNORE_INCORRECT_DEPENDENCIES = "kotlin.native.ignoreIncorrectDependencies"
+        internal const val KOTLIN_IGNORE_INCORRECT_COMPILE_ONLY_DEPENDENCIES = "kotlin.mpp.ignoreIncorrectCompileOnlyDependencies"
 
         private const val KOTLIN_NATIVE_BINARY_OPTION_PREFIX = "kotlin.native.binary."
 
