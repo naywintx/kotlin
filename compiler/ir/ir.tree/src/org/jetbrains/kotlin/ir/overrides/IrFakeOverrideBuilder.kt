@@ -261,10 +261,7 @@ class IrFakeOverrideBuilder(
         return trueFakeOverrides.ifEmpty { customizedFakeOverrides }
     }
 
-    private fun determineModalityForFakeOverride(
-        members: List<FakeOverride>,
-        current: IrClass
-    ): Modality {
+    private fun determineModalityForFakeOverride(members: List<FakeOverride>): Modality {
         // Optimization: avoid creating hash sets in frequent cases when modality can be computed trivially
         var hasOpen = false
         var hasAbstract = false
@@ -277,24 +274,18 @@ class IrFakeOverrideBuilder(
             }
         }
 
-        // Fake overrides of abstract members in non-abstract expected classes should not be abstract, because otherwise it would be
-        // impossible to inherit a non-expected class from that expected class in common code.
-        // We're making their modality that of the containing class, because this is the least confusing behavior for the users.
-        // However, it may cause problems if we reuse resolution results of common code when compiling platform code (see KT-15220)
-        val transformAbstractToClassModality =
-            current.isExpect && current.modality !== Modality.ABSTRACT && current.modality !== Modality.SEALED
         if (hasOpen && !hasAbstract) {
             return Modality.OPEN
         }
         if (!hasOpen && hasAbstract) {
-            return if (transformAbstractToClassModality) current.modality else Modality.ABSTRACT
+            return Modality.ABSTRACT
         }
 
-        val realOverrides = members
+        return members
             .map { it.original as IrOverridableDeclaration<*> }
             .removeInvalidOverridesOfMethodsFromAny()
             .removeEachOthersOverrides()
-        return getMinimalModality(realOverrides, transformAbstractToClassModality, current.modality)
+            .minOf { it.modality }
     }
 
     private fun Collection<IrOverridableDeclaration<*>>.removeInvalidOverridesOfMethodsFromAny(): Collection<IrOverridableDeclaration<*>> {
@@ -329,22 +320,6 @@ class IrFakeOverrideBuilder(
         return result
     }
 
-    private fun getMinimalModality(
-        members: Collection<IrOverridableMember>,
-        transformAbstractToClassModality: Boolean,
-        classModality: Modality
-    ): Modality {
-        var result = Modality.ABSTRACT
-        for (member in members) {
-            val effectiveModality =
-                if (transformAbstractToClassModality && member.modality === Modality.ABSTRACT) classModality else member.modality
-            if (effectiveModality < result) {
-                result = effectiveModality
-            }
-        }
-        return result
-    }
-
     private fun IrSimpleFunction.updateAccessorModalityAndVisibility(
         newModality: Modality,
         newVisibility: DescriptorVisibility
@@ -366,7 +341,7 @@ class IrFakeOverrideBuilder(
         addedFakeOverrides: MutableList<IrOverridableMember>,
         compatibilityMode: Boolean
     ) {
-        val modality = determineModalityForFakeOverride(overridables, currentClass)
+        val modality = determineModalityForFakeOverride(overridables)
         val visibility = findMemberWithMaxVisibility(overridables).override.visibility
         val mostSpecific = selectMostSpecificMember(overridables)
 
