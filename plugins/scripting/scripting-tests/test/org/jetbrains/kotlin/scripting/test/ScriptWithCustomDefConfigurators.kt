@@ -28,8 +28,13 @@ private val testScriptDefinitionClasspath by lazy {
 class ScriptWithCustomDefEnvironmentConfigurator(testServices: TestServices) : EnvironmentConfigurator(testServices) {
     override fun configureCompilerConfiguration(configuration: CompilerConfiguration, module: TestModule) {
         configuration.addJvmClasspathRoots(testScriptDefinitionClasspath)
-        module.directives[ScriptingTestDirectives.SCRIPT_DEFAULT_IMPORTS].takeIf { it.isNotEmpty() }?.let {
-            configuration.put(ScriptingConfigurationKeys.LEGACY_SCRIPT_RESOLVER_ENVIRONMENT_OPTION, "defaultImports", it)
+        val dirSplitRegex = Regex(" *, *")
+        ScriptingTestDirectives.directivesToPassViaEnvironment.forEach { (directive, envName) ->
+            module.directives[directive].flatMap { it.split(dirSplitRegex).filter { it.isNotEmpty() } }.let {
+                if (it.isNotEmpty()) {
+                    configuration.put(ScriptingConfigurationKeys.LEGACY_SCRIPT_RESOLVER_ENVIRONMENT_OPTION, envName, it)
+                }
+            }
         }
         super.configureCompilerConfiguration(configuration, module)
     }

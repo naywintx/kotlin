@@ -9,4 +9,9 @@ import org.jetbrains.kotlin.test.directives.model.SimpleDirectivesContainer
 
 object ScriptingTestDirectives : SimpleDirectivesContainer() {
     val SCRIPT_DEFAULT_IMPORTS by stringDirective("Default imports", multiLine = true)
+
+    val directivesToPassViaEnvironment =
+        listOf(
+            SCRIPT_DEFAULT_IMPORTS to "defaultImports",
+        )
 }
