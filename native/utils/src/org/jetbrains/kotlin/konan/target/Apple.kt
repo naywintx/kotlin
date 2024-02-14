@@ -19,12 +19,14 @@ package org.jetbrains.kotlin.konan.target
 import org.jetbrains.kotlin.konan.properties.KonanPropertiesLoader
 import org.jetbrains.kotlin.konan.properties.Properties
 import org.jetbrains.kotlin.konan.util.InternalServer
+import org.jetbrains.kotlin.konan.util.ProgressCallback
 
 class AppleConfigurablesImpl(
     target: KonanTarget,
     properties: Properties,
-    dependenciesDir: String?
-) : AppleConfigurables, KonanPropertiesLoader(target, properties, dependenciesDir) {
+    dependenciesDir: String?,
+    progressCallback: ProgressCallback,
+) : AppleConfigurables, KonanPropertiesLoader(target, properties, dependenciesDir, progressCallback = progressCallback) {
 
     private val sdkDependency = this.targetSysRoot!!
     private val toolchainDependency = this.targetToolchain!!

@@ -20,7 +20,10 @@ import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPro
 import org.jetbrains.kotlin.gradle.utils.NativeCompilerDownloader
 import org.jetbrains.kotlin.gradle.utils.filesProvider
 import org.jetbrains.kotlin.gradle.utils.property
+import org.jetbrains.kotlin.konan.properties.KonanPropertiesLoader
+import org.jetbrains.kotlin.konan.target.Distribution
 import org.jetbrains.kotlin.konan.target.KonanTarget
+import org.jetbrains.kotlin.konan.target.loadConfigurables
 
 /**
  * This is a nested provider for all native tasks
@@ -29,6 +32,7 @@ internal class KotlinNativeProvider(
     project: Project,
     konanTargets: Set<KonanTarget>,
     kotlinNativeBundleBuildService: Provider<KotlinNativeBundleBuildService>,
+    enableDependenciesDownloading: Boolean = true,
 ) {
     constructor(
         project: Project,
@@ -64,6 +68,30 @@ internal class KotlinNativeProvider(
         }
         kotlinNativeVersion
     }
+
+    @get:Input
+    val kotlinNativeDependencies: Provider<Set<String>> =
+        kotlinNativeBundleVersion
+            .zip(bundleDirectory) { _, bundleDir ->
+                val requiredDependencies = mutableSetOf<String>()
+                if (project.kotlinNativeToolchainEnabled && enableDependenciesDownloading) {
+                    val distribution = Distribution(bundleDir.asFile.absolutePath, konanDataDir = konanDataDir.orNull)
+                    konanTargets.forEach { konanTarget ->
+                        val konanPropertiesLoader = loadConfigurables(
+                            konanTarget,
+                            distribution.properties,
+                            distribution.dependenciesDir,
+                            progressCallback = { url, currentBytes, totalBytes ->
+                                project.logger.info("Downloading dependency for Kotlin Native: $url (${currentBytes}/${totalBytes}). ")
+                            }
+                        ) as KonanPropertiesLoader
+
+                        requiredDependencies.addAll(konanPropertiesLoader.dependencies)
+                        konanPropertiesLoader.downloadDependencies()
+                    }
+                }
+                requiredDependencies
+            }
 
     // Gradle tries to evaluate this val during configuration cache,
     // which lead to resolving configuration, even if k/n bundle is in konan home directory.
