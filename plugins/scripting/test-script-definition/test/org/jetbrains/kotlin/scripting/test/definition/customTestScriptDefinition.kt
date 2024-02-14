@@ -12,7 +12,7 @@ import kotlin.script.experimental.host.ScriptingHostConfiguration
 
 @Suppress("unused", "UNUSED_PARAMETER")
 @KotlinScript(fileExtension = "test.kts", compilationConfiguration = ConfigurableTestScriptConfiguration::class)
-abstract class ConfigurableTestScript(vararg args: String)
+abstract class ConfigurableTestScript(vararg val args: String)
 
 class ConfigurableTestScriptConfiguration : ScriptCompilationConfiguration(
     {
@@ -26,6 +26,14 @@ class ConfigurableTestScriptConfiguration : ScriptCompilationConfiguration(
                         env["defaultImports"]?.let {
                             @Suppress("UNCHECKED_CAST")
                             defaultImports.append(it as List<String>)
+                        }
+                        env["providedProperties"]?.let {
+                            @Suppress("UNCHECKED_CAST")
+                            (it as List<String>).forEach {
+                                it.split(Regex(" *: *")).let {
+                                    providedProperties.append(listOf(it.first() to KotlinType(it.last())))
+                                }
+                            }
                         }
                     }.asSuccess()
             }

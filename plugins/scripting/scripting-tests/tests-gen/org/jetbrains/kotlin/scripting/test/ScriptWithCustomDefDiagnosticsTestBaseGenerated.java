@@ -25,6 +25,12 @@ public class ScriptWithCustomDefDiagnosticsTestBaseGenerated extends AbstractScr
     }
 
     @Test
+    @TestMetadata("providedProperties.test.kts")
+    public void testProvidedProperties_test() throws Exception {
+        runTest("plugins/scripting/scripting-tests/testData/diagnostics/testScripts/providedProperties.test.kts");
+    }
+
+    @Test
     @TestMetadata("simple.test.kts")
     public void testSimple_test() throws Exception {
         runTest("plugins/scripting/scripting-tests/testData/diagnostics/testScripts/simple.test.kts");
