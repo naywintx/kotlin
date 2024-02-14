@@ -8,5 +8,5 @@ package org.jetbrains.kotlin.scripting.test
 import org.jetbrains.kotlin.test.directives.model.SimpleDirectivesContainer
 
 object ScriptingTestDirectives : SimpleDirectivesContainer() {
-    val SCRIPT_DEFAULT_IMPORT by stringDirective("Default imports", multiLine = true)
+    val SCRIPT_DEFAULT_IMPORTS by stringDirective("Default imports", multiLine = true)
 }

@@ -28,7 +28,7 @@ private val testScriptDefinitionClasspath by lazy {
 class ScriptWithCustomDefEnvironmentConfigurator(testServices: TestServices) : EnvironmentConfigurator(testServices) {
     override fun configureCompilerConfiguration(configuration: CompilerConfiguration, module: TestModule) {
         configuration.addJvmClasspathRoots(testScriptDefinitionClasspath)
-        module.directives[ScriptingTestDirectives.SCRIPT_DEFAULT_IMPORT].takeIf { it.isNotEmpty() }?.let {
+        module.directives[ScriptingTestDirectives.SCRIPT_DEFAULT_IMPORTS].takeIf { it.isNotEmpty() }?.let {
             configuration.put(ScriptingConfigurationKeys.LEGACY_SCRIPT_RESOLVER_ENVIRONMENT_OPTION, "defaultImports", it)
         }
         super.configureCompilerConfiguration(configuration, module)
