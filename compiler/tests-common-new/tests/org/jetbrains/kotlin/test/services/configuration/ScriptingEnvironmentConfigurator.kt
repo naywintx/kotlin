@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.test.services.EnvironmentConfigurator
 import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.isKtsFile
 
-class ScriptingEnvironmentConfigurator(testServices: TestServices) : EnvironmentConfigurator(testServices) {
+open class ScriptingEnvironmentConfigurator(testServices: TestServices) : EnvironmentConfigurator(testServices) {
     override fun configureCompilerConfiguration(configuration: CompilerConfiguration, module: TestModule) {
         if (module.files.any { it.isKtsFile }) {
             loadScriptingPlugin(configuration)
