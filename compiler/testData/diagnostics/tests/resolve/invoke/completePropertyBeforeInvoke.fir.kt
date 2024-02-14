@@ -14,7 +14,7 @@ interface AsyncModule {
 operator fun <T : AsyncModule, R> T.invoke(handler: T.() -> R): R = TODO()
 
 fun XTrackableLoading.foo(fooBar: Property<LoadingValue<AsyncModule>>) {
-    fooBar.<!EXPLICIT_TYPE_ARGUMENTS_IN_PROPERTY_ACCESS, TYPE_ARGUMENTS_NOT_ALLOWED!>liveLoaded<!> {
+    fooBar.<!TYPE_ARGUMENTS_NOT_ALLOWED!>liveLoaded<!> {
         bar()
     }
 }

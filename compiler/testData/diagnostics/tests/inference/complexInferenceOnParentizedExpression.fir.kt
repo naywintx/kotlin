@@ -22,7 +22,7 @@ val <C: Context<C>, A: InterfaceA<C>> A.impl get() = ABuilder<C, A, AImpl<C>>()
 
 fun test_1() {
     RootA.apply {
-        <!TYPE_ARGUMENTS_NOT_ALLOWED!>(<!EXPLICIT_TYPE_ARGUMENTS_IN_PROPERTY_ACCESS!>impl<!>) {
+        <!TYPE_ARGUMENTS_NOT_ALLOWED!>(impl) {
             foo()
         }<!>
     }
@@ -30,7 +30,7 @@ fun test_1() {
 
 fun test_2() {
     RootA.apply {
-        <!EXPLICIT_TYPE_ARGUMENTS_IN_PROPERTY_ACCESS, TYPE_ARGUMENTS_NOT_ALLOWED!>impl<!> {
+        <!TYPE_ARGUMENTS_NOT_ALLOWED!>impl<!> {
             foo()
         }
     }

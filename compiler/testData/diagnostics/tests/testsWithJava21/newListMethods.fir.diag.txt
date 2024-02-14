@@ -12,13 +12,9 @@
 
 /newListMethods.fir.kt:(779,787): error: Unresolved reference 'getFirst'.
 
-/newListMethods.fir.kt:(796,801): error: Property access cannot have explicit type arguments.
-
 /newListMethods.fir.kt:(796,801): error: Function invocation 'first()' expected.
 
 /newListMethods.fir.kt:(887,894): error: Unresolved reference 'getLast'.
-
-/newListMethods.fir.kt:(903,907): error: Property access cannot have explicit type arguments.
 
 /newListMethods.fir.kt:(903,907): error: Function invocation 'last()' expected.
 
