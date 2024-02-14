@@ -25,6 +25,12 @@ public class ScriptWithCustomDefDiagnosticsTestBaseGenerated extends AbstractScr
     }
 
     @Test
+    @TestMetadata("conflictingImportsWithJava.test.kts")
+    public void testConflictingImportsWithJava_test() throws Exception {
+        runTest("plugins/scripting/scripting-tests/testData/diagnostics/testScripts/conflictingImportsWithJava.test.kts");
+    }
+
+    @Test
     @TestMetadata("providedPropertiesShadowing.test.kts")
     public void testProvidedPropertiesShadowing_test() throws Exception {
         runTest("plugins/scripting/scripting-tests/testData/diagnostics/testScripts/providedPropertiesShadowing.test.kts");
