@@ -10,9 +10,9 @@ import org.jetbrains.kotlin.scripting.definitions.getEnvironment
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 
-@Suppress("unused")
+@Suppress("unused", "UNUSED_PARAMETER")
 @KotlinScript(fileExtension = "test.kts", compilationConfiguration = ConfigurableTestScriptConfiguration::class)
-abstract class ConfigurableTestScript
+abstract class ConfigurableTestScript(vararg args: String)
 
 class ConfigurableTestScriptConfiguration : ScriptCompilationConfiguration(
     {

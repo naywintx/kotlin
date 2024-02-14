@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.lombok.*
 import org.jetbrains.kotlin.noarg.*
 import org.jetbrains.kotlin.parcelize.test.runners.*
 import org.jetbrains.kotlin.samWithReceiver.*
+import org.jetbrains.kotlin.scripting.test.AbstractScriptWithCustomDefBlackBoxCodegenTest
 import org.jetbrains.kotlin.scripting.test.AbstractScriptWithCustomDefDiagnosticsTestBase
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlinx.atomicfu.AbstractAtomicfuJsIrTest
@@ -401,6 +402,12 @@ fun main(args: Array<String>) {
         testGroup("plugins/scripting/scripting-tests/tests-gen", "plugins/scripting/scripting-tests") {
             testClass<AbstractScriptWithCustomDefDiagnosticsTestBase> {
                 model("testData/diagnostics/testScripts", extension = "kts")
+            }
+        }
+
+        testGroup("plugins/scripting/scripting-tests/tests-gen", "plugins/scripting/scripting-tests") {
+            testClass<AbstractScriptWithCustomDefBlackBoxCodegenTest> {
+                model("testData/codegen/testScripts", extension = "kts")
             }
         }
 
