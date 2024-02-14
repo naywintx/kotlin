@@ -188,7 +188,6 @@ fun testCleanerCleansWithoutGC() {
             createCleaner(funBox) { it.call() }
         }()
         GC.collect()  // Make sure local funBox reference is gone
-        cleaner
         cleanerWeak = WeakReference(cleaner)
         assertFalse(called.value)
     }()

@@ -10,9 +10,6 @@ import kotlin.native.internal.GCUnsafeCall
 import kotlin.native.internal.InternalForKotlinNative
 import kotlinx.cinterop.*
 
-@FreezingIsDeprecated
-internal fun Any?.isShareable(): Boolean = true
-
 // Implementation details.
 
 @GCUnsafeCall("Kotlin_Worker_stateOfFuture")
