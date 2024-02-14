@@ -1,0 +1,3 @@
+Declaration: class Target
+At usage site: public fun target(): kotlin.Unit { /* compiled code */ }
+Is visible: true

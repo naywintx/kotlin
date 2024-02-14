@@ -1,0 +1,3 @@
+Declaration: private class Hello
+At usage site: println
+Is visible: false
