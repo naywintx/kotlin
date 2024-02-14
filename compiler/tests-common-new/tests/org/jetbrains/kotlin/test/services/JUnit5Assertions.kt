@@ -10,8 +10,11 @@ import org.jetbrains.kotlin.test.util.convertLineSeparators
 import org.jetbrains.kotlin.test.util.trimTrailingWhitespacesAndAddNewlineAtEOF
 import org.jetbrains.kotlin.utils.rethrow
 import org.junit.jupiter.api.function.Executable
+import org.opentest4j.AssertionFailedError
+import org.opentest4j.FileInfo
 import java.io.File
 import java.io.IOException
+import java.nio.charset.StandardCharsets
 import org.junit.jupiter.api.Assertions as JUnit5PlatformAssertions
 
 object JUnit5Assertions : AssertionsService() {
@@ -49,9 +52,10 @@ object JUnit5Assertions : AssertionsService() {
             val expected = expectedFile.readText().convertLineSeparators()
             val expectedText = expected.trim { it <= ' ' }.trimTrailingWhitespacesAndAddNewlineAtEOF()
             if (sanitizer.invoke(expectedText) != sanitizer.invoke(actualText)) {
-                throw FileComparisonFailure(
+                throw AssertionFailedError(
                     "${differenceObtainedMessage()}: ${expectedFile.name}",
-                    expected, actual, expectedFile.absolutePath
+                    FileInfo(expectedFile.absolutePath, expected.toByteArray(StandardCharsets.UTF_8)),
+                    actual,
                 )
             }
         } catch (e: IOException) {
