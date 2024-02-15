@@ -957,19 +957,22 @@ private class ScriptToClassTransformer(
         return declarationToCompare == data.topLevelDeclaration
     }
 
-    private fun IrDeclaration.needsScriptReceiver() =
-        this.parent == irScript || this.parent == irScriptClass ||
-                when (this) {
-                    is IrFunction -> this.dispatchReceiverParameter
-                    is IrProperty -> {
-                        this.getter?.takeIf {
-                            // without this exception, the PropertyReferenceLowering generates clinit with attempt to use script as receiver
-                            // TODO: find whether it is a valid exception and maybe how to make it more obvious
-                            it.origin != IrDeclarationOrigin.DELEGATED_PROPERTY_ACCESSOR
-                        }?.dispatchReceiverParameter
-                    }
-                    else -> null
-                }?.origin == IrDeclarationOrigin.SCRIPT_THIS_RECEIVER
+    private fun IrDeclaration.needsScriptReceiver(): Boolean {
+        val representative = when (this) {
+            is IrFunction -> this
+            is IrProperty -> {
+                this.getter?.takeIf {
+                    // without this exception, the PropertyReferenceLowering generates clinit with attempt to use script as receiver
+                    // TODO: find whether it is a valid exception and maybe how to make it more obvious
+                    it.origin != IrDeclarationOrigin.DELEGATED_PROPERTY_ACCESSOR
+                }
+            }
+            else -> null
+        }
+        return representative != null &&
+                (this.parent == irScript || this.parent == irScriptClass ||
+                        representative.dispatchReceiverParameter?.origin == IrDeclarationOrigin.SCRIPT_THIS_RECEIVER)
+    }
 }
 
 private class ScriptFixLambdasTransformer(val irScriptClass: IrClass) : IrElementTransformer<ScriptFixLambdasTransformerContext> {
