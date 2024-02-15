@@ -26671,6 +26671,18 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestDataPath("$PROJECT_ROOT")
       public class Hmpp {
         @Test
+        @TestMetadata("actualizeSubtypeBeforeSupertype.kt")
+        public void testActualizeSubtypeBeforeSupertype() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/actualizeSubtypeBeforeSupertype.kt");
+        }
+
+        @Test
+        @TestMetadata("actualizedInPlatformSession.kt")
+        public void testActualizedInPlatformSession() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/actualizedInPlatformSession.kt");
+        }
+
+        @Test
         public void testAllFilesPresentInHmpp() {
           KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/multiplatform/hmpp"), Pattern.compile("^(.+)\\.(kt|kts)$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
         }
@@ -26679,6 +26691,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         @TestMetadata("ambiguousActuals.kt")
         public void testAmbiguousActuals() {
           runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/ambiguousActuals.kt");
+        }
+
+        @Test
+        @TestMetadata("hmppModalityClash.kt")
+        public void testHmppModalityClash() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/hmppModalityClash.kt");
         }
 
         @Test
@@ -26691,6 +26709,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         @TestMetadata("hmppRedeclarationWithExpectActualPair.kt")
         public void testHmppRedeclarationWithExpectActualPair() {
           runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/hmppRedeclarationWithExpectActualPair.kt");
+        }
+
+        @Test
+        @TestMetadata("hmppSignatureClash.kt")
+        public void testHmppSignatureClash() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/hmppSignatureClash.kt");
         }
 
         @Test
