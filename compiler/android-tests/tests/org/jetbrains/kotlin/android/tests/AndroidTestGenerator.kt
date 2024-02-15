@@ -40,7 +40,7 @@ internal fun patchFilesAndAddTest(
     services: TestServices,
     filesHolder: CodegenTestsOnAndroidGenerator.FilesWriter
 ): FqName {
-    val newPackagePrefix = testFile.path.replace("\\\\|-|\\.|/".toRegex(), "_")
+    val newPackagePrefix = testFile.path.substringAfter("testData/").replace("""[\\\-./]""".toRegex(), "_")
     val oldPackage = Ref<FqName>()
     val isJvmName = Ref<Boolean>(false)
     val testFiles = module.files
@@ -111,7 +111,7 @@ internal fun patchFilesAndAddTest(
         }
     }
 
-    val boxFiles = resultFiles.filter { hasBoxMethod(it.content) }
+    val boxFiles = resultFiles.filter { it.content.contains("fun box()") }
     if (boxFiles.size != 1) {
         println("Several box methods in $testFile")
     }
@@ -124,14 +124,9 @@ internal fun patchFilesAndAddTest(
     return boxFiles.last().newPackagePartClassId
 }
 
-private fun hasBoxMethod(text: String): Boolean {
-    return text.contains("fun box()")
-}
-
 class TestClassInfo(val name: String, var content: String, val oldPackage: FqName, val isJvmName: Boolean, val newPackagePartClassId: FqName) {
     val newPackage = newPackagePartClassId.parent()
 }
-
 
 private fun changePackage(newPackagePrefix: String, text: String, oldPackage: Ref<FqName>, isJvmName: Ref<Boolean>): String {
     val matcher = packagePattern.matcher(text)

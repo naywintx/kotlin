@@ -508,7 +508,7 @@ private fun TestProject.withBuildSummary(
 
 /**
  * This property is configured reade konan from specific directory, which in teamcity will be filled with k/n built from master.
- * NOTE: On changing test konan dir location update related location in kotlin-teamcity-build repository
+ * NOTE: On changing test konan dir location update related location in kotlin-teamcity-buil repository
  */
 val konanDir
     get() =

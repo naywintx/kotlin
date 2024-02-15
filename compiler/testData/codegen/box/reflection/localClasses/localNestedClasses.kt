@@ -1,9 +1,12 @@
 // TARGET_BACKEND: JVM_IR
+// WITH_STDLIB
 // WITH_REFLECT
 // JVM_ABI_K1_K2_DIFF: K2 names companion objects in metadata correctly
 
 import kotlin.reflect.KType
 import kotlin.reflect.full.memberProperties
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 val KType.str get() = classifier.toString()
 
@@ -131,14 +134,13 @@ fun foo7(): String {
 }
 
 fun box(): String {
-    if (A().foo() != "class A\$foo\$Nested\$Inner") return "Fail 1"
-    if (foo1() != "class LocalNestedClassesKt\$foo1\$X\$Y\$Z") return "Fail 2"
-    if (foo2() != "class LocalNestedClassesKt\$foo2\$X\$Y\$Companion") return "Fail 3"
-    if (foo3() != "class LocalNestedClassesKt\$foo3\$X\$Y\$prop\$1") return "Fail 4"
-    if (foo4() != "class LocalNestedClassesKt\$foo4\$A\$B\$C\$bar\$D") return "Fail 5"
-    if (foo5() != "class LocalNestedClassesKt\$foo5\$1\$bar\$1\$foo\$A\$B") return "Fail 6"
-    if (foo6() != "class LocalNestedClassesKt\$foo6\$1\$bar\$A\$B\$C") return "Fail 7"
-    if (foo7() != "class LocalNestedClassesKt\$foo7\$x\$1\$y\$1\$z\$1") return "Fail 8"
-
+    assertTrue(A().foo().endsWith("A\$foo\$Nested\$Inner"), "A().foo() not ends with A\$foo\$Nested\$Inner")
+    assertTrue(foo1().endsWith("LocalNestedClassesKt\$foo1\$X\$Y\$Z"), "foo1() not ends with LocalNestedClassesKt\$foo1\$X\$Y\$Z")
+    assertTrue(foo2().endsWith("LocalNestedClassesKt\$foo2\$X\$Y\$Companion"), "foo2() not ends with LocalNestedClassesKt\$foo2\$X\$Y\$Companion")
+    assertTrue(foo3().endsWith("LocalNestedClassesKt\$foo3\$X\$Y\$prop\$1"), "foo3() not ends with LocalNestedClassesKt\$foo3\$X\$Y\$prop\$1")
+    assertTrue(foo4().endsWith("LocalNestedClassesKt\$foo4\$A\$B\$C\$bar\$D"), "foo4() not ends with LocalNestedClassesKt\$foo4\$A\$B\$C\$bar\$D")
+    assertTrue(foo5().endsWith("LocalNestedClassesKt\$foo5\$1\$bar\$1\$foo\$A\$B"), "foo5() not ends with LocalNestedClassesKt\$foo5\$1\$bar\$1\$foo\$A\$B")
+    assertTrue(foo6().endsWith("LocalNestedClassesKt\$foo6\$1\$bar\$A\$B\$C"), "foo6() not ends with LocalNestedClassesKt\$foo6\$1\$bar\$A\$B\$C")
+    assertTrue(foo7().endsWith("LocalNestedClassesKt\$foo7\$x\$1\$y\$1\$z\$1"), "foo7() not ends with LocalNestedClassesKt\$foo7\$x\$1\$y\$1\$z\$1")
     return "OK"
 }

@@ -1,0 +1,10 @@
+test-classes/
+libs/
+gradle/
+build/
+gradlew
+gradlew.bat
+src/*
+!src/main/
+gradle.properties
+*.hprof
