@@ -108,7 +108,7 @@ class CandidateFactory private constructor(
             }
             if (propertySymbol != null) {
                 // Flag all property references that are resolved from an convention operator call.
-                result.addDiagnostic(PropertyAsOperator(propertySymbol))
+                //result.addDiagnostic(PropertyAsOperator(propertySymbol))
             }
         }
         if (symbol is FirPropertySymbol &&

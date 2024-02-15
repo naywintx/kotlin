@@ -625,7 +625,7 @@ class LightTreeRawFirExpressionBuilder(
         }
 
         return result ?: buildErrorExpression {
-            source = null
+            source = dotQualifiedExpression.toFirSourceElement()
             diagnostic = ConeSyntaxDiagnostic("Qualified expression without selector")
 
             // if there is no selector, we still want to resolve the receiver
@@ -879,6 +879,10 @@ class LightTreeRawFirExpressionBuilder(
             when (it.tokenType) {
                 else -> if (it.isExpression()) firExpression = getAsFirExpression(it, "No expression in condition with expression")
             }
+        }
+
+        if (firExpression == null) {
+            Unit
         }
 
         val calculatedFirExpression = firExpression ?: buildErrorExpression(
