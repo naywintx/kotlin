@@ -9,21 +9,56 @@ repositories {
 
 kotlin {
     jvm()
+
     linuxX64()
     mingwX64()
     macosX64()
-    //jsTarget: js { browser(); nodejs() }
-    //wasmJs: wasmJs { browser() }
-    //wasmWasi: wasmWasi { nodejs() }
+
+    js { browser() }
+
+    wasmJs { browser() }
+    wasmWasi { nodejs() }
+
+    sourceSets {
+        commonMain {
+            dependencies {
+                //commonMain-compileOnly: compileOnly("org.jetbrains.kotlinx:atomicfu:latest.release")
+                //commonMain-api: api("org.jetbrains.kotlinx:atomicfu:latest.release")
+            }
+        }
+        commonTest {
+            dependencies {
+                //commonTest-compileOnly: compileOnly("org.jetbrains.kotlinx:atomicfu:latest.release")
+                /*
+                 * api() is not defined here, to verify that compileOnly() + api() is not necessary
+                 * for test compilations, because they are not published
+                 */
+            }
+        }
+        jvmMain {
+            dependencies {
+                // JVM does not require exposing `compileOnly()` dependencies
+            }
+        }
+        jsMain {
+            dependencies {
+                //targetMain-api: api("org.jetbrains.kotlinx:atomicfu:latest.release")
+            }
+        }
+        nativeMain {
+            dependencies {
+                //targetMain-api: api("org.jetbrains.kotlinx:atomicfu:latest.release")
+            }
+        }
+        wasmJsMain {
+            dependencies {
+                //targetMain-api: api("org.jetbrains.kotlinx:atomicfu:latest.release")
+            }
+        }
+        wasmWasiMain {
+            dependencies {
+                //targetMain-api: api("org.jetbrains.kotlinx:atomicfu:latest.release")
+            }
+        }
+    }
 }
-
-dependencies {
-    //compileOnly: commonMainCompileOnly("org.jetbrains.kotlinx:atomicfu:latest.release")
-    //api: commonMainApi("org.jetbrains.kotlinx:atomicfu:latest.release")
-
-    //compileOnly: commonMainCompileOnly(project(":my-kmp-lib"))
-    //api: commonMainApi(project(":my-kmp-lib"))
-}
-
-//jsTarget: kotlin { sourceSets { jsMain { dependencies { api("org.jetbrains.kotlinx:atomicfu:latest.release") } } } }
-//jsTarget: kotlin { sourceSets { jsTest { dependencies { api("org.jetbrains.kotlinx:atomicfu:latest.release") } } } }

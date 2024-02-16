@@ -8,15 +8,18 @@ import org.gradle.api.logging.LogLevel
 import org.jetbrains.kotlin.gradle.util.modify
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.junit.Test
+import kotlin.test.assertEquals
 
 open class MultiplatformIncorrectCompileOnlyDependenciesValidationIT : BaseGradleIT() {
 
     private fun setupProject(
-        jsTarget: Boolean = false,
-        wasmJs: Boolean = false,
-        wasmWasi: Boolean = false,
-        compileOnlyDependencies: Boolean = false,
-        apiDependencies: Boolean = false,
+        commonMainCompileOnlyDependencies: Boolean = false,
+        commonMainApiDependencies: Boolean = false,
+
+        commonTestCompileOnlyDependencies: Boolean = false,
+
+        targetMainApiDependencies: Boolean = false,
+
         kotlinNativeIgnoreIncorrectDependencies: Boolean = false,
         kotlinKmpIgnoreIncorrectCompileOnlyDependencies: Boolean = false,
         exec: BaseGradleIT.Project.() -> Unit,
@@ -24,30 +27,28 @@ open class MultiplatformIncorrectCompileOnlyDependenciesValidationIT : BaseGradl
         with(Project("kmp-compileonly-dependency", minLogLevel = LogLevel.INFO)) {
             setupWorkingDir()
 
-            fun modifyAllBuildGradleKts(transform: (content: String) -> String) {
-                projectDir.walk().filter { it.name == "build.gradle.kts" }.forEach { buildGradleKts ->
-                    buildGradleKts.modify(transform)
+            if (commonMainCompileOnlyDependencies) {
+                gradleBuildScript().modify {
+                    it.replace("//commonMain-compileOnly:", "")
                 }
             }
 
-            if (jsTarget) {
-                modifyAllBuildGradleKts { it.replace("//jsTarget:", "") }
+            if (commonTestCompileOnlyDependencies) {
+                gradleBuildScript().modify {
+                    it.replace("//commonTest-compileOnly:", "")
+                }
             }
 
-            if (wasmWasi) {
-                modifyAllBuildGradleKts { it.replace("//wasmWasi:", "") }
+            if (commonMainApiDependencies) {
+                gradleBuildScript().modify {
+                    it.replace("//commonMain-api:", "")
+                }
             }
 
-            if (wasmJs) {
-                modifyAllBuildGradleKts { it.replace("//wasmJs:", "") }
-            }
-
-            if (compileOnlyDependencies) {
-                modifyAllBuildGradleKts { it.replace("//compileOnly:", "") }
-            }
-
-            if (apiDependencies) {
-                modifyAllBuildGradleKts { it.replace("//api:", "") }
+            if (targetMainApiDependencies) {
+                gradleBuildScript().modify {
+                    it.replace("//targetMain-api:", "")
+                }
             }
 
             if (kotlinNativeIgnoreIncorrectDependencies) {
@@ -71,9 +72,21 @@ open class MultiplatformIncorrectCompileOnlyDependenciesValidationIT : BaseGradl
     }
 
     @Test
-    fun `when dependency is not defined, expect no warning`() {
+    fun `when compileOnly dependency is not defined anywhere, expect no warning`() {
+        setupProject {
+            assertOutputDoesNotContainCompileOnlyWarning()
+        }
+    }
+
+    /**
+     * The `compileOnly()` warning is only relevant for 'published' compilations.
+     *
+     * Verify `compileOnly()` dependencies in test sources do not trigger the warning.
+     */
+    @Test
+    fun `when compileOnly dependency is defined in commonTest, expect no warning`() {
         setupProject(
-            jsTarget = true
+            commonTestCompileOnlyDependencies = true,
         ) {
             assertOutputDoesNotContainCompileOnlyWarning()
         }
@@ -82,11 +95,7 @@ open class MultiplatformIncorrectCompileOnlyDependenciesValidationIT : BaseGradl
     @Test
     fun `when dependency is defined as compileOnly but not api, expect warning`() {
         setupProject(
-            jsTarget = true,
-            wasmJs = true,
-            wasmWasi = true,
-            compileOnlyDependencies = true,
-            apiDependencies = false,
+            commonMainCompileOnlyDependencies = true,
         ) {
             assertOutputContainsCompileOnlyWarning(target = "Kotlin/JS", "js")
             assertOutputContainsCompileOnlyWarning(target = "Kotlin/Native", detectNativeEnabledCompilation())
@@ -96,21 +105,29 @@ open class MultiplatformIncorrectCompileOnlyDependenciesValidationIT : BaseGradl
     }
 
     @Test
-    fun `in Native project, when dependency is defined as compileOnly and api, expect no warning`() {
+    fun `when commonMain dependency is defined as compileOnly and api, expect no warning`() {
         setupProject(
-            compileOnlyDependencies = true,
-            apiDependencies = true,
+            commonMainCompileOnlyDependencies = true,
+            commonMainApiDependencies = true,
         ) {
             assertOutputDoesNotContainCompileOnlyWarning()
         }
     }
 
     @Test
-    fun `in Native and JS project, when dependency is defined as compileOnly but not api, and kotlin-mpp warning is disabled, expect no warning`() {
+    fun `when dependency is defined as compileOnly in commonMain, and api in target main sources, expect no warning`() {
         setupProject(
-            jsTarget = true,
-            compileOnlyDependencies = true,
-            apiDependencies = false,
+            commonMainCompileOnlyDependencies = true,
+            targetMainApiDependencies = true
+        ) {
+            assertOutputDoesNotContainCompileOnlyWarning()
+        }
+    }
+
+    @Test
+    fun `when dependency is defined as compileOnly but not api, and kotlin-mpp warning is disabled, expect no warning`() {
+        setupProject(
+            commonMainCompileOnlyDependencies = true,
             kotlinKmpIgnoreIncorrectCompileOnlyDependencies = true
         ) {
             assertOutputDoesNotContainCompileOnlyWarning()
@@ -118,17 +135,39 @@ open class MultiplatformIncorrectCompileOnlyDependenciesValidationIT : BaseGradl
     }
 
     @Test
-    fun `in Native project, when dependency is defined as compileOnly but not api, and kotlin-native warning is disabled, expect no warning`() {
+    fun `when dependency is defined as compileOnly but not api, and kotlin-native warning is disabled, expect no warning for native compilations`() {
         setupProject(
-            jsTarget = false,
-            compileOnlyDependencies = true,
+            commonMainCompileOnlyDependencies = true,
             kotlinNativeIgnoreIncorrectDependencies = true
         ) {
-            assertOutputDoesNotContainCompileOnlyWarning()
+            build("help") {
+                val warnings = warningRegex.findAll(output)
+                    .map {
+                        val (platformName, targetName) = it.destructured
+                        "$platformName - $targetName"
+                    }
+                    .toList()
+                    .sorted()
+                    .joinToString("\n")
+
+                assertEquals(
+                    """
+                    Kotlin/JS - js
+                    Kotlin/Wasm - wasmJs
+                    Kotlin/Wasm - wasmWasi
+                    """.trimIndent(),
+                    warnings,
+                    message = "expect no warnings for Kotlin/Native compilations"
+                )
+            }
         }
     }
 
     companion object {
+
+        private val warningRegex = Regex(
+            "A compileOnly dependency is used in the (?<platformName>[^ ]*) target '(?<targetName>[^']*)':"
+        )
 
         private fun BaseGradleIT.Project.assertOutputContainsCompileOnlyWarning(
             target: String,
@@ -143,7 +182,7 @@ open class MultiplatformIncorrectCompileOnlyDependenciesValidationIT : BaseGradl
         private fun BaseGradleIT.Project.assertOutputDoesNotContainCompileOnlyWarning(): Unit = with(testCase) {
             build("help") {
                 assertSuccessful()
-                assertNotContains(Regex("A compileOnly dependency is used in the [^ ]* target '[^']*':"))
+                assertNotContains(warningRegex)
             }
         }
 
