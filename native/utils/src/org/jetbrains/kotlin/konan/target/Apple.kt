@@ -47,10 +47,13 @@ class AppleConfigurablesImpl(
         XcodePartsProvider.InternalServer -> absolute(additionalToolsDir)
     }
 
-    override val dependencies get() = super.dependencies + when (xcodePartsProvider) {
-        is XcodePartsProvider.Local -> emptyList()
-        XcodePartsProvider.InternalServer -> listOf(sdkDependency, toolchainDependency, xcodeAddonDependency)
-    }
+    override val dependencies
+        get() = super.dependencies +
+                if (InternalServer.isAvailable) listOf(
+                    sdkDependency,
+                    toolchainDependency,
+                    xcodeAddonDependency
+                ) else emptyList()
 
     private val xcodePartsProvider by lazy {
         if (InternalServer.isAvailable) {
