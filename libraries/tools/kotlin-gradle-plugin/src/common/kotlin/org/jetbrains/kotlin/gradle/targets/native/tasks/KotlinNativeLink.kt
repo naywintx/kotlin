@@ -379,7 +379,7 @@ constructor(
         replaceWith = ReplaceWith("kotlinNativeProvider.compilerDirectory")
     )
     @get:Internal
-    val konanHome: Provider<String> = kotlinNativeProvider.map { it.bundleDirectory.get().asFile.absolutePath }
+    internal val konanHome: Provider<String> = project.objects.property(project.konanHome.absolutePath)
 
     private val runnerSettings = KotlinNativeCompilerRunner.Settings.of(
         kotlinNativeProvider.get().bundleDirectory.getFile().absolutePath,
@@ -400,11 +400,12 @@ constructor(
             val executionContext = KotlinToolRunner.GradleExecutionContext.fromTaskContext(objectFactory, execOperations, logger)
             val additionalOptions = mutableListOf<String>().apply {
                 addAll(externalDependenciesArgs)
+                val konanHomePath = @Suppress("DEPRECATION") File(konanHome.get())
                 when (cacheSettings.orchestration) {
                     NativeCacheOrchestration.Compiler -> {
                         if (cacheSettings.kind != NativeCacheKind.NONE
                             && !optimized
-                            && konanPropertiesService.get().cacheWorksFor(konanTarget)
+                            && konanPropertiesService.get().cacheWorksFor(konanHomePath, konanTarget)
                         ) {
                             add("-Xauto-cache-from=${cacheSettings.gradleUserHomeDir}")
                             add("-Xbackend-threads=${cacheSettings.threads}")
@@ -428,7 +429,8 @@ constructor(
                             executionContext = executionContext,
                             settings = cacheBuilderSettings,
                             konanPropertiesService = konanPropertiesService.get(),
-                            metricsReporter = metricsReporter
+                            metricsReporter = metricsReporter,
+                            konanHome = konanHomePath
                         )
                         addAll(cacheBuilder.buildCompilerArgs(resolvedConfiguration))
                     }

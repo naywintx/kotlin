@@ -12,7 +12,6 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.services.BuildService
 import org.gradle.api.services.BuildServiceParameters
 import org.gradle.api.tasks.Internal
-import org.jetbrains.kotlin.compilerRunner.konanHome
 import org.jetbrains.kotlin.gradle.dsl.NativeCacheKind
 import org.jetbrains.kotlin.gradle.tasks.withType
 import org.jetbrains.kotlin.gradle.utils.SingleActionPerProject
@@ -20,6 +19,7 @@ import org.jetbrains.kotlin.konan.properties.resolvablePropertyList
 import org.jetbrains.kotlin.konan.target.Distribution
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
+import java.io.File
 import java.util.*
 
 internal interface UsesKonanPropertiesBuildService : Task {
@@ -27,56 +27,45 @@ internal interface UsesKonanPropertiesBuildService : Task {
     val konanPropertiesService: Property<KonanPropertiesBuildService>
 }
 
-abstract class KonanPropertiesBuildService : BuildService<KonanPropertiesBuildService.Parameters> {
+abstract class KonanPropertiesBuildService : BuildService<BuildServiceParameters.None> {
 
-    internal interface Parameters : BuildServiceParameters {
-        val konanHome: Property<String>
-    }
+    private fun properties(konanHome: File): Properties =
+        Distribution(konanHome.absolutePath).properties
 
-    private val properties: Properties by lazy {
-        Distribution(parameters.konanHome.get()).properties
-    }
+    private fun cacheableTargets(konanHome: File): List<KonanTarget> = properties(konanHome)
+        .resolvablePropertyList("cacheableTargets", HostManager.hostName)
+        .map { KonanTarget.predefinedTargets.getValue(it) }
 
-    private val cacheableTargets: List<KonanTarget> by lazy {
-        properties
-            .resolvablePropertyList("cacheableTargets", HostManager.hostName)
-            .map { KonanTarget.predefinedTargets.getValue(it) }
-    }
 
-    private val targetsWithOptInStaticCaches: List<KonanTarget> by lazy {
-        properties
+    private fun targetsWithOptInStaticCaches(konanHome: File): List<KonanTarget> =
+        properties(konanHome)
             .resolvablePropertyList("optInCacheableTargets", HostManager.hostName)
             .map { KonanTarget.predefinedTargets.getValue(it) }
-    }
 
-    internal fun defaultCacheKindForTarget(target: KonanTarget): NativeCacheKind =
-        if (target in cacheableTargets && target !in targetsWithOptInStaticCaches) {
+
+    internal fun defaultCacheKindForTarget(konanHome: File, target: KonanTarget): NativeCacheKind =
+        if (target in cacheableTargets(konanHome) && target !in targetsWithOptInStaticCaches(konanHome)) {
             NativeCacheKind.STATIC
         } else {
             NativeCacheKind.NONE
         }
 
-    internal fun cacheWorksFor(target: KonanTarget): Boolean =
-        target in cacheableTargets
+    internal fun cacheWorksFor(konanHome: File, target: KonanTarget): Boolean =
+        target in cacheableTargets(konanHome)
 
-    internal fun additionalCacheFlags(target: KonanTarget): List<String> =
-        properties.resolvablePropertyList("additionalCacheFlags", target.visibleName)
-
-    internal val compilerVersion: String? by lazy {
-        properties["compilerVersion"]?.toString()
-    }
+    internal fun additionalCacheFlags(konanHome: File, target: KonanTarget): List<String> =
+        properties(konanHome).resolvablePropertyList("additionalCacheFlags", target.visibleName)
 
     companion object {
         fun registerIfAbsent(project: Project): Provider<KonanPropertiesBuildService> =
-            project.gradle.sharedServices.registerIfAbsent(serviceName, KonanPropertiesBuildService::class.java) { service ->
-                service.parameters.konanHome.set(project.rootProject.konanHome.absolutePath)
-            }.also { serviceProvider ->
-                SingleActionPerProject.run(project, UsesKonanPropertiesBuildService::class.java.name) {
-                    project.tasks.withType<UsesKonanPropertiesBuildService>().configureEach { task ->
-                        task.usesService(serviceProvider)
+            project.gradle.sharedServices.registerIfAbsent(serviceName, KonanPropertiesBuildService::class.java) { }
+                .also { serviceProvider ->
+                    SingleActionPerProject.run(project, UsesKonanPropertiesBuildService::class.java.name) {
+                        project.tasks.withType<UsesKonanPropertiesBuildService>().configureEach { task ->
+                            task.usesService(serviceProvider)
+                        }
                     }
                 }
-            }
 
         private val serviceName: String
             get() {

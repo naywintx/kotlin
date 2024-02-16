@@ -755,6 +755,7 @@ internal class CacheBuilder(
     private val settings: Settings,
     private val konanPropertiesService: KonanPropertiesBuildService,
     private val metricsReporter: BuildMetricsReporter<GradleBuildTime, GradleBuildPerformanceMetric>,
+    private val konanHome: File,
 ) {
     class Settings(
         val runnerSettings: KotlinNativeCompilerRunner.Settings,
@@ -915,7 +916,7 @@ internal class CacheBuilder(
                 "-target", target
             )
             if (debuggable) args += "-g"
-            args += konanPropertiesService.additionalCacheFlags(konanTarget)
+            args += konanPropertiesService.additionalCacheFlags(konanHome, konanTarget)
             args += settings.externalDependenciesArgs
             args += "$PARTIAL_LINKAGE_PARAMETER=$partialLinkageMode"
             args += "-Xadd-cache=${library.libraryFile.absolutePath}"
@@ -996,7 +997,7 @@ internal class CacheBuilder(
     }
 
     fun buildCompilerArgs(resolvedConfiguration: LazyResolvedConfiguration): List<String> = mutableListOf<String>().apply {
-        if (konanCacheKind != NativeCacheKind.NONE && !optimized && konanPropertiesService.cacheWorksFor(konanTarget)) {
+        if (konanCacheKind != NativeCacheKind.NONE && !optimized && konanPropertiesService.cacheWorksFor(konanHome, konanTarget)) {
             rootCacheDirectory.mkdirs()
             ensureCompilerProvidedLibsPrecached()
             add("-Xcache-directory=${rootCacheDirectory.absolutePath}")

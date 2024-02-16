@@ -45,7 +45,7 @@ internal class PlatformLibrariesGenerator(val project: Project, val konanTarget:
     }
 
     private val shouldBuildCaches: Boolean =
-        konanPropertiesService.cacheWorksFor(konanTarget) && konanCacheKind != NativeCacheKind.NONE
+        konanPropertiesService.cacheWorksFor(project.konanHome, konanTarget) && konanCacheKind != NativeCacheKind.NONE
 
     private val presentDefs: Set<String> by lazy {
         defDirectory
@@ -118,7 +118,7 @@ internal class PlatformLibrariesGenerator(val project: Project, val konanTarget:
                 CacheBuilder.getRootCacheDirectory(konanHome, konanTarget, true, konanCacheKind).absolutePath
             )
             args.addArg("-cache-arg", "-g")
-            val additionalCacheFlags = konanPropertiesService.additionalCacheFlags(konanTarget)
+            val additionalCacheFlags = konanPropertiesService.additionalCacheFlags(konanHome, konanTarget)
             additionalCacheFlags.forEach {
                 args.addArg("-cache-arg", it)
             }
