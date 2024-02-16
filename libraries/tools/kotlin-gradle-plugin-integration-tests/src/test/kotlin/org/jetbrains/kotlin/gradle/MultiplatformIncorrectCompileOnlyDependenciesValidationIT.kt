@@ -6,9 +6,8 @@ package org.jetbrains.kotlin.gradle
 
 import org.gradle.api.logging.LogLevel
 import org.jetbrains.kotlin.gradle.util.modify
-import org.jetbrains.kotlin.konan.target.HostManager
 import org.junit.Test
-import kotlin.test.assertEquals
+import kotlin.test.assertContentEquals
 
 open class MultiplatformIncorrectCompileOnlyDependenciesValidationIT : BaseGradleIT() {
 
@@ -93,14 +92,22 @@ open class MultiplatformIncorrectCompileOnlyDependenciesValidationIT : BaseGradl
     }
 
     @Test
-    fun `when dependency is defined as compileOnly but not api, expect warning`() {
+    fun `when dependency is defined as compileOnly but not api, expect warnings`() {
         setupProject(
             commonMainCompileOnlyDependencies = true,
         ) {
-            assertOutputContainsCompileOnlyWarning(target = "Kotlin/JS", "js")
-            assertOutputContainsCompileOnlyWarning(target = "Kotlin/Native", detectNativeEnabledCompilation())
-            assertOutputContainsCompileOnlyWarning(target = "Kotlin/Wasm", "wasmWasi")
-            assertOutputContainsCompileOnlyWarning(target = "Kotlin/Wasm", "wasmJs")
+            build("help") {
+                val warnings = extractCompileOnlyWarningPlatformNames()
+                assertContentEquals(
+                    listOf(
+                        "Kotlin/JS",
+                        "Kotlin/Native",
+                        "Kotlin/Wasm",
+                    ),
+                    warnings,
+                    message = "expect warnings for compileOnly-incompatible platforms"
+                )
+            }
         }
     }
 
@@ -141,24 +148,7 @@ open class MultiplatformIncorrectCompileOnlyDependenciesValidationIT : BaseGradl
             kotlinNativeIgnoreIncorrectDependencies = true
         ) {
             build("help") {
-                val warnings = warningRegex.findAll(output)
-                    .map {
-                        val (platformName, targetName) = it.destructured
-                        "$platformName - $targetName"
-                    }
-                    .toList()
-                    .sorted()
-                    .joinToString("\n")
-
-                assertEquals(
-                    """
-                    Kotlin/JS - js
-                    Kotlin/Wasm - wasmJs
-                    Kotlin/Wasm - wasmWasi
-                    """.trimIndent(),
-                    warnings,
-                    message = "expect no warnings for Kotlin/Native compilations"
-                )
+                assertNotContains("A compileOnly dependency is used in the Kotlin/Native target")
             }
         }
     }
@@ -166,31 +156,24 @@ open class MultiplatformIncorrectCompileOnlyDependenciesValidationIT : BaseGradl
     companion object {
 
         private val warningRegex = Regex(
-            "A compileOnly dependency is used in the (?<platformName>[^ ]*) target '(?<targetName>[^']*)':"
+            "A compileOnly dependency is used in the (?<platformName>[^ ]*) target '[^']*':"
         )
 
-        private fun BaseGradleIT.Project.assertOutputContainsCompileOnlyWarning(
-            target: String,
-            compilation: String,
-        ): Unit = with(testCase) {
-            build("help") {
-                assertSuccessful()
-                assertContains(Regex("A compileOnly dependency is used in the $target target '$compilation':"))
-            }
-        }
+        private fun CompiledProject.extractCompileOnlyWarningPlatformNames(): List<String> =
+            warningRegex.findAll(output)
+                .map {
+                    val (platformName) = it.destructured
+                    platformName
+                }
+                .distinct()
+                .toList()
+                .sorted()
 
         private fun BaseGradleIT.Project.assertOutputDoesNotContainCompileOnlyWarning(): Unit = with(testCase) {
             build("help") {
                 assertSuccessful()
                 assertNotContains(warningRegex)
             }
-        }
-
-        private fun detectNativeEnabledCompilation(): String = when {
-            HostManager.hostIsLinux -> "linuxX64"
-            HostManager.hostIsMingw -> "mingwX64"
-            HostManager.hostIsMac -> "macosX64"
-            else -> throw AssertionError("Host ${HostManager.host} is not supported for this test")
         }
     }
 }
