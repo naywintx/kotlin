@@ -261,7 +261,7 @@ interface KotlinDependencyHandler : HasProject {
      *
      * The official Kotlin dependencies are always part of the "org.jetbrains.kotlin" group and the module name always has prefix: "kotlin-".
      *
-     * @param simpleModuleName Kotlin module name followed after "kotlin-" prefix. For example, for "kotlin-reflect":
+     * @param simpleModuleName The Kotlin module name that follows after the "kotlin-" prefix. For example, for "kotlin-reflect":
      * ```
      * implementation(kotlin("reflect"))
      * // equivalent to
