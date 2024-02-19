@@ -262,7 +262,7 @@ private val CallableId.isStringPlus: Boolean
     get() = classId == StandardClassIds.String && callableName == OperatorNameConventions.PLUS
 
 private val CallableId.isCharCode: Boolean
-    get() = packageName.asString() == "kotlin" && classId == null && callableName.identifierOrNullIfSpecial == "code"
+    get() = packageName == StandardClassIds.BASE_KOTLIN_PACKAGE && classId == null && callableName.identifierOrNullIfSpecial == "code"
 
 ////// KINDS
 
