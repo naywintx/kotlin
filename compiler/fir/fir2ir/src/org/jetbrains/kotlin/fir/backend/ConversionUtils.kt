@@ -341,7 +341,7 @@ fun FirLiteralExpression<*>.getIrConstKind(): IrConstKind<*> = when (kind) {
 }
 
 context(Fir2IrComponents)
-fun <T> FirLiteralExpression<T>.toIrConst(irType: IrType): IrExpression {
+fun <T> FirLiteralExpression<T>.toIrConstOrExpression(irType: IrType): IrExpression {
     this.originalExpression?.let { original ->
         return original.asCompileTimeIrInitializer(this@Fir2IrComponents).expression
     }

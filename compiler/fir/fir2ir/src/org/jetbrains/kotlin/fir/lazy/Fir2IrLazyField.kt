@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.fir.lazy
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.fir.backend.Fir2IrComponents
-import org.jetbrains.kotlin.fir.backend.toIrConst
+import org.jetbrains.kotlin.fir.backend.toIrConstOrExpression
 import org.jetbrains.kotlin.fir.declarations.FirField
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.utils.isExternal
@@ -72,7 +72,7 @@ class Fir2IrLazyField(
 
     override var initializer: IrExpressionBody? by lazyVar(lock) {
         when (val initializer = fir.unwrapFakeOverrides().initializer) {
-            is FirLiteralExpression<*> -> factory.createExpressionBody(initializer.toIrConst(type))
+            is FirLiteralExpression<*> -> factory.createExpressionBody(initializer.toIrConstOrExpression(type))
             else -> null
         }
     }
