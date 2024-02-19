@@ -101,7 +101,7 @@ interface KotlinDependencyHandler : HasProject {
     fun implementation(dependencyNotation: String, configure: ExternalModuleDependency.() -> Unit): ExternalModuleDependency
 
     /**
-     * Adds an implementation
+     * Adds an `implementation`
      * [module dependency](https://docs.gradle.org/current/userguide/declaring_dependencies.html#sub:module_dependencies) to this entity.
      *
      * @see [HasKotlinDependencies.implementationConfigurationName]
