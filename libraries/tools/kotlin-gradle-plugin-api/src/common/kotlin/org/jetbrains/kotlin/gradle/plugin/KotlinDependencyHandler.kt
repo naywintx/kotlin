@@ -368,7 +368,7 @@ interface KotlinDependencyHandler : HasProject {
      *
      * This is only relevant for Kotlin entities that target only [KotlinPlatformType.js] or [KotlinPlatformType.wasm].
      *
-     * @param name npm dependency name
+     * @param name The NPM dependency name
      * @param version npm dependency version
      */
     fun npm(
