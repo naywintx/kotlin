@@ -65,7 +65,7 @@ class FirCompileTimeConstantEvaluator(
     private fun tryToEvaluateExpression(expression: FirExpression): FirExpression {
         val result = try {
             evaluator.evaluate(expression)
-        } catch (e: EvaluationException) {
+        } catch (_: EvaluationException) {
             return expression
         }
         return result ?: error("Couldn't evaluate FIR expression: ${expression.render()}")
