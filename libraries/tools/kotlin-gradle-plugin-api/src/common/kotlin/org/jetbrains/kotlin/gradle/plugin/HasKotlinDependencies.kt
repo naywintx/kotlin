@@ -15,7 +15,7 @@ import org.gradle.api.logging.Logger
 interface HasKotlinDependencies {
 
     /**
-     * Configures dependencies for this entity.
+     * Configures all dependencies for this entity.
      */
     fun dependencies(configure: KotlinDependencyHandler.() -> Unit)
 
