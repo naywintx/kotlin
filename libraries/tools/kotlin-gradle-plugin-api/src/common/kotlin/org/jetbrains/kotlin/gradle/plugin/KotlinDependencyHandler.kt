@@ -78,7 +78,7 @@ interface KotlinDependencyHandler : HasProject {
     fun <T : Dependency> api(dependency: T, configure: Action<T>) = api(dependency) { configure.execute(this) }
 
     /**
-     * Adds an implementation
+     * Adds an `implementation`
      * [module dependency](https://docs.gradle.org/current/userguide/declaring_dependencies.html#sub:module_dependencies) to this entity.
      *
      * @see [HasKotlinDependencies.implementationConfigurationName]
