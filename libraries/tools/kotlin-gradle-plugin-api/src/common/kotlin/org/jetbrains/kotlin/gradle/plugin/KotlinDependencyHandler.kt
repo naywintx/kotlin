@@ -391,7 +391,7 @@ interface KotlinDependencyHandler : HasProject {
     }
 
     /**
-     * Creates a dependency to [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#dependencies) module.
+     * Creates a dependency on the [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#dependencies) module.
      * Created dependency should be manually added to this entity using other methods from this DSL!
      *
      * This is only relevant for Kotlin entities that target only [KotlinPlatformType.js] or [KotlinPlatformType.wasm].
