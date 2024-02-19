@@ -26,7 +26,7 @@ interface HasKotlinDependencies {
 
     /**
      * The name of the Gradle [Configuration]
-     * containing [API](https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_separation) dependencies.
+     * that contains [`api`](https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_separation) dependencies.
      *
      * The Gradle API configuration should be used to declare dependencies which are exported by the project API.
      *
