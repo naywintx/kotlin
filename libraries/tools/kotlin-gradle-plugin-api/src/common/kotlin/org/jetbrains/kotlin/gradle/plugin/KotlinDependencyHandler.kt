@@ -125,7 +125,7 @@ interface KotlinDependencyHandler : HasProject {
     fun <T : Dependency> implementation(dependency: T, configure: T.() -> Unit): T
 
     /**
-     * Adds an implementation dependency to this entity.
+     * Adds an `implementation` dependency to this entity.
      *
      * @see [HasKotlinDependencies.implementationConfigurationName]
      *
