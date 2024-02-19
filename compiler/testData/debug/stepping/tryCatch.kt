@@ -66,7 +66,7 @@ fun box() {
 // Throwable.kt:23 $kotlin.Throwable.<init> (32, 38, 27, 27, 43)
 // Throwable.kt:18 $kotlin.Throwable.<init> (28, 62)
 // Throwable.kt:25 $kotlin.Throwable.<init>
-// ExternalWrapper.kt:226 $kotlin.wasm.internal.jsCheckIsNullOrUndefinedAdapter (18, 8, 32, 33)
+// ExternalWrapper.kt:229 $kotlin.wasm.internal.jsCheckIsNullOrUndefinedAdapter (18, 8, 32, 33)
 // Throwable.kt:27 $kotlin.Throwable.<init>
 // Throwable.kt:39 $kotlin.Throwable.<init>
 // Throwable.kt:49 $kotlin.Throwable.<init>

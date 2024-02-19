@@ -7,7 +7,7 @@ fun foo() {
     } catch (e: Throwable) {
         return
     }
-    
+
     val t = try {
         mightThrow2()
     } catch (e: Throwable) {
@@ -176,7 +176,7 @@ fun box() {
 // Throwable.kt:23 $kotlin.Throwable.<init> (32, 38, 27, 27, 43, 32, 38, 27, 27, 43, 32, 38, 27, 27, 43)
 // Throwable.kt:18 $kotlin.Throwable.<init> (28, 62, 28, 62, 28, 62)
 // Throwable.kt:25 $kotlin.Throwable.<init> (50, 50, 50)
-// ExternalWrapper.kt:226 $kotlin.wasm.internal.jsCheckIsNullOrUndefinedAdapter (18, 8, 32, 33, 18, 8, 32, 33, 18, 8, 32, 33)
+// ExternalWrapper.kt:229 $kotlin.wasm.internal.jsCheckIsNullOrUndefinedAdapter (18, 8, 32, 33, 18, 8, 32, 33, 18, 8, 32, 33)
 // Throwable.kt:27 $kotlin.Throwable.<init> (34, 34, 34)
 // Throwable.kt:39 $kotlin.Throwable.<init> (69, 69, 69)
 // Throwable.kt:49 $kotlin.Throwable.<init> (1, 1, 1)

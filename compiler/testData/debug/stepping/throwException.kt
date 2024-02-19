@@ -53,7 +53,7 @@ fun throwIfLess(a: Int, b: Int) {
 // Throwable.kt:23 $kotlin.Throwable.<init> (32, 38, 27, 27, 43, 32, 38, 27, 27, 43)
 // Throwable.kt:18 $kotlin.Throwable.<init> (28, 62, 28, 62)
 // Throwable.kt:25 $kotlin.Throwable.<init> (50, 50)
-// ExternalWrapper.kt:226 $kotlin.wasm.internal.jsCheckIsNullOrUndefinedAdapter (18, 8, 32, 33, 18, 8, 32, 33, 18, 8, 32, 33)
+// ExternalWrapper.kt:229 $kotlin.wasm.internal.jsCheckIsNullOrUndefinedAdapter (18, 8, 32, 33, 18, 8, 32, 33, 18, 8, 32, 33)
 // Throwable.kt:27 $kotlin.Throwable.<init> (34, 34)
 // Throwable.kt:39 $kotlin.Throwable.<init> (69, 69)
 // Throwable.kt:49 $kotlin.Throwable.<init> (1, 1)
@@ -88,18 +88,18 @@ fun throwIfLess(a: Int, b: Int) {
 // Array.kt:76 $kotlin.Array.set
 // String.kt:149 $kotlin.stringLiteral (11, 4)
 // TypeInfo.kt:38 $kotlin.wasm.internal.getSimpleName
-// ExternalWrapper.kt:200 $kotlin.wasm.internal.kotlinToJsStringAdapter
-// ExternalWrapper.kt:201 $kotlin.wasm.internal.kotlinToJsStringAdapter
-// Strings.kt:161 $kotlin.wasm.internal.kotlinToJsStringAdapter
+// ExternalWrapper.kt:203 $kotlin.wasm.internal.kotlinToJsStringAdapter
+// ExternalWrapper.kt:204 $kotlin.wasm.internal.kotlinToJsStringAdapter
+// Strings.kt:166 $kotlin.wasm.internal.kotlinToJsStringAdapter
 // Strings.kt:296 $kotlin.wasm.internal.kotlinToJsStringAdapter (52, 62, 52, 63)
 // String.kt:18 $kotlin.String.<get-length>
-// ExternalWrapper.kt:203 $kotlin.wasm.internal.kotlinToJsStringAdapter
+// ExternalWrapper.kt:206 $kotlin.wasm.internal.kotlinToJsStringAdapter
 // String.kt:150 $kotlin.wasm.internal.kotlinToJsStringAdapter
 // String.kt:63 $kotlin.wasm.internal.kotlinToJsStringAdapter
 // String.kt:66 $kotlin.wasm.internal.kotlinToJsStringAdapter (15, 8)
-// ExternalWrapper.kt:204 $kotlin.wasm.internal.kotlinToJsStringAdapter (23, 32, 4)
-// ExternalWrapper.kt:205 $kotlin.wasm.internal.kotlinToJsStringAdapter (26, 4)
-// ExternalWrapper.kt:208 $kotlin.wasm.internal.kotlinToJsStringAdapter
+// ExternalWrapper.kt:207 $kotlin.wasm.internal.kotlinToJsStringAdapter (23, 32, 4)
+// ExternalWrapper.kt:208 $kotlin.wasm.internal.kotlinToJsStringAdapter (26, 4)
+// ExternalWrapper.kt:211 $kotlin.wasm.internal.kotlinToJsStringAdapter
 // MemoryAllocation.kt:55 $kotlin.wasm.internal.kotlinToJsStringAdapter
 // MemoryAllocation.kt:56 $kotlin.wasm.internal.kotlinToJsStringAdapter (20, 4)
 // MemoryAllocation.kt:69 $kotlin.wasm.unsafe.createAllocatorInTheNewScope (20, 38, 20)
@@ -114,7 +114,7 @@ fun throwIfLess(a: Int, b: Int) {
 // MemoryAllocation.kt:71 $kotlin.wasm.unsafe.createAllocatorInTheNewScope (23, 4)
 // MemoryAllocation.kt:72 $kotlin.wasm.unsafe.createAllocatorInTheNewScope (11, 4)
 // MemoryAllocation.kt:58 $kotlin.wasm.internal.kotlinToJsStringAdapter (8, 14)
-// MemoryAllocation.kt:160 $kotlin.wasm.internal.kotlinToJsStringAdapter (828, 739, 758, 784, 771, 803, 758, 739, 749, 749, 749, 820, 8580, 8584, 723, 882, 845, 915, 895, 932, 948, 963, 948, 932, 932, 932, 1251, 1261, 1276, 1291, 1276, 1306, 1220, 1353, 1364, 1379, 1364, 1394, 1332, 1325, 1325)
+// MemoryAllocation.kt:160 $kotlin.wasm.internal.kotlinToJsStringAdapter (992, 903, 922, 948, 935, 967, 922, 903, 913, 913, 913, 984, 8580, 8584, 887, 1046, 1009, 1079, 1059, 1096, 1112, 1127, 1112, 1096, 1096, 1096, 1415, 1425, 1440, 1455, 1440, 1470, 1384, 1517, 1528, 1543, 1528, 1558, 1496, 1489, 1489)
 // _Ranges.kt:1321 $kotlin.ranges.coerceAtMost (15, 22, 15, 54, 4)
 // MemoryAllocation.kt:99 $kotlin.wasm.unsafe.ScopedMemoryAllocator.allocate (8, 8)
 // PreconditionsWasm.kt:29 $kotlin.wasm.unsafe.ScopedMemoryAllocator.allocate (2303, 2302, 2388, 2387, 2728, 2737, 2728, 2742, 2751, 2742, 2760, 2742)
