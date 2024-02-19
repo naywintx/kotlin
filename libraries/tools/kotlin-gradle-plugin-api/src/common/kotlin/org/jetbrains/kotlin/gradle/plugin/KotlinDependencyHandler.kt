@@ -184,7 +184,7 @@ interface KotlinDependencyHandler : HasProject {
     fun <T : Dependency> compileOnly(dependency: T, configure: T.() -> Unit): T
 
     /**
-     * Adds a compile-only dependency to this entity.
+     * Adds a `compileOnly` dependency to this entity.
      *
      * @see [HasKotlinDependencies.compileOnlyConfigurationName]
      *
