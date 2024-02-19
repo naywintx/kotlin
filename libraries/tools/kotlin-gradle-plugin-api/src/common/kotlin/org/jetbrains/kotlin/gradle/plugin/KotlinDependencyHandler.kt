@@ -552,7 +552,7 @@ interface KotlinDependencyHandler : HasProject {
      *
      * This is only relevant for Kotlin entities that target only [KotlinPlatformType.js] or [KotlinPlatformType.wasm].
      *
-     * @param directory path where dependency files are located
+     * @param directory The directory where dependency files are located
      * (see NPM [directory](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#local-paths) keyword)
      */
     fun optionalNpm(
