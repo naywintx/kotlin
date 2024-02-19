@@ -290,7 +290,7 @@ interface KotlinDependencyHandler : HasProject {
      * Creates a Gradle project dependency.
      * Created dependency should be manually added to this entity using other methods from this DSL!
      *
-     * @param path project path
+     * @param path The project path
      * @param configuration optional target configuration in the project
      */
     fun project(path: String, configuration: String? = null): ProjectDependency =
