@@ -173,7 +173,7 @@ interface KotlinDependencyHandler : HasProject {
         compileOnly(dependencyNotation) { configure.execute(this) }
 
     /**
-     * Adds a compile-only dependency to this entity.
+     * Adds a `compileOnly` dependency to this entity.
      *
      * @see [HasKotlinDependencies.compileOnlyConfigurationName]
      *
