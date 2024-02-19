@@ -232,7 +232,7 @@ interface KotlinDependencyHandler : HasProject {
         runtimeOnly(dependencyNotation) { configure.execute(this) }
 
     /**
-     * Adds a runtime-only dependency to this entity.
+     * Adds a `runtimeOnly` dependency to this entity.
      *
      * @see [HasKotlinDependencies.runtimeOnlyConfigurationName]
      *
