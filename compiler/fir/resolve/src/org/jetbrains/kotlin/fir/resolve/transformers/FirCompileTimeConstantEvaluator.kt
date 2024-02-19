@@ -38,10 +38,14 @@ import org.jetbrains.kotlin.resolve.constants.evaluate.evalUnaryOp
 import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
+@RequiresOptIn(message = "This evaluation mode is experimental and is not tested properly. Please refrain from using it.")
+annotation class UnstableEvaluationMode
+
 enum class FirEvaluationMode {
     /**
      * In this mode, evaluator will try to analyze and evaluate all expressions.
      */
+    @UnstableEvaluationMode
     FULL,
 
     /**
@@ -162,6 +166,7 @@ class FirCompileTimeConstantEvaluator(
         return super.transformResolvedTypeRef(resolvedTypeRef, data)
     }
 
+    @OptIn(UnstableEvaluationMode::class)
     override fun transformExpression(expression: FirExpression, data: FirEvaluationMode): FirStatement {
         if (data == FirEvaluationMode.FULL && expression.canBeEvaluated()) {
             return super.transformExpression(tryToEvaluateExpression(expression), data)
