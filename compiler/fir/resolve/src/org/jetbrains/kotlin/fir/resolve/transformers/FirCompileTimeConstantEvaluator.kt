@@ -378,7 +378,7 @@ private fun <T> Any?.toConstExpression(
         originalExpression.source,
         kind,
         this as T,
-        originalExpression.annotations.toMutableList(),
+        originalExpression.annotations.takeIf { it.isNotEmpty() }?.toMutableList(),
         setType = false,
         originalExpression = originalExpression
     ).apply { replaceConeTypeOrNull(originalExpression.resolvedType) }
