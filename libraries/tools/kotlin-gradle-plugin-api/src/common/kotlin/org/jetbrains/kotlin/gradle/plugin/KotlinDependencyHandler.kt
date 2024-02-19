@@ -67,7 +67,7 @@ interface KotlinDependencyHandler : HasProject {
     fun <T : Dependency> api(dependency: T, configure: T.() -> Unit): T
 
     /**
-     * Adds an API dependency to this entity.
+     * Adds an `api` dependency to this entity.
      *
      * @see [HasKotlinDependencies.apiConfigurationName]
      *
