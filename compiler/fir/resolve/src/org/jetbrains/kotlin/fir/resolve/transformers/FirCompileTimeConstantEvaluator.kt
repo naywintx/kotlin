@@ -160,7 +160,7 @@ class FirCompileTimeConstantEvaluator(
 }
 
 private class FirExpressionEvaluator(private val session: FirSession) : FirVisitor<FirElement?, Nothing?>() {
-    private val propertyStack = mutableListOf<FirCallableSymbol<*>>()
+    private val propertyStack = mutableSetOf<FirCallableSymbol<*>>()
 
     fun evaluate(expression: FirExpression?): FirExpression? {
         return expression?.accept(this, null) as? FirExpression
@@ -171,7 +171,7 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
         try {
             return block()
         } finally {
-            propertyStack.removeLast()
+            propertyStack.remove(this)
         }
     }
 
