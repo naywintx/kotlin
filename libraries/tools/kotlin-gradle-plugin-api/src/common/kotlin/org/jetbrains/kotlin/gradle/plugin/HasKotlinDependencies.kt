@@ -36,7 +36,7 @@ interface HasKotlinDependencies {
 
     /**
      * The name of the Gradle [Configuration]
-     * containing [implementation](https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_separation)
+     * that contains [`implementation`](https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_separation)
      * dependencies.
      *
      * The Gradle implementation configuration should be used to declare dependencies which are internal to the component (internal APIs).
