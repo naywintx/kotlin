@@ -253,7 +253,7 @@ private class FirConstCheckVisitor(private val session: FirSession) : FirVisitor
                 val initializer = propertySymbol.fir.initializer
 
                 if (propertySymbol.isConst) {
-                    return propertySymbol.visit { initializer?.accept(this, data) } ?: ConstantArgumentKind.UNKNOWN
+                    return propertySymbol.visit { initializer?.accept(this, data) } ?: ConstantArgumentKind.RESOLUTION_ERROR
                 }
 
                 return when (initializer) {
