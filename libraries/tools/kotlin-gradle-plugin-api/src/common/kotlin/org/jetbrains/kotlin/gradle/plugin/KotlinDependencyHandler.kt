@@ -95,7 +95,7 @@ interface KotlinDependencyHandler : HasProject {
      * @see [HasKotlinDependencies.implementationConfigurationName]
      *
      * @param dependencyNotation The module dependency notation, as per [DependencyHandler.create].
-     * @param configure additional configuration for the created module dependency.
+     * @param configure Additional configuration for the created module dependency.
      * @return The module dependency, or `null` if dependencyNotation is a provider.
      */
     fun implementation(dependencyNotation: String, configure: ExternalModuleDependency.() -> Unit): ExternalModuleDependency
