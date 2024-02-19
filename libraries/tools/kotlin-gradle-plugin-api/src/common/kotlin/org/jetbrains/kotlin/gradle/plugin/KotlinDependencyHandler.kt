@@ -550,7 +550,7 @@ interface KotlinDependencyHandler : HasProject {
      * The name of the dependency is derived either from `package.json` file located in the [directory] or [directory] name itself.
      * Created dependency should be manually added to this entity using other methods from this DSL!
      *
-     * **Note**: Only relevant for Kotlin entities targeting only [KotlinPlatformType.js] or [KotlinPlatformType.wasm]!
+     * This is only relevant for Kotlin entities that target only [KotlinPlatformType.js] or [KotlinPlatformType.wasm].
      *
      * @param directory path where dependency files are located
      * (see NPM [directory](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#local-paths) keyword)
