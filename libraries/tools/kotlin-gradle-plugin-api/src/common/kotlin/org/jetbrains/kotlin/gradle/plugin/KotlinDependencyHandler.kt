@@ -300,7 +300,7 @@ interface KotlinDependencyHandler : HasProject {
      * Creates a Gradle project dependency.
      * Created dependency should be manually added to this entity using other methods from this DSL!
      *
-     * @param notation project notation described in [DependencyHandler].
+     * @param notation Project notation described in [DependencyHandler].
      * For example:
      * ```
      * project(mapOf("path" to ":project-a", "configuration" to "someOtherConfiguration"))
