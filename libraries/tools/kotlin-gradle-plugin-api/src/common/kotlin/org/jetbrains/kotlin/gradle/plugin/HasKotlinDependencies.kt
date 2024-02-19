@@ -62,7 +62,7 @@ interface HasKotlinDependencies {
      * containing [`runtimeOnly`](https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_configurations_graph)
      * dependencies.
      *
-     * The Gradle runtime-only configuration should be used to declare dependencies which are not participating in the compilation,
+     * The Gradle `runtimeOnly` configuration should be used to declare dependencies that don't participate in compilation,
      * but added in the runtime.
      *
      * This Gradle configuration is not meant to be resolved.
