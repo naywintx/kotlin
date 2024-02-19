@@ -225,7 +225,7 @@ interface KotlinDependencyHandler : HasProject {
      * @see [HasKotlinDependencies.runtimeOnlyConfigurationName]
      *
      * @param dependencyNotation The module dependency notation, as per [DependencyHandler.create].
-     * @param configure additional configuration for the created module dependency.
+     * @param configure Additional configuration for the created module dependency.
      * @return The module dependency, or `null` if dependencyNotation is a provider.
      */
     fun runtimeOnly(dependencyNotation: String, configure: Action<ExternalModuleDependency>) =
