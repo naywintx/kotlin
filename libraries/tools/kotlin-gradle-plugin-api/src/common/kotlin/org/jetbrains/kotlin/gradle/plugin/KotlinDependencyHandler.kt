@@ -297,7 +297,7 @@ interface KotlinDependencyHandler : HasProject {
         project(listOf("path", "configuration").zip(listOfNotNull(path, configuration)).toMap())
 
     /**
-     * Creates Gradle project dependency.
+     * Creates a Gradle project dependency.
      * Created dependency should be manually added to this entity using other methods from this DSL!
      *
      * @param notation project notation described in [DependencyHandler].
