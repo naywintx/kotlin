@@ -259,7 +259,7 @@ interface KotlinDependencyHandler : HasProject {
      * in [KotlinTopLevelExtensionConfig.coreLibrariesVersion].
      * Created dependency should be manually added to this entity using other methods from this DSL!
      *
-     * The official Kotlin dependencies always have "org.jetbrains.kotlin" group and module name has "kotlin-" prefix.
+     * The official Kotlin dependencies are always part of the "org.jetbrains.kotlin" group and the module name always has prefix: "kotlin-".
      *
      * @param simpleModuleName Kotlin module name followed after "kotlin-" prefix. For example, for "kotlin-reflect":
      * ```
