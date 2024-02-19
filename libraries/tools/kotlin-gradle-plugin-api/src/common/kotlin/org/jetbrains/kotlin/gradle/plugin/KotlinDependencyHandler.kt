@@ -243,7 +243,7 @@ interface KotlinDependencyHandler : HasProject {
     fun <T : Dependency> runtimeOnly(dependency: T, configure: T.() -> Unit): T
 
     /**
-     * Adds a runtime-only dependency to this entity.
+     * Adds a `runtimeOnly` dependency to this entity.
      *
      * @see [HasKotlinDependencies.runtimeOnlyConfigurationName]
      *
