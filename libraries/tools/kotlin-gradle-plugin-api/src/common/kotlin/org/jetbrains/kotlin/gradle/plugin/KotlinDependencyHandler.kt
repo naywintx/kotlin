@@ -189,7 +189,7 @@ interface KotlinDependencyHandler : HasProject {
      * @see [HasKotlinDependencies.compileOnlyConfigurationName]
      *
      * @param dependency The dependency to add.
-     * @param configure additional configuration for the [dependency].
+     * @param configure Additional configuration for the [dependency].
      * @return The added [dependency].
      */
     fun <T : Dependency> compileOnly(dependency: T, configure: Action<T>) =
