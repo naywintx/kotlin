@@ -295,7 +295,8 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
                 when {
                     propertySymbol.callableId.isStringLength || propertySymbol.callableId.isCharCode -> {
                         evaluate(propertyAccessExpression.explicitReceiver)?.let { receiver ->
-                            propertyAccessExpression.evaluate(receiver, propertySymbol.callableId)
+                            evaluateUnary(receiver, propertySymbol.callableId)
+                                ?.adjustTypeAndConvertToLiteral(propertyAccessExpression)
                         }
                     }
                     else -> evaluateOrCopy(propertySymbol.fir.initializer)
@@ -324,10 +325,14 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
         if (evaluatedArgs.any { it == null }) return null
 
         val opr1 = evaluatedArgs.getOrNull(0) ?: return null
-        functionCall.evaluate(opr1, symbol.callableId)?.let { return it }
+        evaluateUnary(opr1, symbol.callableId)
+            ?.adjustTypeAndConvertToLiteral(functionCall)
+            ?.let { return it }
 
         val opr2 = evaluatedArgs.getOrNull(1) ?: return null
-        functionCall.evaluate(symbol.callableId, opr1, opr2)?.let { return it }
+        evaluateBinary(opr1, symbol.callableId, opr2)
+            ?.adjustTypeAndConvertToLiteral(functionCall)
+            ?.let { return it }
 
         return null
     }
@@ -432,7 +437,7 @@ private fun <T> ConstantValueKind<T>.toCompileTimeType(): CompileTimeType {
 }
 
 // Unary operators
-private fun FirExpression.evaluate(arg: FirExpression, callableId: CallableId): FirLiteralExpression<*>? {
+private fun evaluateUnary(arg: FirExpression, callableId: CallableId): Any? {
     if (arg !is FirLiteralExpression<*> || arg.value == null) return null
 
     val opr = arg.kind.convertToGivenKind(arg.value) ?: return null
@@ -440,15 +445,15 @@ private fun FirExpression.evaluate(arg: FirExpression, callableId: CallableId): 
         callableId.callableName.asString(),
         arg.kind.toCompileTimeType(),
         opr
-    )?.adjustTypeAndConvertToLiteral(this)
+    )
 }
 
 // Binary operators
-private fun FirExpression.evaluate(
-    callableId: CallableId,
+private fun evaluateBinary(
     arg1: FirExpression,
+    callableId: CallableId,
     arg2: FirExpression
-): FirExpression? {
+): Any? {
     if (arg1 !is FirLiteralExpression<*> || arg1.value == null) return null
     if (arg2 !is FirLiteralExpression<*> || arg2.value == null) return null
     // NB: some utils accept very general types, and due to the way operation map works, we should up-cast rhs type.
@@ -477,7 +482,7 @@ private fun FirExpression.evaluate(
         opr1,
         rightType,
         opr2
-    )?.adjustTypeAndConvertToLiteral(this)
+    )
 }
 
 private fun Any.adjustTypeAndConvertToLiteral(original: FirExpression): FirLiteralExpression<*>? {
