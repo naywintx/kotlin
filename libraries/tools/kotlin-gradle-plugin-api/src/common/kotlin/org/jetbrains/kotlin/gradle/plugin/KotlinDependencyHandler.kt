@@ -525,7 +525,7 @@ interface KotlinDependencyHandler : HasProject {
      *
      * @param name The NPM dependency name
      * @param directory path where dependency files are located
-     * (see NPM [directory](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#local-paths) keyword)
+     * (See NPM [directory](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#local-paths) keyword)
      */
     fun optionalNpm(
         name: String,
