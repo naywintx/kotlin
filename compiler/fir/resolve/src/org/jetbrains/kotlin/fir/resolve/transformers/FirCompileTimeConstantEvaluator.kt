@@ -442,10 +442,10 @@ private fun ClassId.toConstantValueKind(): ConstantValueKind<*>? =
         StandardClassIds.String -> ConstantValueKind.String
         StandardClassIds.Boolean -> ConstantValueKind.Boolean
 
-        "UByte" -> ConstantValueKind.UnsignedByte
-        "UShort" -> ConstantValueKind.UnsignedShort
-        "UInt" -> ConstantValueKind.UnsignedInt
-        "ULong" -> ConstantValueKind.UnsignedLong
+        StandardClassIds.UByte -> ConstantValueKind.UnsignedByte
+        StandardClassIds.UShort -> ConstantValueKind.UnsignedShort
+        StandardClassIds.UInt -> ConstantValueKind.UnsignedInt
+        StandardClassIds.ULong -> ConstantValueKind.UnsignedLong
 
         else -> null
     }
