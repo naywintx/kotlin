@@ -19,7 +19,7 @@ import java.io.File
 interface KotlinDependencyHandler : HasProject {
 
     /**
-     * Adds an API [module dependency](https://docs.gradle.org/current/userguide/declaring_dependencies.html#sub:module_dependencies)
+     * Adds an `api` [module dependency](https://docs.gradle.org/current/userguide/declaring_dependencies.html#sub:module_dependencies)
      * to this entity.
      *
      * @see [HasKotlinDependencies.apiConfigurationName]
