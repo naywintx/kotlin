@@ -1,5 +1,4 @@
-$TESTDATA_DIR$/firMpp/common.kt
-$TESTDATA_DIR$/firMpp/platform.kt
+$TESTDATA_DIR$/firMpp
 -Xcommon-sources=$TESTDATA_DIR$/firMpp/common.kt
 -language-version
 2.0
@@ -7,6 +6,6 @@ $TESTDATA_DIR$/firMpp/platform.kt
 $TEMP_DIR$
 -ir-output-name
 firMpp
+-Xallow-kotlin-package
 -XXLanguage\:+MultiPlatformProjects
--libraries
-libraries/stdlib/build/classes/kotlin/js/main
+-Xstdlib-compilation

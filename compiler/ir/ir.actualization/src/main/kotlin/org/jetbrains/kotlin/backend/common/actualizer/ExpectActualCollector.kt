@@ -5,11 +5,9 @@
 
 package org.jetbrains.kotlin.backend.common.actualizer
 
-import org.jetbrains.kotlin.ir.IrDiagnosticReporter
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.incremental.components.ExpectActualTracker
-import org.jetbrains.kotlin.ir.IrElement
-import org.jetbrains.kotlin.ir.PsiIrFileEntry
+import org.jetbrains.kotlin.ir.*
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
@@ -60,7 +58,7 @@ internal class ExpectActualCollector(
     fun collectClassActualizationInfo(): ClassActualizationInfo {
         val expectTopLevelClasses = ExpectTopLevelClassesCollector.collect(dependentFragments)
         val fragmentsWithActuals = dependentFragments.drop(1) + mainFragment
-        return ActualDeclarationsCollector.collectActualsFromFragments(fragmentsWithActuals, expectTopLevelClasses)
+        return FragmentsActualDeclarationsCollector(fragmentsWithActuals, expectTopLevelClasses).collect()
     }
 
     private fun matchAllExpectDeclarations(
@@ -77,19 +75,6 @@ internal class ExpectActualCollector(
         // Thus relevant actuals are always missing for the last module
         // But the collector should be run anyway to detect and report "hanging" expect declarations
         linkCollector.visitModuleFragment(mainFragment, linkCollectorContext)
-    }
-}
-
-internal data class ClassActualizationInfo(
-    // mapping from classId of actual class/typealias to itself/typealias expansion
-    val actualClasses: Map<ClassId, IrClassSymbol>,
-    // mapping from classId to actual typealias
-    val actualTypeAliases: Map<ClassId, IrTypeAliasSymbol>,
-    val actualTopLevels: Map<CallableId, List<IrSymbol>>,
-    val actualSymbolsToFile: Map<IrSymbol, IrFile?>,
-) {
-    fun getActualWithoutExpansion(classId: ClassId): IrSymbol? {
-        return actualTypeAliases[classId] ?: actualClasses[classId]
     }
 }
 
@@ -117,24 +102,10 @@ private class ExpectTopLevelClassesCollector {
     }
 }
 
-private class ActualDeclarationsCollector(
+private class FragmentsActualDeclarationsCollector(
+    private val fragments: List<IrModuleFragment>,
     private val expectTopLevelClasses: Map<ClassId, IrClassSymbol>,
-) {
-    companion object {
-        fun collectActualsFromFragments(fragments: List<IrModuleFragment>, expectTopLevelClasses: Map<ClassId, IrClassSymbol>): ClassActualizationInfo {
-            val collector = ActualDeclarationsCollector(expectTopLevelClasses)
-            for (fragment in fragments) {
-                collector.collect(fragment)
-            }
-            return ClassActualizationInfo(
-                collector.actualClasses,
-                collector.actualTypeAliasesWithoutExpansion,
-                collector.actualTopLevels,
-                collector.actualSymbolsToFile
-            )
-        }
-    }
-
+) : ActualDeclarationsCollector() {
     private val actualClasses: MutableMap<ClassId, IrClassSymbol> = mutableMapOf()
     private val actualTypeAliasesWithoutExpansion: MutableMap<ClassId, IrTypeAliasSymbol> = mutableMapOf()
     private val actualTopLevels: MutableMap<CallableId, MutableList<IrSymbol>> = mutableMapOf()
@@ -142,6 +113,18 @@ private class ActualDeclarationsCollector(
 
     private val visitedActualClasses = mutableSetOf<IrClass>()
     private var currentFile: IrFile? = null
+
+    override fun collect(): ClassActualizationInfo {
+        for (fragment in fragments) {
+            collect(fragment)
+        }
+        return ClassActualizationInfo(
+            actualClasses,
+            actualTypeAliasesWithoutExpansion,
+            actualTopLevels,
+            actualSymbolsToFile
+        )
+    }
 
     private fun collect(element: IrElement) {
         when (element) {

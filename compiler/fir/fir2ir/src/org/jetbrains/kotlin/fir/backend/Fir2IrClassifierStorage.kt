@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.backend
 
+import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
@@ -240,13 +241,19 @@ class Fir2IrClassifierStorage(
         classifierStorage.getCachedIrClass(firClass)?.let { return it }
 
         val symbol = createClassSymbol(signature = null)
-        val irClass = lazyDeclarationsGenerator.createIrLazyClass(firClass, irParent, symbol)
-        classCache[firClass] = irClass
-        // NB: this is needed to prevent recursions in case of self bounds
-        irClass.prepareTypeParameters()
+        val irClass = if (configuration.languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation)) {
+            classifiersGenerator.createIrClass(firClass, irParent, symbol, IrDeclarationOrigin.DEFINED).also {
+                classCache[firClass] = it
+            }
+        } else {
+            lazyDeclarationsGenerator.createIrLazyClass(firClass, irParent, symbol).also {
+                classCache[firClass] = it
+                // NB: this is needed to prevent recursions in case of self bounds
+                it.prepareTypeParameters()
+            }
+        }
 
         return irClass
-
     }
 
     fun getFieldsWithContextReceiversForClass(irClass: IrClass, klass: FirClass): List<IrField> {

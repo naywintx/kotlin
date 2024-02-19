@@ -1150,6 +1150,11 @@ public class CliTestGenerated extends AbstractCliTest {
             runTest("compiler/testData/cli/jvm/standaloneSamConversionsAreEnabledWithNewInferenceInternalFlag.args");
         }
 
+        @TestMetadata("stdlib.args")
+        public void testStdlib() throws Exception {
+            runTest("compiler/testData/cli/jvm/stdlib.args");
+        }
+
         @TestMetadata("suppressAllWarningsJvm.args")
         public void testSuppressAllWarningsJvm() throws Exception {
             runTest("compiler/testData/cli/jvm/suppressAllWarningsJvm.args");

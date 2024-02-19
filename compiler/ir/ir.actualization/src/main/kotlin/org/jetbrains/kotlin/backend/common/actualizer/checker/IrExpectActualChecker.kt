@@ -6,8 +6,8 @@
 package org.jetbrains.kotlin.backend.common.actualizer.checker
 
 import org.jetbrains.kotlin.ir.IrDiagnosticReporter
-import org.jetbrains.kotlin.backend.common.actualizer.ClassActualizationInfo
 import org.jetbrains.kotlin.backend.common.actualizer.IrExpectActualMatchingContext
+import org.jetbrains.kotlin.ir.ClassActualizationInfo
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContext
 

@@ -5,6 +5,8 @@
 // TARGET_PLATFORM: Common
 // FILE: common.kt
 
+expect class Int1
+
 expect fun func(): String
 
 expect var prop: String

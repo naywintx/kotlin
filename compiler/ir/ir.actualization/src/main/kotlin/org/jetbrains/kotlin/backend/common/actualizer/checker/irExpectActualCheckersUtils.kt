@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.backend.common.actualizer.checker
 
-import org.jetbrains.kotlin.backend.common.actualizer.ClassActualizationInfo
+import org.jetbrains.kotlin.ir.ClassActualizationInfo
 import org.jetbrains.kotlin.ir.util.parents
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclaration
