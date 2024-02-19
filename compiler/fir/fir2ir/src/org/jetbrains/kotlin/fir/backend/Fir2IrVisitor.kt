@@ -877,7 +877,7 @@ class Fir2IrVisitor(
     }
 
     override fun <T> visitLiteralExpression(literalExpression: FirLiteralExpression<T>, data: Any?): IrElement {
-        return literalExpression.toIrConst(literalExpression.resolvedType.toIrType())
+        return literalExpression.toIrConstOrExpression(literalExpression.resolvedType.toIrType())
     }
 
     // ==================================================================================
