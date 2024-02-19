@@ -255,7 +255,7 @@ interface KotlinDependencyHandler : HasProject {
         runtimeOnly(dependency) { configure.execute(this) }
 
     /**
-     * Creates a dependency to an official Kotlin library with the same version as configured
+     * Creates a dependency to an official Kotlin library with the same version that is configured
      * in [KotlinTopLevelExtensionConfig.coreLibrariesVersion].
      * Created dependency should be manually added to this entity using other methods from this DSL!
      *
