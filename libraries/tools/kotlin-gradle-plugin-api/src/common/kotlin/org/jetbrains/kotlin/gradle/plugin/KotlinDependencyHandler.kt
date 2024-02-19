@@ -56,7 +56,7 @@ interface KotlinDependencyHandler : HasProject {
     }
 
     /**
-     * Adds an API dependency to this entity.
+     * Adds an `api` dependency to this entity.
      *
      * @see [HasKotlinDependencies.apiConfigurationName]
      *
