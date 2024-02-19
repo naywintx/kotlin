@@ -22,12 +22,14 @@ import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.resolve.diagnostics.canBeEvaluatedAtCompileTime
 import org.jetbrains.kotlin.fir.resolve.diagnostics.canBeUsedForConstVal
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
+import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.visitors.FirTransformer
 import org.jetbrains.kotlin.fir.visitors.FirVisitor
 import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
 import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.resolve.constants.evaluate.CompileTimeType
 import org.jetbrains.kotlin.resolve.constants.evaluate.evalBinaryOp
@@ -299,7 +301,7 @@ private val CallableId.isStringPlus: Boolean
 private fun ConeKotlinType.toConstantValueKind(): ConstantValueKind<*>? =
     when (this) {
         is ConeErrorType -> null
-        is ConeLookupTagBasedType -> lookupTag.name.asString().toConstantValueKind()
+        is ConeLookupTagBasedType -> (lookupTag as? ConeClassLikeLookupTag)?.classId?.toConstantValueKind()
         is ConeFlexibleType -> upperBound.toConstantValueKind()
         is ConeCapturedType -> lowerType?.toConstantValueKind() ?: constructor.supertypes!!.first().toConstantValueKind()
         is ConeDefinitelyNotNullType -> original.toConstantValueKind()
@@ -307,18 +309,18 @@ private fun ConeKotlinType.toConstantValueKind(): ConstantValueKind<*>? =
         is ConeStubType, is ConeIntegerLiteralType, is ConeTypeVariableType -> null
     }
 
-private fun String.toConstantValueKind(): ConstantValueKind<*>? =
+private fun ClassId.toConstantValueKind(): ConstantValueKind<*>? =
     when (this) {
-        "Byte" -> ConstantValueKind.Byte
-        "Double" -> ConstantValueKind.Double
-        "Float" -> ConstantValueKind.Float
-        "Int" -> ConstantValueKind.Int
-        "Long" -> ConstantValueKind.Long
-        "Short" -> ConstantValueKind.Short
+        StandardClassIds.Byte -> ConstantValueKind.Byte
+        StandardClassIds.Double -> ConstantValueKind.Double
+        StandardClassIds.Float -> ConstantValueKind.Float
+        StandardClassIds.Int -> ConstantValueKind.Int
+        StandardClassIds.Long -> ConstantValueKind.Long
+        StandardClassIds.Short -> ConstantValueKind.Short
 
-        "Char" -> ConstantValueKind.Char
-        "String" -> ConstantValueKind.String
-        "Boolean" -> ConstantValueKind.Boolean
+        StandardClassIds.Char -> ConstantValueKind.Char
+        StandardClassIds.String -> ConstantValueKind.String
+        StandardClassIds.Boolean -> ConstantValueKind.Boolean
 
         else -> null
     }
