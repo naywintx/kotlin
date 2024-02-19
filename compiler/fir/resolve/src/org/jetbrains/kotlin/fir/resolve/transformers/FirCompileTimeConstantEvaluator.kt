@@ -42,7 +42,7 @@ val FirSession.compileTimeEvaluator: FirCompileTimeConstantEvaluator by FirSessi
 private sealed class EvaluationException : Exception()
 private class UnknownEvaluationException : EvaluationException()
 private class DivisionByZeroEvaluationException : EvaluationException()
-private class StackOverflowEvaluationException : EvaluationException()
+private class RecursiveEvaluationException : EvaluationException()
 
 class FirCompileTimeConstantEvaluator(
     private val session: FirSession,
@@ -248,7 +248,7 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
             ?: return null
 
         if (propertySymbol in propertyStack) {
-            throw StackOverflowEvaluationException()
+            throw RecursiveEvaluationException()
         }
 
         fun evaluateOrCopy(initializer: FirExpression?): FirExpression? = propertySymbol.visit {
