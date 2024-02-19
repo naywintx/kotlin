@@ -207,7 +207,7 @@ interface KotlinDependencyHandler : HasProject {
     fun runtimeOnly(dependencyNotation: Any): Dependency?
 
     /**
-     * Adds a runtime-only [module dependency](https://docs.gradle.org/current/userguide/declaring_dependencies.html#sub:module_dependencies)
+     * Adds a `runtimeOnly` [module dependency](https://docs.gradle.org/current/userguide/declaring_dependencies.html#sub:module_dependencies)
      * to this entity.
      *
      * @see [HasKotlinDependencies.runtimeOnlyConfigurationName]
