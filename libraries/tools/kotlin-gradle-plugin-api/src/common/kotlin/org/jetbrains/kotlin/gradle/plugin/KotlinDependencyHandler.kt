@@ -114,7 +114,7 @@ interface KotlinDependencyHandler : HasProject {
         implementation(dependencyNotation) { configure.execute(this) }
 
     /**
-     * Adds an implementation dependency to this entity.
+     * Adds an `implementation` dependency to this entity.
      *
      * @see [HasKotlinDependencies.implementationConfigurationName]
      *
