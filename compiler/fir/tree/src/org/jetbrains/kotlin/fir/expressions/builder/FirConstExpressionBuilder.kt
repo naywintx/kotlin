@@ -21,7 +21,7 @@ fun <T> buildLiteralExpression(
     source: KtSourceElement?,
     kind: ConstantValueKind<T>,
     value: T,
-    annotations: MutableList<FirAnnotation> = mutableListOf(),
+    annotations: MutableList<FirAnnotation>? = null,
     setType: Boolean,
     originalExpression: FirExpression? = null
 ): FirLiteralExpression<T> {
