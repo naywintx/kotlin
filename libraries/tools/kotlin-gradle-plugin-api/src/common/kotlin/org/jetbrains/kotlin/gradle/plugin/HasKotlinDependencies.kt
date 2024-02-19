@@ -50,7 +50,7 @@ interface HasKotlinDependencies {
      * containing [`compileOnly`](https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_configurations_graph)
      * dependencies.
      *
-     * The Gradle compile-only configuration should be used to declare dependencies which are participating in compilation,
+     * The Gradle `compileOnly` configuration should be used to declare dependencies that participate in compilation,
      * but should be added explicitly by consumers in the runtime.
      *
      * This Gradle configuration is not meant to be resolved.
