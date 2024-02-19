@@ -20,7 +20,7 @@ interface HasKotlinDependencies {
     fun dependencies(configure: KotlinDependencyHandler.() -> Unit)
 
     /**
-     * Configures dependencies for this entity.
+     * Configures all dependencies for this entity.
      */
     fun dependencies(configure: Action<KotlinDependencyHandler>)
 
