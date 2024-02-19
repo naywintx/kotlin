@@ -10,7 +10,7 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.logging.Logger
 
 /**
- * Represents a Kotlin DSL entity having configurable Kotlin dependencies.
+ * Contains all the configurable Kotlin dependencies for a Kotlin DSL entity, like an instance of `KotlinSourceSet`.
  */
 interface HasKotlinDependencies {
 
