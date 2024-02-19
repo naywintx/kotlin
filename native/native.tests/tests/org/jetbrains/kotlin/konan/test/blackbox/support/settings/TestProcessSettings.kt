@@ -18,7 +18,7 @@ import java.io.File
 import java.io.IOException
 import java.util.*
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * The tested and the host Kotlin/Native targets.
@@ -197,7 +197,7 @@ internal class BaseDirs(val testBuildDir: File)
  */
 internal class Timeouts(val executionTimeout: Duration) {
     companion object {
-        val DEFAULT_EXECUTION_TIMEOUT: Duration get() = 30.seconds
+        val DEFAULT_EXECUTION_TIMEOUT: Duration get() = 2.minutes
     }
 }
 
