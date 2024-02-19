@@ -518,7 +518,7 @@ interface KotlinDependencyHandler : HasProject {
     }
 
     /**
-     * Creates a dependency to optional [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#optionaldependencies) module.
+     * Creates a dependency to an optional [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#optionaldependencies) module.
      * Created dependency should be manually added to this entity using other methods from this DSL!
      *
      * **Note**: Only relevant for Kotlin entities targeting only [KotlinPlatformType.js] or [KotlinPlatformType.wasm]!
