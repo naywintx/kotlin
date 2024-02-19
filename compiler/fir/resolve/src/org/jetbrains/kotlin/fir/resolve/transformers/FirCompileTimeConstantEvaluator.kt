@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.resolve.constants.evaluate.CompileTimeType
 import org.jetbrains.kotlin.resolve.constants.evaluate.evalBinaryOp
 import org.jetbrains.kotlin.resolve.constants.evaluate.evalUnaryOp
 import org.jetbrains.kotlin.types.ConstantValueKind
+import org.jetbrains.kotlin.util.OperatorNameConventions
 
 class FirCompileTimeConstantEvaluator(private val session: FirSession) : FirTransformer<Nothing?>() {
     private val evaluator = FirExpressionEvaluator(session)
@@ -288,10 +289,10 @@ private val CallableId.isStringLength: Boolean
     get() = classId == StandardClassIds.String && callableName.identifierOrNullIfSpecial == "length"
 
 private val CallableId.isStringEquals: Boolean
-    get() = classId == StandardClassIds.String && callableName.identifierOrNullIfSpecial == "equals"
+    get() = classId == StandardClassIds.String && callableName == OperatorNameConventions.EQUALS
 
 private val CallableId.isStringPlus: Boolean
-    get() = classId == StandardClassIds.String && callableName.identifierOrNullIfSpecial == "plus"
+    get() = classId == StandardClassIds.String && callableName == OperatorNameConventions.PLUS
 
 ////// KINDS
 
