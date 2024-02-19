@@ -287,7 +287,7 @@ interface KotlinDependencyHandler : HasProject {
     fun kotlin(simpleModuleName: String, version: String?): ExternalModuleDependency
 
     /**
-     * Creates Gradle project dependency.
+     * Creates a Gradle project dependency.
      * Created dependency should be manually added to this entity using other methods from this DSL!
      *
      * @param path project path
