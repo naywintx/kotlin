@@ -6,11 +6,11 @@ import kotlin.math.sqrt
 import kotlin.system.getTimeMillis
 import kotlin.test.assertTrue
 
-// Runs for ~60 seconds. Prints a short message to stdout every second.
+// Runs for ~3 minutes. Prints a short message to stdout every 10 seconds.
 fun main() {
-    for (i in 0..60) {
+    for (i in 0..18) {
         println("Iteration $i")
-        sleep(1000)
+        sleep(10000)
     }
     println("Done.")
 }
