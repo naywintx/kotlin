@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.konan.test.blackbox.support.group.PredefinedTestCase
         ignoredTests = [DISABLED_STDLIB_TEST]
     )
 )
+@EnforcedProperty(property = ClassLevelProperty.EXECUTION_TIMEOUT, propertyValue = "2m")
 @UsePartialLinkage(UsePartialLinkage.Mode.DISABLED)
 class StdlibTest : AbstractNativeBlackBoxTest() {
     @TestFactory
@@ -67,6 +68,7 @@ class StdlibTest : AbstractNativeBlackBoxTest() {
         ignoredTests = [DISABLED_STDLIB_TEST]
     )
 )
+@EnforcedProperty(property = ClassLevelProperty.EXECUTION_TIMEOUT, propertyValue = "2m")
 @FirPipeline
 @UsePartialLinkage(UsePartialLinkage.Mode.DISABLED)
 class FirStdlibTest : AbstractNativeBlackBoxTest() {
