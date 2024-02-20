@@ -6,10 +6,11 @@
 package org.jetbrains.kotlin.gradle.plugin.diagnostics.checkers
 
 import org.jetbrains.kotlin.commonizer.stdlib
+import org.jetbrains.kotlin.compilerRunner.kotlinNativeToolchainEnabled
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
-import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnostics
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinGradleProjectChecker
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinGradleProjectCheckerContext
+import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnostics
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnosticsCollector
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.utils.konanDistribution
@@ -20,6 +21,7 @@ internal object MissingNativeStdlibChecker : KotlinGradleProjectChecker {
         if (targets.isEmpty() || // misconfigured project
             targets.none { it is KotlinNativeTarget } || // no K/N targets
             project.hasProperty("kotlin.native.nostdlib") || // suppressed
+            project.kotlinNativeToolchainEnabled || // with toolchain, we download konan after configuration phase and should do this check there
             project.konanDistribution.stdlib.exists()
         ) return
 
