@@ -8,37 +8,23 @@ package org.jetbrains.kotlin.gradle.targets.js.npm.tasks
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.Configuration
-import org.gradle.api.artifacts.FileCollectionDependency
-import org.gradle.api.artifacts.component.ComponentArtifactIdentifier
-import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.artifacts.result.ResolvedComponentResult
-import org.gradle.api.attributes.Category
-import org.gradle.api.attributes.Usage
+import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.file.FileCollection
 import org.gradle.api.provider.ListProperty
-import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
-import org.gradle.api.provider.SetProperty
 import org.gradle.api.tasks.*
 import org.gradle.work.DisableCachingByDefault
-import org.gradle.work.NormalizeLineEndings
-import org.jetbrains.kotlin.gradle.plugin.categoryByName
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
-import org.jetbrains.kotlin.gradle.plugin.mpp.disambiguateName
-import org.jetbrains.kotlin.gradle.plugin.sources.KotlinDependencyScope
-import org.jetbrains.kotlin.gradle.plugin.sources.compilationDependencyConfigurationByScope
-import org.jetbrains.kotlin.gradle.plugin.sources.sourceSetDependencyConfigurationByScope
-import org.jetbrains.kotlin.gradle.plugin.usesPlatformOf
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrCompilation
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNodeJsExtension
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNpmResolutionManager
 import org.jetbrains.kotlin.gradle.targets.js.npm.*
-import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.*
+import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinCompilationNpmResolver
+import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinRootNpmResolver
 import org.jetbrains.kotlin.gradle.tasks.registerTask
-import org.jetbrains.kotlin.gradle.utils.CompositeProjectComponentArtifactMetadata
-import org.jetbrains.kotlin.gradle.utils.`is`
 import org.jetbrains.kotlin.gradle.utils.mapToFile
 import java.io.File
 
@@ -98,23 +84,32 @@ abstract class KotlinPackageJsonTask :
             .sorted()
     }
 
-    @get:IgnoreEmptyDirectories
-    @get:NormalizeLineEndings
+    @get:Internal
+    internal val components by lazy {
+        rootResolver.allConfigurations
+    }
+
     @get:InputFiles
-    @get:PathSensitive(PathSensitivity.RELATIVE)
-    internal abstract val compositeFiles: SetProperty<File>
+    val one: ConfigurableFileCollection = project.objects
+        .fileCollection()
 
-    @get:Input
-    internal abstract val components: Property<ResolvedComponentResult>
+//    @get:IgnoreEmptyDirectories
+//    @get:NormalizeLineEndings
+//    @get:InputFiles
+//    @get:PathSensitive(PathSensitivity.RELATIVE)
+//    internal abstract val compositeFiles: SetProperty<File>
 
-    @get:Input
-    internal abstract val map: MapProperty<ComponentArtifactIdentifier, File>
+//    @get:Input
+//    internal abstract val components: Property<ResolvedComponentResult>
 
-    @get:Nested
-    internal abstract val npmDeps: SetProperty<NpmDependencyDeclaration>
+//    @get:Input
+//    internal abstract val map: MapProperty<ComponentArtifactIdentifier, File>
 
-    @get:Nested
-    internal abstract val fileDeps: SetProperty<FileCollectionExternalGradleDependency>
+//    @get:Nested
+//    internal abstract val npmDeps: SetProperty<NpmDependencyDeclaration>
+
+//    @get:Nested
+//    internal abstract val fileDeps: SetProperty<FileCollectionExternalGradleDependency>
 
     // nested inputs are processed in configuration phase
     // so npmResolutionManager must not be used
@@ -128,23 +123,25 @@ abstract class KotlinPackageJsonTask :
 
     @TaskAction
     fun resolve() {
-        val resolvedConfiguration = components.get() to map.get().map { (key, value) -> key.componentIdentifier to value }.toMap()
+//        val resolvedConfiguration = components.get() to map.get().map { (key, value) -> key.componentIdentifier to value }.toMap()
 
         val resolution = npmResolutionManager.get().resolution.get()[projectPath][compilationDisambiguatedName.get()]
         val preparedResolution = resolution
             .prepareWithDependencies(
                 npmResolutionManager = npmResolutionManager.get(),
                 logger = logger,
-                resolvedConfiguration = resolvedConfiguration,
-                npmDeps = npmDeps.get(),
-                fileDeps = fileDeps.get(),
+                resolvedConfiguration = components
             )
 
         resolution.createPackageJson(preparedResolution, packageJsonMain, packageJsonHandlers)
     }
 
     companion object {
-        fun create(compilation: KotlinJsIrCompilation): TaskProvider<KotlinPackageJsonTask> {
+        fun create(
+            compilation: KotlinJsIrCompilation,
+            conf: Configuration
+//            resolvedConfiguration: Pair<Provider<ResolvedComponentResult>, Provider<Map<ComponentArtifactIdentifier, File>>>
+        ): TaskProvider<KotlinPackageJsonTask> {
             val target = compilation.target
             val project = target.project
             val npmProject = compilation.npmProject
@@ -154,34 +151,34 @@ abstract class KotlinPackageJsonTask :
             val packageJsonTaskName = npmProject.packageJsonTaskName
             val packageJsonUmbrella = nodeJsTaskProviders.packageJsonUmbrellaTaskProvider
 
-            fun createAggregatedConfiguration(): Configuration {
-                val all = project.configurations.create(compilation.disambiguateName("npm"))
-
-                all.usesPlatformOf(target)
-                all.attributes.attribute(Usage.USAGE_ATTRIBUTE, KotlinUsages.consumerRuntimeUsage(target))
-                all.attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
-                all.isVisible = false
-                all.isCanBeConsumed = false
-                all.isCanBeResolved = true
-                all.description = "NPM configuration for $compilation."
-
-                KotlinDependencyScope.values().forEach { scope ->
-                    val compilationConfiguration = project.compilationDependencyConfigurationByScope(
-                        compilation,
-                        scope
-                    )
-                    all.extendsFrom(compilationConfiguration)
-                    compilation.allKotlinSourceSets.forEach { sourceSet ->
-                        val sourceSetConfiguration = project.configurations.sourceSetDependencyConfigurationByScope(sourceSet, scope)
-                        all.extendsFrom(sourceSetConfiguration)
-                    }
-                }
-
-                // We don't have `kotlin-js-test-runner` in NPM yet
-                all.dependencies.add(nodeJsTaskProviders.versions.kotlinJsTestRunner.createDependency(project))
-
-                return all
-            }
+//            fun createAggregatedConfiguration(): Configuration {
+//                val all = project.configurations.create(compilation.disambiguateName("npm"))
+//
+//                all.usesPlatformOf(target)
+//                all.attributes.attribute(Usage.USAGE_ATTRIBUTE, KotlinUsages.consumerRuntimeUsage(target))
+//                all.attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
+//                all.isVisible = false
+//                all.isCanBeConsumed = false
+//                all.isCanBeResolved = true
+//                all.description = "NPM configuration for $compilation."
+//
+//                KotlinDependencyScope.values().forEach { scope ->
+//                    val compilationConfiguration = project.compilationDependencyConfigurationByScope(
+//                        compilation,
+//                        scope
+//                    )
+//                    all.extendsFrom(compilationConfiguration)
+//                    compilation.allKotlinSourceSets.forEach { sourceSet ->
+//                        val sourceSetConfiguration = project.configurations.sourceSetDependencyConfigurationByScope(sourceSet, scope)
+//                        all.extendsFrom(sourceSetConfiguration)
+//                    }
+//                }
+//
+//                // We don't have `kotlin-js-test-runner` in NPM yet
+//                all.dependencies.add(nodeJsTaskProviders.versions.kotlinJsTestRunner.createDependency(project))
+//
+//                return all
+//            }
 
             val npmResolutionManager = project.kotlinNpmResolutionManager
             val gradleNodeModules = GradleNodeModulesCache.registerIfAbsent(project, null, null)
@@ -191,47 +188,49 @@ abstract class KotlinPackageJsonTask :
                 task.description = "Create package.json file for $compilation"
                 task.group = NodeJsRootPlugin.TASKS_GROUP_NAME
 
-                val all = createAggregatedConfiguration()
-                val createAggregatedConfiguration = all.incoming.resolutionResult.rootComponent to all.incoming.artifacts.resolvedArtifacts.map {
-                    it.map { it.id to it.file }.toMap()
-                }
+                task.one.from(conf)
 
-                val externalNpmDependencies = mutableSetOf<NpmDependencyDeclaration>()
-                val fileCollectionDependencies = mutableSetOf<FileCollectionExternalGradleDependency>()
-
-                all.allDependencies.forEach { dependency ->
-                    when (dependency) {
-                        is NpmDependency -> externalNpmDependencies.add(dependency.toDeclaration())
-                        is FileCollectionDependency -> fileCollectionDependencies.add(
-                            FileCollectionExternalGradleDependency(
-                                dependency.files.files,
-                                dependency.version
-                            )
-                        )
-                    }
-                }
-                task.components.set(createAggregatedConfiguration.first)
-                task.map.set(createAggregatedConfiguration.second)
+//                val all = createAggregatedConfiguration()
+//                val createAggregatedConfiguration = all.incoming.resolutionResult.rootComponent to all.incoming.artifacts.resolvedArtifacts.map {
+//                    it.map { it.id to it.file }.toMap()
+//                }
+//
+//                val externalNpmDependencies = mutableSetOf<NpmDependencyDeclaration>()
+//                val fileCollectionDependencies = mutableSetOf<FileCollectionExternalGradleDependency>()
+//
+//                all.allDependencies.forEach { dependency ->
+//                    when (dependency) {
+//                        is NpmDependency -> externalNpmDependencies.add(dependency.toDeclaration())
+//                        is FileCollectionDependency -> fileCollectionDependencies.add(
+//                            FileCollectionExternalGradleDependency(
+//                                dependency.files.files,
+//                                dependency.version
+//                            )
+//                        )
+//                    }
+//                }
+//                task.components.set(resolvedConfiguration.first)
+//                task.map.set(resolvedConfiguration.second)
 //                task.resolvedConfiguration = createAggregatedConfiguration
 
-                task.npmDeps.set(externalNpmDependencies)
-                task.fileDeps.set(fileCollectionDependencies)
+//                task.npmDeps.set(externalNpmDependencies)
+//                task.fileDeps.set(fileCollectionDependencies)
 
-                task.compositeFiles.set(
-                    all
-                        .incoming
-                        .artifactView { artifactView ->
-                            artifactView.componentFilter { componentIdentifier ->
-                                componentIdentifier is ProjectComponentIdentifier
-                            }
-                        }
-                        .artifacts
-                        .filter {
-                            it.id `is` CompositeProjectComponentArtifactMetadata
-                        }
-                        .map { it.file }
-                        .toSet()
-                )
+//                task.compositeFiles.set(
+//                    all
+//                        .incoming
+//                        .artifactView { artifactView ->
+//                            artifactView.componentFilter { componentIdentifier ->
+//                                componentIdentifier is ProjectComponentIdentifier
+//                            }
+//                        }
+//                        .artifacts
+//                        .filter {
+//                            it.id `is` CompositeProjectComponentArtifactMetadata
+//                        }
+//                        .map { it.file }
+//                        .toSet()
+//                )
 
                 task.npmResolutionManager.value(npmResolutionManager)
                     .disallowChanges()

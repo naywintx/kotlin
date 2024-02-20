@@ -7,16 +7,14 @@ package org.jetbrains.kotlin.gradle.targets.js.npm.resolver
 
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.FileCollectionDependency
-import org.gradle.api.artifacts.ResolvedArtifact
-import org.gradle.api.artifacts.ResolvedDependency
-import org.gradle.api.artifacts.component.ProjectComponentIdentifier
+import org.gradle.api.artifacts.component.ComponentArtifactIdentifier
+import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.attributes.Attribute
 import org.gradle.api.attributes.Category
 import org.gradle.api.attributes.Usage
-import org.gradle.api.internal.artifacts.DefaultProjectComponentIdentifier
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.Zip
-import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.categoryByName
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
 import org.jetbrains.kotlin.gradle.plugin.mpp.fileExtension
@@ -26,14 +24,15 @@ import org.jetbrains.kotlin.gradle.plugin.sources.compilationDependencyConfigura
 import org.jetbrains.kotlin.gradle.plugin.sources.sourceSetDependencyConfigurationByScope
 import org.jetbrains.kotlin.gradle.plugin.usesPlatformOf
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrCompilation
-import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNodeJsExtension
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNpmResolutionManager
 import org.jetbrains.kotlin.gradle.targets.js.npm.*
 import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinPackageJsonTask
 import org.jetbrains.kotlin.gradle.tasks.registerTask
-import org.jetbrains.kotlin.gradle.utils.*
+import org.jetbrains.kotlin.gradle.utils.createConsumable
 import org.jetbrains.kotlin.gradle.utils.createResolvable
+import org.jetbrains.kotlin.gradle.utils.setAttribute
+import java.io.File
 import java.io.Serializable
 
 /**
@@ -59,8 +58,17 @@ class KotlinCompilationNpmResolver(
 
     val projectPath: String = project.path
 
+    val aggregatedConfiguration: Configuration = run {
+        createAggregatedConfiguration()
+    }
+
+    val resolvedAggregatedConfiguration: Pair<Provider<ResolvedComponentResult>, Provider<Map<ComponentArtifactIdentifier, File>>> =
+        aggregatedConfiguration.incoming.resolutionResult.rootComponent to aggregatedConfiguration.incoming.artifacts.resolvedArtifacts.map {
+            it.map { it.id to it.file }.toMap()
+        }
+
     val packageJsonTaskHolder: TaskProvider<KotlinPackageJsonTask> =
-        KotlinPackageJsonTask.create(compilation)
+        KotlinPackageJsonTask.create(compilation, aggregatedConfiguration)
 
     val publicPackageJsonTaskHolder: TaskProvider<PublicPackageJsonTask> = run {
         val npmResolutionManager = project.kotlinNpmResolutionManager
@@ -80,6 +88,8 @@ class KotlinCompilationNpmResolver(
             it.npmProjectName.set(npmProject.name)
             it.npmProjectMain.set(npmProject.main)
             it.extension.set(compilation.fileExtension)
+//            it.components.set(resolvedAggregatedConfiguration.first)
+//            it.map.set(resolvedAggregatedConfiguration.second)
         }.also { packageJsonTask ->
             project.dependencies.attributesSchema {
                 it.attribute(publicPackageJsonAttribute)
@@ -109,20 +119,62 @@ class KotlinCompilationNpmResolver(
 
     override fun toString(): String = "KotlinCompilationNpmResolver(${npmProject.name})"
 
-//    val aggregatedConfiguration: Configuration = run {
-//        createAggregatedConfiguration()
-//    }
+    private fun createAggregatedConfiguration(): Configuration {
+        val all = project.configurations.createResolvable(compilation.npmAggregatedConfigurationName)
+
+        all.usesPlatformOf(target)
+        all.attributes.setAttribute(Usage.USAGE_ATTRIBUTE, KotlinUsages.consumerRuntimeUsage(target))
+        all.attributes.setAttribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
+        all.attributes.setAttribute(publicPackageJsonAttribute, PUBLIC_PACKAGE_JSON_ATTR_VALUE)
+        all.isVisible = false
+        all.description = "NPM configuration for $compilation."
+
+        KotlinDependencyScope.values().forEach { scope ->
+            val compilationConfiguration = project.compilationDependencyConfigurationByScope(
+                compilation,
+                scope
+            )
+            all.extendsFrom(compilationConfiguration)
+            compilation.allKotlinSourceSets.forEach { sourceSet ->
+                val sourceSetConfiguration = project.configurations.sourceSetDependencyConfigurationByScope(sourceSet, scope)
+                all.extendsFrom(sourceSetConfiguration)
+            }
+        }
+
+        // We don't have `kotlin-js-test-runner` in NPM yet
+        all.dependencies.add(rootResolver.versions.kotlinJsTestRunner.createDependency(project))
+
+        return all
+    }
 
     private var _compilationNpmResolution: KotlinCompilationNpmResolution? = null
 
-    val compilationNpmResolution: KotlinCompilationNpmResolution
-        get() {
-            return _compilationNpmResolution ?: run {
+    val compilationNpmResolution: Provider<KotlinCompilationNpmResolution> = project.provider {
+        val all = aggregatedConfiguration
+
+        val externalNpmDependencies = mutableSetOf<NpmDependencyDeclaration>()
+        val fileCollectionDependencies = mutableSetOf<FileCollectionExternalGradleDependency>()
+
+        all.allDependencies.forEach { dependency ->
+            when (dependency) {
+                is NpmDependency -> externalNpmDependencies.add(dependency.toDeclaration())
+                is FileCollectionDependency -> fileCollectionDependencies.add(
+                    FileCollectionExternalGradleDependency(
+                        dependency.files.files,
+                        dependency.version
+                    )
+                )
+            }
+        }
 //                val visitor = ConfigurationVisitor()
 //                visitor.visit(aggregatedConfiguration)
 //                visitor.toPackageJsonProducer()
 
-                KotlinCompilationNpmResolution(
+        KotlinCompilationNpmResolution(
+//            resolvedAggregatedConfiguration.first.get(),
+//            resolvedAggregatedConfiguration.second.get(),
+            externalNpmDependencies,
+            fileCollectionDependencies,
 //                    internalDependencies,
 //                    internalCompositeDependencies,
 //                    externalGradleDependencies.map {
@@ -134,20 +186,65 @@ class KotlinCompilationNpmResolver(
 //                    },
 //                    externalNpmDependencies,
 //                    fileCollectionDependencies,
-                    projectPath,
-                    compilationDisambiguatedName,
-                    npmProject.name,
-                    npmVersion,
-                    rootResolver.tasksRequirements
-                )
-            }.also {
-                _compilationNpmResolution = it
-            }
-        }
+            projectPath,
+            compilationDisambiguatedName,
+            npmProject.name,
+            npmVersion,
+            rootResolver.tasksRequirements
+        )
+    }
+//        get() {
+//            return _compilationNpmResolution ?: run {
+//                val all = aggregatedConfiguration
+//
+//                val externalNpmDependencies = mutableSetOf<NpmDependencyDeclaration>()
+//                val fileCollectionDependencies = mutableSetOf<FileCollectionExternalGradleDependency>()
+//
+//                all.allDependencies.forEach { dependency ->
+//                    when (dependency) {
+//                        is NpmDependency -> externalNpmDependencies.add(dependency.toDeclaration())
+//                        is FileCollectionDependency -> fileCollectionDependencies.add(
+//                            FileCollectionExternalGradleDependency(
+//                                dependency.files.files,
+//                                dependency.version
+//                            )
+//                        )
+//                    }
+//                }
+////                val visitor = ConfigurationVisitor()
+////                visitor.visit(aggregatedConfiguration)
+////                visitor.toPackageJsonProducer()
+//
+//                KotlinCompilationNpmResolution(
+//                    resolvedAggregatedConfiguration.first.get(),
+//                    resolvedAggregatedConfiguration.second.get(),
+//                    externalNpmDependencies,
+//                    fileCollectionDependencies,
+////                    internalDependencies,
+////                    internalCompositeDependencies,
+////                    externalGradleDependencies.map {
+////                        FileExternalGradleDependency(
+////                            it.dependency.moduleName,
+////                            it.dependency.moduleVersion,
+////                            it.artifact.file
+////                        )
+////                    },
+////                    externalNpmDependencies,
+////                    fileCollectionDependencies,
+//                    projectPath,
+//                    compilationDisambiguatedName,
+//                    npmProject.name,
+//                    npmVersion,
+//                    rootResolver.tasksRequirements
+//                )
+//            }.also {
+//                _compilationNpmResolution = it
+//            }
+//        }
 
     @Synchronized
     fun close(): KotlinCompilationNpmResolution? {
-        return _compilationNpmResolution
+        return compilationNpmResolution.get()
     }
 
 //    private fun createAggregatedConfiguration(): Configuration {

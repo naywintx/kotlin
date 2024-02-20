@@ -6,6 +6,8 @@
 package org.jetbrains.kotlin.gradle.targets.js.npm.resolver
 
 import org.gradle.api.Project
+import org.gradle.api.artifacts.component.ComponentArtifactIdentifier
+import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.file.Directory
 import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
@@ -31,6 +33,14 @@ class KotlinRootNpmResolver internal constructor(
     internal var resolution: KotlinRootNpmResolution? = null
 
     val projectResolvers: MutableMap<String, KotlinProjectNpmResolver> = mutableMapOf()
+
+    val allConfigurations: Map<String, Map<String, Pair<Provider<ResolvedComponentResult>, Provider<Map<ComponentArtifactIdentifier, File>>>>> by lazy {
+        projectResolvers.map {
+            it.key to it.value.compilationResolvers.map {
+                it.compilationDisambiguatedName to it.resolvedAggregatedConfiguration
+            }.toMap()
+        }.toMap()
+    }
 
     fun alreadyResolvedMessage(action: String) = "Cannot $action. NodeJS projects already resolved."
 
