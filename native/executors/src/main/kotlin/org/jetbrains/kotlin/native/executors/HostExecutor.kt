@@ -132,7 +132,7 @@ private class SleeperWithBackoff {
 }
 
 private fun Process.waitFor(timeout: Duration): Boolean {
-    // if (!HostManager.hostIsMingw) return waitFor(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+    if (!HostManager.hostIsMingw) return waitFor(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
     // KT-65113: Looks like there's a race in waitFor implementation for Windows. It can wait for the entire `timeout` but the process'
     // exitValue would be 0.
     if (!isAlive) return true
