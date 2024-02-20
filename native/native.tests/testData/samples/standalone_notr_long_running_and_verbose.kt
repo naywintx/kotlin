@@ -7,11 +7,11 @@ import kotlin.system.getTimeMillis
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-// Runs for ~3 mintues. Prints 200 thousand bytes to stdout every second.
+// Runs for ~60 seconds. Prints 200 thousand bytes to stdout every second.
 fun main() {
     assertEquals(10, TEN_BYTES_STRING.length)
 
-    for (i in 0..180) {
+    for (i in 0..60) {
         repeat(200) { print1000Bytes() }
         sleep(1000)
     }
