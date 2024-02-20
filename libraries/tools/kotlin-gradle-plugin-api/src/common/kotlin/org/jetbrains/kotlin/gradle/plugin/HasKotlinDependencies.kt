@@ -51,7 +51,7 @@ interface HasKotlinDependencies {
      * dependencies.
      *
      * The Gradle `compileOnly` configuration should be used to declare dependencies that participate in compilation,
-     * but should be added explicitly by consumers in the runtime.
+     * but who need to be added explicitly by consumers at runtime.
      *
      * This Gradle configuration is not meant to be resolved.
      */
