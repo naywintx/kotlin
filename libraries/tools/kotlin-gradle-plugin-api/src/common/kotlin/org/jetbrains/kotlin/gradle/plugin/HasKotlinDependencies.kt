@@ -63,7 +63,7 @@ interface HasKotlinDependencies {
      * dependencies.
      *
      * The Gradle `runtimeOnly` configuration should be used to declare dependencies that don't participate in compilation,
-     * but added in the runtime.
+     * but who are added at runtime.
      *
      * This Gradle configuration is not meant to be resolved.
      */
