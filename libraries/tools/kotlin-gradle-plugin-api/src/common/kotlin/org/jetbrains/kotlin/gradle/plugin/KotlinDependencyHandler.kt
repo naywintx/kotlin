@@ -257,7 +257,13 @@ interface KotlinDependencyHandler : HasProject {
     /**
      * Creates a dependency to an official Kotlin library with the same version that is configured
      * in [KotlinTopLevelExtensionConfig.coreLibrariesVersion].
-     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * Note: The created dependency should be manually added to this entity using other methods from this DSL:
+     * ```
+     * kotlin.sourceSets["jvmMain"].dependencies {
+     *     implementation(kotlin("stdlib"))
+     * }
+     * ```
      *
      * The official Kotlin dependencies are always part of the "org.jetbrains.kotlin" group and the module name always has prefix: "kotlin-".
      *
@@ -272,15 +278,21 @@ interface KotlinDependencyHandler : HasProject {
 
     /**
      * Creates a dependency to an official Kotlin library.
-     * Created dependency should be manually added to this entity using other methods from this DSL!
      *
- * The official Kotlin dependencies are always part of the "org.jetbrains.kotlin" group and the module name always has prefix: "kotlin-".
+     * Note: The created dependency should be manually added to this entity using other methods from this DSL:
+     * ```
+     * kotlin.sourceSets["jvmMain"].dependencies {
+     *     implementation(kotlin("stdlib", "2.0.0"))
+     * }
+     * ```
+     *
+     * The official Kotlin dependencies are always part of the "org.jetbrains.kotlin" group and the module name always has prefix: "kotlin-".
      *
      * @param simpleModuleName The Kotlin module name followedthat follows after the "kotlin-" prefix. For example, for "kotlin-reflect":
      * ```
-     * implementation(kotlin("reflect", "1.9.0"))
+     * implementation(kotlin("reflect", "2.0.0"))
      * // equivalent to
-     * implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.0")
+     * implementation("org.jetbrains.kotlin:kotlin-reflect:2.0.0")
      * ```
      * @param version dependency version or `null` to use the version defined in [KotlinTopLevelExtensionConfig.coreLibrariesVersion].
      */
@@ -288,7 +300,13 @@ interface KotlinDependencyHandler : HasProject {
 
     /**
      * Creates a Gradle project dependency.
-     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * Note: The created dependency should be manually added to this entity using other methods from this DSL:
+     * ```
+     * kotlin.sourceSets["jvmMain"].dependencies {
+     *     implementation(project(":my-library", "customLibraryConfiguration"))
+     * }
+     * ```
      *
      * @param path The project path
      * @param configuration optional target configuration in the project
@@ -298,13 +316,15 @@ interface KotlinDependencyHandler : HasProject {
 
     /**
      * Creates a Gradle project dependency.
-     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * Note: The created dependency should be manually added to this entity using other methods from this DSL:
+     * ```
+     * kotlin.sourceSets["jvmMain"].dependencies {
+     *     implementation(project(mapOf("path" to ":project-a", "configuration" to "someOtherConfiguration")))
+     * }
+     * ```
      *
      * @param notation Project notation described in [DependencyHandler].
-     * For example:
-     * ```
-     * project(mapOf("path" to ":project-a", "configuration" to "someOtherConfiguration"))
-     * ```
      */
     fun project(notation: Map<String, Any?>): ProjectDependency
 
@@ -364,7 +384,13 @@ interface KotlinDependencyHandler : HasProject {
 
     /**
      * Creates a dependency on the [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#dependencies) module.
-     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * Note: The created dependency should be manually added to this entity using other methods from this DSL:
+     * ```
+     * kotlin.sourceSets["jsMain"].dependencies {
+     *     implementation(npm("is-odd-even", "1.0.0"))
+     * }
+     * ```
      *
      * This is only relevant for Kotlin entities that target only [KotlinPlatformType.js] or [KotlinPlatformType.wasm].
      *
@@ -392,7 +418,13 @@ interface KotlinDependencyHandler : HasProject {
 
     /**
      * Creates a dependency on the [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#dependencies) module.
-     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * Note: The created dependency should be manually added to this entity using other methods from this DSL:
+     * ```
+     * kotlin.sourceSets["jsMain"].dependencies {
+     *     implementation(npm("is-odd-even", project.file("npm/is-odd-even")))
+     * }
+     * ```
      *
      * This is only relevant for Kotlin entities that target only [KotlinPlatformType.js] or [KotlinPlatformType.wasm].
      *
@@ -421,7 +453,13 @@ interface KotlinDependencyHandler : HasProject {
     /**
      * Creates a dependency on the [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#dependencies) module.
      * The name of the dependency is derived either from `package.json` file located in the [directory] or [directory] name itself.
-     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * Note: The created dependency should be manually added to this entity using other methods from this DSL:
+     * ```
+     * kotlin.sourceSets["jsMain"].dependencies {
+     *     implementation(npm(project.file("npm/is-odd-even")))
+     * }
+     * ```
      *
      * This is only relevant for Kotlin entities that target only [KotlinPlatformType.js] or [KotlinPlatformType.wasm].
      *
@@ -434,7 +472,13 @@ interface KotlinDependencyHandler : HasProject {
 
     /**
      * Creates a dependency to dev [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#devdependencies) module.
-     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * Note: The created dependency should be manually added to this entity using other methods from this DSL:
+     * ```
+     * kotlin.sourceSets["jsMain"].dependencies {
+     *     implementation(devNpm("is-odd-even", "1.1.0"))
+     * }
+     * ```
      *
      * This is only relevant for Kotlin entities that target only [KotlinPlatformType.js] or [KotlinPlatformType.wasm].
      *
@@ -448,7 +492,13 @@ interface KotlinDependencyHandler : HasProject {
 
     /**
      * Creates a dependency to dev [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#devdependencies) module.
-     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * Note: The created dependency should be manually added to this entity using other methods from this DSL:
+     * ```
+     * kotlin.sourceSets["jsMain"].dependencies {
+     *     implementation(devNpm("is-odd-even", project.file("npm/is-odd-even")))
+     * }
+     * ```
      *
      * This is only relevant for Kotlin entities that target only [KotlinPlatformType.js] or [KotlinPlatformType.wasm].
      *
@@ -464,7 +514,13 @@ interface KotlinDependencyHandler : HasProject {
     /**
      * Creates a dependency to dev [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#devdependencies) module.
      * The name of the dependency is derived either from the `package.json` file located in the [directory] or the [directory] name itself.
-     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * Note: The created dependency should be manually added to this entity using other methods from this DSL:
+     * ```
+     * kotlin.sourceSets["jsMain"].dependencies {
+     *     implementation(devNpm(project.file("npm/is-odd-even")))
+     * }
+     * ```
      *
      * This is only relevant for Kotlin entities that target only [KotlinPlatformType.js] or [KotlinPlatformType.wasm].
      *
@@ -491,7 +547,13 @@ interface KotlinDependencyHandler : HasProject {
 
     /**
      * Creates a dependency to an optional [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#optionaldependencies) module.
-     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * Note: The created dependency should be manually added to this entity using other methods from this DSL:
+     * ```
+     * kotlin.sourceSets["jsMain"].dependencies {
+     *     implementation(optionalNpm("is-odd-even", "1.0.0"))
+     * }
+     * ```
      *
      * This is only relevant for Kotlin entities that target only [KotlinPlatformType.js] or [KotlinPlatformType.wasm].
      *
@@ -519,7 +581,13 @@ interface KotlinDependencyHandler : HasProject {
 
     /**
      * Creates a dependency to an optional [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#optionaldependencies) module.
-     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * Note: The created dependency should be manually added to this entity using other methods from this DSL:
+     * ```
+     * kotlin.sourceSets["jsMain"].dependencies {
+     *     implementation(optionalNpm("is-odd-even", project.file("npm/is-odd-even")))
+     * }
+     * ```
      *
      * **Note**: Only relevant for Kotlin entities targeting only [KotlinPlatformType.js] or [KotlinPlatformType.wasm]!
      *
@@ -548,7 +616,13 @@ interface KotlinDependencyHandler : HasProject {
     /**
      * Creates a dependency to an optional [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#optionaldependencies) module.
      * The name of the dependency is derived either from `package.json` file located in the [directory] or [directory] name itself.
-     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * Note: The created dependency should be manually added to this entity using other methods from this DSL:
+     * ```
+     * kotlin.sourceSets["jsMain"].dependencies {
+     *     implementation(optionalNpm(project.file("npm/is-odd-even")))
+     * }
+     * ```
      *
      * This is only relevant for Kotlin entities that target only [KotlinPlatformType.js] or [KotlinPlatformType.wasm].
      *
@@ -561,7 +635,13 @@ interface KotlinDependencyHandler : HasProject {
 
     /**
      * Creates a dependency to peer [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#peerdependencies) module.
-     * Created dependency should be manually added to this entity using other methods from this DSL!
+     *
+     * Note: The created dependency should be manually added to this entity using other methods from this DSL:
+     * ```
+     * kotlin.sourceSets["jsMain"].dependencies {
+     *     implementation(peerNpm("is-odd-even", "1.0.0"))
+     * }
+     * ```
      *
      * This is only relevant for Kotlin entities that target only [KotlinPlatformType.js] or [KotlinPlatformType.wasm].
      *
