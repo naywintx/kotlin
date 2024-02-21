@@ -452,7 +452,7 @@ interface KotlinDependencyHandler : HasProject {
 
     /**
      * Creates a dependency on the [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#dependencies) module.
-     * The name of the dependency is derived either from `package.json` file located in the [directory] or [directory] name itself.
+     * The name of the dependency is derived either from the `package.json` file located in the [directory] or the [directory] name itself.
      *
      * Note: The created dependency should be manually added to this entity using other methods from this DSL:
      * ```
@@ -615,7 +615,7 @@ interface KotlinDependencyHandler : HasProject {
 
     /**
      * Creates a dependency to an optional [NPM](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#optionaldependencies) module.
-     * The name of the dependency is derived either from `package.json` file located in the [directory] or [directory] name itself.
+     * The name of the dependency is derived either from the `package.json` file located in the [directory] or the [directory] name itself.
      *
      * Note: The created dependency should be manually added to this entity using other methods from this DSL:
      * ```
