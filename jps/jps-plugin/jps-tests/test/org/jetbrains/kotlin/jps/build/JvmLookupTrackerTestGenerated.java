@@ -49,6 +49,11 @@ public class JvmLookupTrackerTestGenerated extends AbstractJvmLookupTrackerTest 
     runTest("jps/jps-plugin/testData/incremental/lookupTracker/jvm/java/");
   }
 
+  @TestMetadata("jvmNameChanged")
+  public void testJvmNameChanged() {
+    runTest("jps/jps-plugin/testData/incremental/lookupTracker/jvm/jvmNameChanged/");
+  }
+
   @TestMetadata("localDeclarations")
   public void testLocalDeclarations() {
     runTest("jps/jps-plugin/testData/incremental/lookupTracker/jvm/localDeclarations/");
