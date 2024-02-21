@@ -43,6 +43,7 @@ class KonanDriverTest : AbstractNativeSimpleTest() {
 
     private val testSuiteDir = File("native/native.tests/testData/driver")
     private val source = testSuiteDir.resolve("driver0.kt")
+    private val fileRC = testSuiteDir.resolve("File.rc")
 
     @Test
     fun testLLVMVariantDev() {
@@ -174,6 +175,33 @@ class KonanDriverTest : AbstractNativeSimpleTest() {
             "Compiler's stdout must contain string: $expected\n" +
                     "STDOUT:\n${compilationResult.stdout}\nSTDERR:${compilationResult.stderr}"
         )
+        testRunSettings.executor.runProcess(kexe.absolutePath)
+    }
+
+    @Test
+    fun testKT50983() {
+        Assumptions.assumeTrue(HostManager.hostIsMingw)
+
+        val windres = File(testRunSettings.configurables.absoluteTargetToolchain).resolve("bin").resolve("windres")
+        val fileRes = buildDir.resolve("File.res")
+        runProcess(windres.absolutePath, fileRC.absolutePath, "-O", "coff", "-o", fileRes.absolutePath) {
+            timeout = Duration.parse("1m")
+        }
+
+        val module = TestModule.Exclusive("moduleName", emptySet(), emptySet(), emptySet())
+        val kexe = buildDir.resolve("kexe.kexe").also { it.delete() }
+        val compilation = ExecutableCompilation(
+            settings = testRunSettings,
+            freeCompilerArgs = TestCompilerArgs(listOf("-linker-option", fileRes.absolutePath)),
+            sourceModules = listOf(module),
+            extras = TestCase.NoTestRunnerExtras("main"),
+            dependencies = emptyList(),
+            expectedArtifact = TestCompilationArtifact.Executable(kexe),
+            tryPassSystemCacheDirectory = true
+        )
+        runProcess(konanc.absolutePath, source.absolutePath, *compilation.getCompilerArgs()) {
+            timeout = Duration.parse("5m")
+        }
         testRunSettings.executor.runProcess(kexe.absolutePath)
     }
 }
