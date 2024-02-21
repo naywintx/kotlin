@@ -288,7 +288,8 @@ class JavacWrapper(
             if (uri.scheme == "jar") {
                 jarFileSystem.findFileByPath(uri.schemeSpecificPart.substring("file:".length))
             } else {
-                localFileSystem.findFileByPath(uri.schemeSpecificPart)
+                localFileSystem.findFileByPath(File(uri.schemeSpecificPart).path)
+
             }
         }
 
