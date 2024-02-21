@@ -42,6 +42,7 @@ public class SirAsSwiftSourcesPrinter(private val printer: SmartPrinter) : SirVi
     }
 
     override fun visitClass(klass: SirClass): Unit = with(printer) {
+        klass.documentation?.let { println(it) }
         printVisibility(klass)
         println(
             "class ",
@@ -55,6 +56,7 @@ public class SirAsSwiftSourcesPrinter(private val printer: SmartPrinter) : SirVi
     }
 
     override fun visitVariable(variable: SirVariable): Unit = with(printer) {
+        variable.documentation?.let { println(it) }
         printVisibility(variable)
         print(
             if (variable.isStatic) "static " else "",

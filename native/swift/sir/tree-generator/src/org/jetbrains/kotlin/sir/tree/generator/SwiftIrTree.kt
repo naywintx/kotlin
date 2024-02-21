@@ -72,6 +72,8 @@ object SwiftIrTree : AbstractSwiftIrTreeBuilder() {
         customParentInVisitor = namedDeclaration
         parent(namedDeclaration)
         parent(declarationContainer)
+
+        +field(name = "documentation", string, nullable = true, mutable = true)
     }
 
     val callable by sealedElement {
@@ -120,6 +122,8 @@ object SwiftIrTree : AbstractSwiftIrTreeBuilder() {
         +field("setter", setter, nullable = true)
 
         +field("isStatic", boolean) // todo: KT-65046 Method|function distinction in SIR
+
+        +field(name = "documentation", string, nullable = true, mutable = true)
     }
 
     val import by element {

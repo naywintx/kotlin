@@ -23,6 +23,7 @@ abstract class SirVariable : SirDeclarationParent(), SirDeclaration {
     abstract val getter: SirGetter
     abstract val setter: SirSetter?
     abstract val isStatic: Boolean
+    abstract var documentation: String?
 
     override fun <R, D> accept(visitor: SirVisitor<R, D>, data: D): R =
         visitor.visitVariable(this, data)

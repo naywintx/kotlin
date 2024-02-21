@@ -73,6 +73,8 @@ internal fun buildSirClassFromPsi(classOrObject: KtClassOrObject): SirNamedDecla
     return buildClass {
         name = classOrObject.name ?: "UNKNOWN_CLASS" // todo: error handling strategy: KT-65980
         origin = KotlinSource(symbol)
+
+        documentation = classOrObject.docComment?.text
     }
 }
 
@@ -124,6 +126,8 @@ internal fun buildSirVariableFromPsi(variable: KtProperty): SirVariable = buildV
 
     getter = buildGetter {}
     setter = if (variable.isVar) buildSetter {} else null
+
+    documentation = variable.docComment?.text
 }.also {
     it.getter.parent = it
     it.setter?.parent = it

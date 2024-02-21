@@ -6,10 +6,7 @@
 package org.jetbrains.kotlin.sir.printer
 
 import org.jetbrains.kotlin.sir.*
-import org.jetbrains.kotlin.sir.builder.buildClass
-import org.jetbrains.kotlin.sir.builder.buildEnum
-import org.jetbrains.kotlin.sir.builder.buildFunction
-import org.jetbrains.kotlin.sir.builder.buildModule
+import org.jetbrains.kotlin.sir.builder.*
 import org.jetbrains.kotlin.sir.util.SirSwiftModule
 import org.jetbrains.kotlin.test.services.JUnit5Assertions
 import org.jetbrains.kotlin.test.util.KtTestUtil
@@ -244,7 +241,7 @@ class SirAsSwiftSourcesPrinterTests {
     }
 
     @Test
-    fun `should print DocC comment`() {
+    fun `should print DocC comment on function`() {
 
         val module = buildModule {
             name = "Test"
@@ -274,6 +271,59 @@ class SirAsSwiftSourcesPrinterTests {
         runTest(
             module,
             "testData/commented_function"
+        )
+    }
+
+    @Test
+    fun `should print DocC comment on class`() {
+
+        val module = buildModule {
+            name = "Test"
+            declarations.add(
+                buildClass {
+                    origin = SirOrigin.Unknown
+                    visibility = SirVisibility.PUBLIC
+                    name = "Foo"
+                    documentation = """
+                            /// Function foo description.
+                            /// - Parameters:
+                            ///   - p: first Integer to consume
+                            /// - Returns: Bool
+                        """.trimIndent()
+                }
+            )
+        }
+
+        runTest(
+            module,
+            "testData/commented_class"
+        )
+    }
+
+    @Test
+    fun `should print DocC comment on variable`() {
+
+        val module = buildModule {
+            name = "Test"
+            declarations.add(
+                buildVariable {
+                    name = "myVariable"
+                    type = SirNominalType(SirSwiftModule.bool)
+                    isStatic = false
+                    getter = buildGetter()
+                    documentation = """
+                            /// Function foo description.
+                            /// - Parameters:
+                            ///   - p: first Integer to consume
+                            /// - Returns: Bool
+                        """.trimIndent()
+                }
+            )
+        }
+
+        runTest(
+            module,
+            "testData/commented_variable"
         )
     }
 
