@@ -284,7 +284,12 @@ internal class LibraryCompilation(
 
     override fun applyDependencies(argsBuilder: ArgsBuilder): Unit = with(argsBuilder) {
         super.applyDependencies(argsBuilder)
-        addFlattened(dependencies.libraries) { library -> listOf("-l", library.headerKlib.takeIf { useHeaders && !dependencies.friends.contains(library) && it.exists() }?.path ?: library.path) }
+        addFlattened(dependencies.libraries) { library ->
+            listOf(
+                "-l",
+                library.headerKlib.takeIf { useHeaders && it.exists() }?.path ?: library.path
+            )
+        }
     }
 }
 
@@ -669,9 +674,18 @@ internal class StaticCacheCompilation(
 
     override fun applyDependencies(argsBuilder: ArgsBuilder): Unit = with(argsBuilder) {
         dependencies.friends.takeIf(Collection<*>::isNotEmpty)?.let { friends ->
-            add("-friend-modules", friends.joinToString(File.pathSeparator) { friend -> friend.headerKlib.takeIf { useHeaders && it.exists() }?.path ?: friend.path })
+            add(
+                "-friend-modules",
+                friends.joinToString(File.pathSeparator) { friend ->
+                    friend.headerKlib.takeIf { useHeaders && it.exists() }?.path ?: friend.path
+                })
         }
-        addFlattened(dependencies.cachedLibraries) { lib -> listOf("-l", lib.klib.headerKlib.takeIf { useHeaders && it.exists() }?.path ?: lib.klib.path) }
+        addFlattened(dependencies.cachedLibraries) { lib ->
+            listOf(
+                "-l",
+                lib.klib.headerKlib.takeIf { useHeaders && it.exists() }?.path ?: lib.klib.path
+            )
+        }
         super.applyDependencies(argsBuilder)
     }
 
