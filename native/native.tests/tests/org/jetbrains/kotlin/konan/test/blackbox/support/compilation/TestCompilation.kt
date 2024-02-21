@@ -134,7 +134,8 @@ internal abstract class BasicCompilation<A : TestCompilationArtifact>(
         val loggedCompilerParameters = LoggedData.CompilerParameters(home, compilerArgs)
 
         val (loggedCompilerCall: LoggedData, result: TestCompilationResult.ImmediateResult<out A>) = try {
-            logger.info("Starting compilation: $compilerArgs")
+            val argsForLogging = compilerArgs.toList()
+            logger.info("Starting compilation: $argsForLogging")
             val compilerToolCallResult = when (compilerOutputInterceptor) {
                 CompilerOutputInterceptor.DEFAULT -> callCompiler(
                     compilerArgs = compilerArgs,
@@ -148,7 +149,7 @@ internal abstract class BasicCompilation<A : TestCompilationArtifact>(
 
             val (exitCode, compilerOutput, compilerOutputHasErrors, duration) = compilerToolCallResult
 
-            logger.info("Finished compilation $compilerArgs in $duration exit code $exitCode")
+            logger.info("Finished compilation $argsForLogging in $duration exit code $exitCode")
 
             val loggedCompilationToolCall = LoggedData.CompilationToolCall(
                 "COMPILER",
