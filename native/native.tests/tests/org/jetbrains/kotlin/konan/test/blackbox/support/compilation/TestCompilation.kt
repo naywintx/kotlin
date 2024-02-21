@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.konan.test.blackbox.support.util.mapToSet
 import org.jetbrains.kotlin.test.services.JUnit5Assertions.assertTrue
 import org.jetbrains.kotlin.test.services.JUnit5Assertions.fail
 import java.io.File
+import java.util.logging.Logger
 
 private fun AssertionsMode.assertionsEnabledWith(optimizationMode: OptimizationMode) = when (this) {
     AssertionsMode.ALWAYS_ENABLE -> true
@@ -49,6 +50,8 @@ internal abstract class BasicCompilation<A : TestCompilationArtifact>(
     protected val dependencies: CategorizedDependencies,
     protected val expectedArtifact: A
 ) : TestCompilation<A>() {
+    private val logger = Logger.getLogger(BasicCompilation::class.java.name)
+
     protected abstract val sourceModules: Collection<TestModule>
     protected abstract val binaryOptions: Map<String, String>
     protected open val tryPassSystemCacheDirectory: Boolean = true
@@ -131,6 +134,7 @@ internal abstract class BasicCompilation<A : TestCompilationArtifact>(
         val loggedCompilerParameters = LoggedData.CompilerParameters(home, compilerArgs)
 
         val (loggedCompilerCall: LoggedData, result: TestCompilationResult.ImmediateResult<out A>) = try {
+            logger.info("Starting compilation: $compilerArgs")
             val compilerToolCallResult = when (compilerOutputInterceptor) {
                 CompilerOutputInterceptor.DEFAULT -> callCompiler(
                     compilerArgs = compilerArgs,
@@ -143,6 +147,8 @@ internal abstract class BasicCompilation<A : TestCompilationArtifact>(
             }
 
             val (exitCode, compilerOutput, compilerOutputHasErrors, duration) = compilerToolCallResult
+
+            logger.info("Finished compilation $compilerArgs in $duration exit code $exitCode")
 
             val loggedCompilationToolCall = LoggedData.CompilationToolCall(
                 "COMPILER",
@@ -379,6 +385,8 @@ internal class CInteropCompilation(
     expectedArtifact: KLIB
 ) : TestCompilation<KLIB>() {
 
+    private val logger = Logger.getLogger(CInteropCompilation::class.java.name)
+
     override val result: TestCompilationResult<out KLIB> by lazy {
         val args = buildList {
             add("-def")
@@ -407,11 +415,13 @@ internal class CInteropCompilation(
 
         val loggedCInteropParameters = LoggedData.CInteropParameters(args, defFile)
         val (loggedCall: LoggedData, immediateResult: TestCompilationResult.ImmediateResult<out KLIB>) = try {
+            logger.info("Starting cinterop: $args")
             val (exitCode, cinteropOutput, cinteropOutputHasErrors, duration) = invokeCInterop(
                 classLoader.classLoader,
                 expectedArtifact.klibFile,
                 args.toTypedArray()
             )
+            logger.info("Finished cinterop $args in $duration exit code $exitCode")
 
             val loggedInteropCall = LoggedData.CompilationToolCall(
                 toolName = "CINTEROP",
