@@ -29,8 +29,10 @@ import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.
 import org.jetbrains.kotlin.gradle.targets.js.npm.*
 import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinPackageJsonTask
 import org.jetbrains.kotlin.gradle.tasks.registerTask
+import org.jetbrains.kotlin.gradle.utils.*
 import org.jetbrains.kotlin.gradle.utils.createConsumable
 import org.jetbrains.kotlin.gradle.utils.createResolvable
+import org.jetbrains.kotlin.gradle.utils.currentBuildId
 import org.jetbrains.kotlin.gradle.utils.setAttribute
 import java.io.File
 import java.io.Serializable
@@ -46,7 +48,7 @@ class KotlinCompilationNpmResolver(
 
     val npmProject = compilation.npmProject
 
-    val compilationDisambiguatedName = compilation.disambiguatedName
+    val compilationDisambiguatedName = compilation.publicPackageJsonConfigurationName
 
     val npmVersion by lazy {
         project.version.toString()
@@ -57,6 +59,7 @@ class KotlinCompilationNpmResolver(
     val project get() = target.project
 
     val projectPath: String = project.path
+    val buildPath: String = project.currentBuildId().buildPathCompat
 
     val aggregatedConfiguration: Configuration = run {
         createAggregatedConfiguration()
@@ -68,7 +71,7 @@ class KotlinCompilationNpmResolver(
         }
 
     val packageJsonTaskHolder: TaskProvider<KotlinPackageJsonTask> =
-        KotlinPackageJsonTask.create(compilation, aggregatedConfiguration)
+        KotlinPackageJsonTask.create(compilation, aggregatedConfiguration, compilationDisambiguatedName)
 
     val publicPackageJsonTaskHolder: TaskProvider<PublicPackageJsonTask> = run {
         val npmResolutionManager = project.kotlinNpmResolutionManager
@@ -78,7 +81,7 @@ class KotlinCompilationNpmResolver(
         ) {
             it.dependsOn(packageJsonTaskHolder)
 
-            it.compilationDisambiguatedName.set(compilation.disambiguatedName)
+            it.compilationDisambiguatedName.set(compilationDisambiguatedName)
             it.packageJsonHandlers.set(compilation.packageJsonHandlers)
 
             it.npmResolutionManager.value(npmResolutionManager)
@@ -171,6 +174,7 @@ class KotlinCompilationNpmResolver(
 //                visitor.toPackageJsonProducer()
 
         KotlinCompilationNpmResolution(
+            buildPath,
 //            resolvedAggregatedConfiguration.first.get(),
 //            resolvedAggregatedConfiguration.second.get(),
             externalNpmDependencies,
@@ -187,6 +191,7 @@ class KotlinCompilationNpmResolver(
 //                    externalNpmDependencies,
 //                    fileCollectionDependencies,
             projectPath,
+            compilation.disambiguatedName,
             compilationDisambiguatedName,
             npmProject.name,
             npmVersion,

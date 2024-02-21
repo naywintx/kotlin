@@ -139,7 +139,8 @@ abstract class KotlinPackageJsonTask :
     companion object {
         fun create(
             compilation: KotlinJsIrCompilation,
-            conf: Configuration
+            conf: Configuration,
+            anotherConfName: String
 //            resolvedConfiguration: Pair<Provider<ResolvedComponentResult>, Provider<Map<ComponentArtifactIdentifier, File>>>
         ): TaskProvider<KotlinPackageJsonTask> {
             val target = compilation.target
@@ -183,7 +184,7 @@ abstract class KotlinPackageJsonTask :
             val npmResolutionManager = project.kotlinNpmResolutionManager
             val gradleNodeModules = GradleNodeModulesCache.registerIfAbsent(project, null, null)
             val packageJsonTask = project.registerTask<KotlinPackageJsonTask>(packageJsonTaskName) { task ->
-                task.compilationDisambiguatedName.set(compilation.disambiguatedName)
+                task.compilationDisambiguatedName.set(anotherConfName)
                 task.packageJsonHandlers.set(compilation.packageJsonHandlers)
                 task.description = "Create package.json file for $compilation"
                 task.group = NodeJsRootPlugin.TASKS_GROUP_NAME

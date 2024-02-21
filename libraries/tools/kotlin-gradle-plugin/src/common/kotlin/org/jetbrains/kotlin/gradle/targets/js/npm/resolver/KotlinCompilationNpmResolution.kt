@@ -12,14 +12,16 @@ import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
+import org.gradle.api.artifacts.result.ResolvedVariantResult
 import org.gradle.api.logging.Logger
 import org.gradle.api.provider.ListProperty
-import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.TasksRequirements
 import org.jetbrains.kotlin.gradle.targets.js.npm.*
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinRootNpmResolution
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.PreparedKotlinCompilationNpmResolution
+import org.jetbrains.kotlin.gradle.utils.buildOrNull
+import org.jetbrains.kotlin.gradle.utils.buildPathCompat
 import org.jetbrains.kotlin.gradle.utils.getFile
 import java.io.File
 import java.io.Serializable
@@ -33,10 +35,12 @@ class KotlinCompilationNpmResolution(
 //    var externalNpmDependencies: Collection<NpmDependencyDeclaration>,
 //    var fileCollectionDependencies: Collection<FileCollectionExternalGradleDependency>,
 //    val resolvedConfiguration: Pair<Provider<ResolvedComponentResult>, Provider<Map<ComponentArtifactIdentifier, File>>>,
+    val buildPath: String,
     val npmDeps: Set<NpmDependencyDeclaration>,
     val fileDeps: Set<FileCollectionExternalGradleDependency>,
     val projectPath: String,
     val compilationDisambiguatedName: String,
+    val publicPackageJsonConf: String,
     val npmProjectName: String,
     val npmProjectVersion: String,
     val tasksRequirements: TasksRequirements,
@@ -109,7 +113,7 @@ class KotlinCompilationNpmResolution(
         val rootResolver = npmResolutionManager.parameters.resolution.get()
 
         val visitor = ConfigurationVisitor(rootResolver)
-        val configuration = allConfigurations.getValue(projectPath).getValue(compilationDisambiguatedName)
+        val configuration = allConfigurations.getValue(projectPath).getValue(publicPackageJsonConf)
         visitor.visit(configuration.first.get() to configuration.second.get().map { (key, value) -> key.componentIdentifier to value }.toMap())
 
         val internalNpmDependencies = visitor.internalDependencies
@@ -207,13 +211,13 @@ class KotlinCompilationNpmResolution(
         val externalNpmDependencies = mutableSetOf<NpmDependencyDeclaration>()
         val fileCollectionDependencies = mutableSetOf<FileCollectionExternalGradleDependency>()
 
-        private val visitedDependencies = mutableSetOf<ComponentIdentifier>()
+        private val visitedDependencies = mutableSetOf<ResolvedVariantResult>()
 
         fun visit(configuration: Pair<ResolvedComponentResult, Map<ComponentIdentifier, File>>) {
             configuration.first.dependencies.forEach { result ->
                 if (result is ResolvedDependencyResult) {
-                    val owner = result.resolvedVariant.externalVariant.orElse(result.resolvedVariant).owner
-                    visitDependency(owner, configuration.second.getValue(owner))
+                    val variant = result.resolvedVariant.externalVariant.orElse(result.resolvedVariant)
+                    visitDependency(variant, configuration.second.getValue(variant.owner))
                 } else {
                     println("WTF ${result}")
                 }
@@ -258,7 +262,7 @@ class KotlinCompilationNpmResolution(
 //        }
         }
 
-        private fun visitDependency(dependency: ComponentIdentifier, second: File) {
+        private fun visitDependency(dependency: ResolvedVariantResult, second: File) {
             if (dependency in visitedDependencies) return
             visitedDependencies.add(dependency)
             visitArtifact(dependency, second)
@@ -277,7 +281,7 @@ class KotlinCompilationNpmResolution(
 //        }
 
         private fun visitArtifact(
-            dependency: ComponentIdentifier,
+            dependency: ResolvedVariantResult,
             artifact: File,
         ) {
 //            val artifactId = artifact.id
@@ -288,13 +292,14 @@ class KotlinCompilationNpmResolution(
 //                return
 //            }
 
-            if (dependency is ProjectComponentIdentifier) {
+            val owner = dependency.owner
+            if (buildPath == owner.buildOrNull?.buildPathCompat && owner is ProjectComponentIdentifier) {
                 visitProjectDependency(dependency)
                 return
             }
 
-            if (dependency is ModuleComponentIdentifier) {
-                externalGradleDependencies.add(ExternalGradleDependency(dependency, artifact))
+            if (owner is ModuleComponentIdentifier) {
+                externalGradleDependencies.add(ExternalGradleDependency(owner, artifact))
             }
         }
 
@@ -321,17 +326,15 @@ class KotlinCompilationNpmResolution(
 //    }
 
         private fun visitProjectDependency(
-            componentIdentifier: ProjectComponentIdentifier,
+            componentIdentifier: ResolvedVariantResult,
         ) {
-            val dependentProject = rootResolution[componentIdentifier.projectPath]
-
-            val dependentCompilation =
-                dependentProject.npmProjects.single { it.compilationDisambiguatedName.contains("main", ignoreCase = true) }
+            val owner = componentIdentifier.owner as ProjectComponentIdentifier
+            val dependentCompilation = rootResolution[owner.projectPath][componentIdentifier.displayName]
 
             internalDependencies.add(
                 InternalDependency(
                     dependentCompilation.projectPath,
-                    dependentCompilation.compilationDisambiguatedName,
+                    dependentCompilation.publicPackageJsonConf,
                     dependentCompilation.npmProjectName
                 )
             )
