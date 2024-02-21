@@ -395,7 +395,7 @@ interface KotlinDependencyHandler : HasProject {
      * This is only relevant for Kotlin entities that target only [KotlinPlatformType.js] or [KotlinPlatformType.wasm].
      *
      * @param name The NPM dependency name
-     * @param version npm dependency version
+     * @param version The NPM dependency version
      */
     fun npm(
         name: String,
@@ -483,7 +483,7 @@ interface KotlinDependencyHandler : HasProject {
      * This is only relevant for Kotlin entities that target only [KotlinPlatformType.js] or [KotlinPlatformType.wasm].
      *
      * @param name The NPM dependency name
-     * @param version npm dependency version
+     * @param version The NPM dependency version
      */
     fun devNpm(
         name: String,
@@ -558,7 +558,7 @@ interface KotlinDependencyHandler : HasProject {
      * This is only relevant for Kotlin entities that target only [KotlinPlatformType.js] or [KotlinPlatformType.wasm].
      *
      * @param name The NPM dependency name
-     * @param version npm dependency version
+     * @param version The NPM dependency version
      */
     fun optionalNpm(
         name: String,
@@ -646,7 +646,7 @@ interface KotlinDependencyHandler : HasProject {
      * This is only relevant for Kotlin entities that target only [KotlinPlatformType.js] or [KotlinPlatformType.wasm].
      *
      * @param name The NPM dependency name
-     * @param version npm dependency version
+     * @param version The NPM dependency version
      */
     fun peerNpm(
         name: String,
