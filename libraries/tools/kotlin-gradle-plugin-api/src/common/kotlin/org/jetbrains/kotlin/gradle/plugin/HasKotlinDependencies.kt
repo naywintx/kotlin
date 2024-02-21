@@ -26,7 +26,7 @@ interface HasKotlinDependencies {
 
     /**
      * The name of the Gradle [Configuration]
-     * that contains [`api`](https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_separation) dependencies.
+     * that contains [`api`](https://kotlinlang.org/docs/gradle-configure-project.html#dependency-types) dependencies.
      *
      * The Gradle `api` configuration should be used to declare dependencies which are exported by the project API.
      *
@@ -36,7 +36,7 @@ interface HasKotlinDependencies {
 
     /**
      * The name of the Gradle [Configuration]
-     * that contains [`implementation`](https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_separation)
+     * that contains [`implementation`](https://kotlinlang.org/docs/gradle-configure-project.html#dependency-types)
      * dependencies.
      *
      * The Gradle `implementation` configuration should be used to declare dependencies which are internal to the component (internal APIs).
@@ -47,7 +47,7 @@ interface HasKotlinDependencies {
 
     /**
      * The name of the Gradle [Configuration]
-     * containing [`compileOnly`](https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_configurations_graph)
+     * containing [`compileOnly`](https://kotlinlang.org/docs/gradle-configure-project.html#dependency-types)
      * dependencies.
      *
      * The Gradle `compileOnly` configuration should be used to declare dependencies that participate in compilation,
@@ -59,7 +59,7 @@ interface HasKotlinDependencies {
 
     /**
      * The name of the Gradle [Configuration]
-     * containing [`runtimeOnly`](https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_configurations_graph)
+     * containing [`runtimeOnly`](https://kotlinlang.org/docs/gradle-configure-project.html#dependency-types)
      * dependencies.
      *
      * The Gradle `runtimeOnly` configuration should be used to declare dependencies that don't participate in compilation,
