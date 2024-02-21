@@ -13,6 +13,7 @@ import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import org.gradle.api.artifacts.result.ResolvedVariantResult
+import org.gradle.api.invocation.Gradle
 import org.gradle.api.logging.Logger
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Provider
@@ -114,7 +115,8 @@ class KotlinCompilationNpmResolution(
 
         val visitor = ConfigurationVisitor(rootResolver)
         val configuration = allConfigurations.getValue(projectPath).getValue(publicPackageJsonConf)
-        visitor.visit(configuration.first.get() to configuration.second.get().map { (key, value) -> key.componentIdentifier to value }.toMap())
+        visitor.visit(configuration.first.get() to configuration.second.get().map { (key, value) -> key.componentIdentifier to value }
+            .toMap())
 
         val internalNpmDependencies = visitor.internalDependencies
             .map {
@@ -127,7 +129,7 @@ class KotlinCompilationNpmResolution(
             }
             .flatMap { it.externalNpmDependencies }
         val importedExternalGradleDependencies = visitor.externalGradleDependencies.mapNotNull {
-            npmResolutionManager.parameters.gradleNodeModulesProvider.get().get(it.component.module, it.component.version, it.artifact)
+            npmResolutionManager.parameters.gradleNodeModulesProvider.get().get(it.module, it.version ?: "0.0.1-SNAPSHOT", it.artifact)
         } + fileDeps.flatMap { dependency ->
             dependency.files
                 // Gradle can hash with FileHasher only files and only existed files
@@ -295,11 +297,16 @@ class KotlinCompilationNpmResolution(
             val owner = dependency.owner
             if (buildPath == owner.buildOrNull?.buildPathCompat && owner is ProjectComponentIdentifier) {
                 visitProjectDependency(dependency)
-                return
+            }
+
+            if (buildPath != owner.buildOrNull?.buildPathCompat && owner is ProjectComponentIdentifier) {
+                dependency.capabilities.forEach { capability ->
+                    externalGradleDependencies.add(ExternalGradleDependency(capability.name, capability.version, artifact))
+                }
             }
 
             if (owner is ModuleComponentIdentifier) {
-                externalGradleDependencies.add(ExternalGradleDependency(owner, artifact))
+                externalGradleDependencies.add(ExternalGradleDependency(owner.module, owner.version, artifact))
             }
         }
 

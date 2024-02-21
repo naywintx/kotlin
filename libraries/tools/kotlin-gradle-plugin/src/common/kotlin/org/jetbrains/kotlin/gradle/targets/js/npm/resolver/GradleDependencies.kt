@@ -14,7 +14,8 @@ import java.io.File
 import java.io.Serializable
 
 data class ExternalGradleDependency(
-    val component: ModuleComponentIdentifier,
+    val module: String,
+    val version: String?,
     val artifact: File
 ) : Serializable
 
