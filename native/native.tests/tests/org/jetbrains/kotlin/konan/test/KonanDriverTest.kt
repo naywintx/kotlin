@@ -184,7 +184,14 @@ class KonanDriverTest : AbstractNativeSimpleTest() {
 
         val windres = File(testRunSettings.configurables.absoluteTargetToolchain).resolve("bin").resolve("windres")
         val fileRes = buildDir.resolve("File.res")
-        runProcess(windres.absolutePath, fileRC.absolutePath, "-O", "coff", "-o", fileRes.absolutePath) {
+        runProcess(
+            windres.absolutePath,
+            fileRC.absolutePath, "-O", "coff", "-o", fileRes.absolutePath,
+            "--use-temp-file", // https://github.com/msys2/MINGW-packages/issues/534
+            // https://sourceforge.net/p/mingw-w64/discussion/723798/thread/bf2a464d/
+            "--preprocessor=x86_64-w64-mingw32-g++.exe",
+            "--preprocessor-arg=-E", "--preprocessor-arg=-xc-header", "--preprocessor-arg=-DRC_INVOKED",
+        ) {
             timeout = Duration.parse("1m")
         }
 
