@@ -309,7 +309,7 @@ interface KotlinDependencyHandler : HasProject {
      * ```
      *
      * @param path The project path
-     * @param configuration optional target configuration in the project
+     * @param configuration The optional target configuration in the project
      */
     fun project(path: String, configuration: String? = null): ProjectDependency =
         project(listOf("path", "configuration").zip(listOfNotNull(path, configuration)).toMap())
