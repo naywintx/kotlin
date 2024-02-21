@@ -128,7 +128,14 @@ internal abstract class BasicCompilation<A : TestCompilationArtifact>(
     protected open fun postCompileCheck() = Unit
 
     private fun doCompile(): TestCompilationResult.ImmediateResult<out A> {
-        val compilerArgs = getCompilerArgs()
+        val compilerArgs = buildArgs {
+            applyCommonArgs()
+            applySpecificArgs(this)
+            applyDependencies(this)
+            applyFreeArgs()
+            applyCompilerPlugins()
+            applySources()
+        }
 
         val loggedCompilerInput = LoggedData.CompilerInput(sourceModules)
         val loggedCompilerParameters = LoggedData.CompilerParameters(home, compilerArgs)
@@ -179,15 +186,6 @@ internal abstract class BasicCompilation<A : TestCompilationArtifact>(
         postCompileCheck()
 
         return result
-    }
-
-    fun getCompilerArgs() = buildArgs {
-        applyCommonArgs()
-        applySpecificArgs(this)
-        applyDependencies(this)
-        applyFreeArgs()
-        applyCompilerPlugins()
-        applySources()
     }
 }
 
