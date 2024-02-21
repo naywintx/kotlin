@@ -123,6 +123,28 @@ internal fun callCompilerWithoutOutputInterceptor(
     return CompilationToolCallResult(exitCode, compilerOutput, toolOutputHasErrors = toolOutputHasErrors, duration)
 }
 
+internal fun callCompilerOutOfProcess(compilerArgs: Array<String>, distributionDir: String): CompilationToolCallResult {
+    val result = try {
+        runProcess("$distributionDir/bin/konanc", *compilerArgs) {
+        }
+    } catch (rpe: RunProcessException) {
+        if (rpe.exitCode == null)
+            throw rpe // Treat compiler timeouts as fatal errors
+        return CompilationToolCallResult(
+            exitCode = ExitCode.COMPILATION_ERROR,
+            toolOutput = "${rpe.stdout}\n${rpe.stderr}",
+            toolOutputHasErrors = true,
+            rpe.executionTime
+        )
+    }
+    return CompilationToolCallResult(
+        exitCode = ExitCode.OK,
+        toolOutput = "${result.stdout}\n${result.stderr}",
+        toolOutputHasErrors = false,
+        result.executionTime
+    )
+}
+
 @OptIn(ExperimentalTime::class)
 internal fun invokeCInterop(
     kotlinNativeClassLoader: ClassLoader,
