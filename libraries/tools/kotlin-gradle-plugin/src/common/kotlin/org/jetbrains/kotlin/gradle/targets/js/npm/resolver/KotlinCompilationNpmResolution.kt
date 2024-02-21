@@ -246,7 +246,7 @@ class KotlinCompilationNpmResolution(
 //            )
 //        }
 
-            val hasPublicNpmDependencies = externalNpmDependencies.isNotEmpty()
+//            val hasPublicNpmDependencies = externalNpmDependencies.isNotEmpty()
 
 //        if (compilation.isMain() && hasPublicNpmDependencies) {
 //            project.tasks
