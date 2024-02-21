@@ -134,12 +134,12 @@ internal abstract class BasicCompilation<A : TestCompilationArtifact>(
         val loggedCompilerParameters = LoggedData.CompilerParameters(home, compilerArgs)
 
         val (loggedCompilerCall: LoggedData, result: TestCompilationResult.ImmediateResult<out A>) = try {
-            val argsForLogging = compilerArgs.asList()
+            val argsForLogging = compilerArgs.toList()
             logger.info("Starting compilation: $argsForLogging")
             val compilerToolCallResult = when (compilerOutputInterceptor) {
-                CompilerOutputInterceptor.DEFAULT -> callCompilerOutOfProcess(
+                CompilerOutputInterceptor.DEFAULT -> callCompiler(
                     compilerArgs = compilerArgs,
-                    distributionDir = home.dir.absolutePath,
+                    kotlinNativeClassLoader = classLoader.classLoader
                 )
                 CompilerOutputInterceptor.NONE -> callCompilerWithoutOutputInterceptor(
                     compilerArgs = compilerArgs,
