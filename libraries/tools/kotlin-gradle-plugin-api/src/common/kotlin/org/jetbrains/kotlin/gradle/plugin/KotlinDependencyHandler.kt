@@ -429,7 +429,7 @@ interface KotlinDependencyHandler : HasProject {
      * This is only relevant for Kotlin entities that target only [KotlinPlatformType.js] or [KotlinPlatformType.wasm].
      *
      * @param name The NPM dependency name
-     * @param directory path where dependency files are located
+     * @param directory The directory where dependency files are located
      * (See NPM [directory](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#local-paths) keyword)
      */
     fun npm(
@@ -503,7 +503,7 @@ interface KotlinDependencyHandler : HasProject {
      * This is only relevant for Kotlin entities that target only [KotlinPlatformType.js] or [KotlinPlatformType.wasm].
      *
      * @param name The NPM dependency name
-     * @param directory path where dependency files are located
+     * @param directory The directory where dependency files are located
      * (See NPM [directory](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#local-paths) keyword)
      */
     fun devNpm(
@@ -592,7 +592,7 @@ interface KotlinDependencyHandler : HasProject {
      * **Note**: Only relevant for Kotlin entities targeting only [KotlinPlatformType.js] or [KotlinPlatformType.wasm]!
      *
      * @param name The NPM dependency name
-     * @param directory path where dependency files are located
+     * @param directory The directory where dependency files are located
      * (See NPM [directory](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#local-paths) keyword)
      */
     fun optionalNpm(
