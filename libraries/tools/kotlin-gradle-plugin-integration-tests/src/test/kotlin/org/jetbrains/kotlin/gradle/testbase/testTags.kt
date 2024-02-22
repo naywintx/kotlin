@@ -41,6 +41,7 @@ annotation class JvmGradlePluginTests
 @Target(AnnotationTarget.CLASS, AnnotationTarget.ANNOTATION_CLASS, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 @Tag("JsKGP")
+@GradleTestVersions(minVersion = TestVersions.Gradle.G_7_4)
 annotation class JsGradlePluginTests
 
 /**

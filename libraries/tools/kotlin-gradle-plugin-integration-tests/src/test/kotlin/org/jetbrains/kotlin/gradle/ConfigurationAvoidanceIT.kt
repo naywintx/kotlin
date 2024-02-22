@@ -139,6 +139,7 @@ class ConfigurationAvoidanceIT : KGPBaseTest() {
     @MppGradlePluginTests
     @DisplayName("MPP unrelated tasks are not configured")
     @GradleTest
+    @GradleTestVersions(minVersion = TestVersions.Gradle.G_7_4)
     fun mppNoTasksConfigured(gradleVersion: GradleVersion) {
         project("new-mpp-lib-and-app/sample-app", gradleVersion) {
             createTaskWithExpensiveConfiguration()

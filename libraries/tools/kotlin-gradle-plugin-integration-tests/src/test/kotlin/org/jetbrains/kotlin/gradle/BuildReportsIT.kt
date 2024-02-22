@@ -94,6 +94,7 @@ class BuildReportsIT : KGPBaseTest() {
 
     @DisplayName("Build metrics produces valid report for mpp-js")
     @GradleTestVersions(
+        minVersion = TestVersions.Gradle.G_7_4,
         additionalVersions = [TestVersions.Gradle.G_7_6, TestVersions.Gradle.G_8_0],
     )
     @GradleTest
@@ -103,6 +104,7 @@ class BuildReportsIT : KGPBaseTest() {
 
     @DisplayName("Build metrics produces valid report for JS project")
     @GradleTestVersions(
+        minVersion = TestVersions.Gradle.G_7_4,
         additionalVersions = [TestVersions.Gradle.G_7_6, TestVersions.Gradle.G_8_0],
     )
     @GradleTest
