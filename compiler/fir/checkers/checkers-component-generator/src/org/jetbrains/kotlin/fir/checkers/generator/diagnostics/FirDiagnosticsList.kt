@@ -227,6 +227,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<FirBasedSymbol<*>>("forbiddenFunction")
             parameter<String>("suggestedFunction")
         }
+        val SELF_CALL_IN_OBJECT_CONSTRUCTOR by error<PsiElement>()
     }
 
     val SUPER by object : DiagnosticGroup("Super") {
