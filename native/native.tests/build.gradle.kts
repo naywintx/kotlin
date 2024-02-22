@@ -72,7 +72,7 @@ val generateTests by generator("org.jetbrains.kotlin.generators.tests.GenerateNa
 }
 
 tasks.create<Delete>("allureClean") {
-    delete("${layout.buildDirectory}/allure-results")
+    delete("${layout.buildDirectory.get()}/allure-results")
 }
 
 tasks.withType<Test> {
