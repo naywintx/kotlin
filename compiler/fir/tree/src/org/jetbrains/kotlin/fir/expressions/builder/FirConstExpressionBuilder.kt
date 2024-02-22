@@ -23,9 +23,8 @@ fun <T> buildLiteralExpression(
     value: T,
     annotations: MutableList<FirAnnotation>? = null,
     setType: Boolean,
-    originalExpression: FirExpression? = null
 ): FirLiteralExpression<T> {
-    return FirLiteralExpressionImpl(source, null, annotations.toMutableOrEmpty(), kind, value, originalExpression).also {
+    return FirLiteralExpressionImpl(source, null, annotations.toMutableOrEmpty(), kind, value).also {
         if (setType) {
             when (kind) {
                 ConstantValueKind.Boolean -> it.coneTypeOrNull = StandardClassIds.Boolean.constructClassLikeType()

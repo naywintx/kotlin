@@ -219,7 +219,7 @@ class FirJavaElementFinder(
         val psiField = object : StubBase<PsiField>(classStub, JavaStubElementTypes.FIELD), PsiFieldStub, NotEvaluatedConstAware {
             private val lazyInitializerText by lazy {
                 if (propertyEvaluator == null) {
-                    session.compileTimeEvaluator.transformJavaFieldAndGetResultAsString(firProperty, FirEvaluationMode.ONLY_NECESSARY)
+                    session.compileTimeEvaluator.transformJavaFieldAndGetResultAsString(firProperty)
                 } else {
                     propertyEvaluator?.invoke(firProperty)
                 }

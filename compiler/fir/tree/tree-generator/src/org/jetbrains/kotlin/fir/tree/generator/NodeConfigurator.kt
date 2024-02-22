@@ -231,7 +231,6 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             val t = withArg("T")
             +field("kind", constKindType.withArgs(t), withReplace = true)
             +field("value", t)
-            +field("originalExpression", expression, nullable = true)
         }
 
         functionCall.configure {
