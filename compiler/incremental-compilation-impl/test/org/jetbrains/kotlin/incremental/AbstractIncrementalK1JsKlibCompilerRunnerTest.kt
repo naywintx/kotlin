@@ -25,6 +25,7 @@ abstract class AbstractIncrementalK1JsKlibCompilerRunnerTest : AbstractIncrement
             isKlibEnabled = true,
             isJsEnabled = true,
             isScopeExpansionEnabled = scopeExpansionMode != CompileScopeExpansionMode.NEVER,
+            isFirEnabled = false
         )
 
     override fun make(cacheDir: File, outDir: File, sourceRoots: Iterable<File>, args: K2JSCompilerArguments): TestCompilationResult {

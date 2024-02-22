@@ -18,7 +18,6 @@ package org.jetbrains.kotlin.incremental.testingUtils
 
 import com.intellij.openapi.util.io.FileUtil
 import java.io.File
-import java.util.*
 import kotlin.math.max
 
 private val COMMANDS = listOf("new", "touch", "delete")
@@ -30,28 +29,43 @@ enum class TouchPolicy {
     CHECKSUM
 }
 
-fun copyTestSources(testDataDir: File, sourceDestinationDir: File, filePrefix: String): Map<File, File> {
+fun String.genVariantMatchingName(expectedOptionalVariant: String): String? {
+    if (expectedOptionalVariant.isEmpty()) return this
+    val variantPrefixPos = this.indexOf("-")
+    if (variantPrefixPos < 0) return this
+    if (substring(0, variantPrefixPos) != expectedOptionalVariant) return null
+    return substring(variantPrefixPos+1)
+}
+
+fun copyTestSources(
+    testDataDir: File,
+    sourceDestinationDir: File,
+    filePrefix: String,
+    optionalVariantPrefix: String = "",
+): Map<File, File> {
     val mapping = hashMapOf<File, File>()
-    FileUtil.copyDir(testDataDir, sourceDestinationDir) {
-        it.isDirectory || it.name.startsWith(filePrefix) && (it.name.endsWith(".kt") || it.name.endsWith(".java"))
-    }
 
-    for (file in sourceDestinationDir.walk()) {
-        if (!file.isFile) continue
-
-        val renamedFile =
-            if (filePrefix.isEmpty()) {
-                file
-            }
-            else {
-                File(sourceDestinationDir, file.name.removePrefix(filePrefix)).apply {
-                    file.renameTo(this)
+    fun copyDir(fromDir: File, toDir: File) {
+        FileUtil.ensureExists(toDir)
+        for (file in fromDir.listFiles().orEmpty()) {
+            if (file.isDirectory) {
+                copyDir(file, File(toDir, file.name))
+            } else if (file.name.endsWith(".kt") || file.name.endsWith(".java")) {
+                val nameWithoutVariant = file.name.genVariantMatchingName(optionalVariantPrefix) ?: continue // prefixed but with different variant
+                if (nameWithoutVariant.startsWith(filePrefix)) {
+                    val targetFile = File(toDir, nameWithoutVariant.substring(filePrefix.length))
+                    if (nameWithoutVariant != file.name /* variant-prefixed file replaces the one without a variant prefix */ ||
+                        !mapping.containsKey(targetFile)
+                    ) {
+                        FileUtil.copy(file, targetFile)
+                        mapping[targetFile] = file
+                    }
                 }
             }
-
-        mapping[renamedFile] = File(testDataDir, file.name)
+        }
     }
 
+    copyDir(testDataDir, sourceDestinationDir)
     return mapping
 }
 
@@ -59,7 +73,8 @@ fun getModificationsToPerform(
     testDataDir: File,
     moduleNames: Collection<String>?,
     allowNoFilesWithSuffixInTestData: Boolean,
-    touchPolicy: TouchPolicy
+    touchPolicy: TouchPolicy,
+    optionalVariantPrefix: String = "",
 ): List<List<Modification>> {
 
     fun getModificationsForIteration(newSuffix: String, touchSuffix: String, deleteSuffix: String): List<Modification> {
@@ -97,11 +112,15 @@ fun getModificationsToPerform(
         for (file in testDataDir.walkTopDown()) {
             if (!file.isFile) continue
 
-            val relativeFilePath = file.toRelativeString(testDataDir)
+            // NOTE: the code do not allow to combine module/variant prefixes with directory structure
+            // TODO: Consider implementing support for the combined variants
+            val relativeFilePathWithoutVariant =
+                file.toRelativeString(testDataDir).genVariantMatchingName(optionalVariantPrefix) ?: continue
+
 
             val (suffix, createModification) = rules.entries.firstOrNull { file.path.endsWith(it.key) } ?: continue
 
-            val (moduleName, fileName) = splitToModuleNameAndFileName(relativeFilePath)
+            val (moduleName, fileName) = splitToModuleNameAndFileName(relativeFilePathWithoutVariant)
             val srcDir = moduleName?.let { "$it/src" } ?: "src"
             modifications.add(createModification(srcDir + "/" + fileName.removeSuffix(suffix), file))
         }
