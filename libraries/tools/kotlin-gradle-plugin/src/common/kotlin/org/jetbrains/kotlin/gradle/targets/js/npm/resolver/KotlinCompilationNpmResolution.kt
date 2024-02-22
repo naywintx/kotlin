@@ -219,7 +219,9 @@ class KotlinCompilationNpmResolution(
             configuration.first.dependencies.forEach { result ->
                 if (result is ResolvedDependencyResult) {
                     val variant = result.resolvedVariant.externalVariant.orElse(result.resolvedVariant)
-                    visitDependency(variant, configuration.second.getValue(variant.owner))
+                    configuration.second[variant.owner]?.let { artifactFile ->
+                        visitDependency(variant, artifactFile)
+                    }
                 } else {
                     println("WTF ${result}")
                 }
