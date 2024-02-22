@@ -157,7 +157,7 @@ abstract class AbstractNativeKlibEvolutionTest : AbstractNativeSimpleTest() {
                 pipelineType = testRunSettings.get(),
                 dependencies = moduleDependencies.map {
                     it.klibFile.toHeaderCacheArtifact().toDependency()
-                } + klib.toHeaderCacheArtifact().toDependency(),
+                } + klib.toKlib().toDependency(),
                 createHeaderCache = true,
                 expectedArtifact = klib.toHeaderCacheArtifact()
             )
