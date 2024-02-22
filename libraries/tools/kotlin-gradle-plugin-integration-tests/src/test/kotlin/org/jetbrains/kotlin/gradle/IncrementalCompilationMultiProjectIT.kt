@@ -147,7 +147,7 @@ abstract class IncrementalCompilationJsMultiProjectIT : BaseIncrementalCompilati
     @GradleTest
     override fun testChangeInterfaceInLib(gradleVersion: GradleVersion) {
         // `impactedClassInAppIsRecompiled = false` for Kotlin/JS (KT-56197 was fixed for Kotlin/JVM only)
-        doTestChangeInterfaceInLib(gradleVersion, impactedClassInAppIsRecompiled = false)
+        doTestChangeInterfaceInLib(gradleVersion, impactedClassInAppIsRecompiled = true)
     }
 }
 
@@ -514,7 +514,7 @@ open class IncrementalCompilationOldICJvmMultiProjectIT : IncrementalCompilation
     @GradleTest
     override fun testChangeInterfaceInLib(gradleVersion: GradleVersion) {
         // `impactedClassInAppIsRecompiled = false` for the old IC (KT-56197 was fixed for the new IC only)
-        doTestChangeInterfaceInLib(gradleVersion, impactedClassInAppIsRecompiled = false)
+        doTestChangeInterfaceInLib(gradleVersion, impactedClassInAppIsRecompiled = true)
     }
 }
 
