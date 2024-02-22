@@ -25,6 +25,7 @@ public fun Document.createElement(name: String, init: Element.() -> Unit): Eleme
  * The element is initialized with the specified [init] function.
  */
 @SinceKotlin("1.4")
+@Suppress("WRONG_INVOCATION_KIND") // TODO: KT-65158
 public fun Element.appendElement(name: String, init: Element.() -> Unit): Element {
     contract { callsInPlace(init, InvocationKind.EXACTLY_ONCE) }
     return ownerDocument!!.createElement(name, init).also { appendChild(it) }
