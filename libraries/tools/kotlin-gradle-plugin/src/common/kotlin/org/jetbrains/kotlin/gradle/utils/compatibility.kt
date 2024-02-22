@@ -31,7 +31,7 @@ import org.gradle.api.tasks.testing.TestDescriptor
 import org.gradle.util.GradleVersion
 import java.io.File
 
-const val minSupportedGradleVersion = "6.8.3"
+const val minSupportedGradleVersion = "7.4.2"
 
 internal fun checkGradleCompatibility(
     withComponent: String = "the Kotlin Gradle plugin",
