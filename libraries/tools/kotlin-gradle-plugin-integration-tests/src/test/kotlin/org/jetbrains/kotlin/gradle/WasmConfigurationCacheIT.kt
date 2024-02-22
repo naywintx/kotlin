@@ -31,6 +31,7 @@ class WasmConfigurationCacheIT : KGPBaseTest() {
 
     @DisplayName("D8 run correctly works with configuration cache")
     @GradleTest
+    @GradleTestVersions(minVersion = TestVersions.Gradle.G_7_6)
     fun testD8Run(gradleVersion: GradleVersion) {
         project(
             "wasm-d8-simple-project",
@@ -64,6 +65,7 @@ class WasmConfigurationCacheIT : KGPBaseTest() {
 
     @DisplayName("Browser case works correctly with configuration cache")
     @GradleTest
+    @GradleTestVersions(minVersion = TestVersions.Gradle.G_7_6)
     fun testBrowser(gradleVersion: GradleVersion) {
         project("wasm-browser-simple-project", gradleVersion) {
             assertSimpleConfigurationCacheScenarioWorks(
