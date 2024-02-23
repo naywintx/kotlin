@@ -130,7 +130,6 @@ fun Project.nativeTest(
             logger.info("$path JIT C2 compiler has been disabled")
             jvmArgs("-XX:TieredStopAtLevel=1") // Disable C2 if there are more than 4 CPUs at the host machine.
         }
-        systemProperty("kotlinx.coroutines.io.parallelism", 128)
 
         // Compute test properties in advance. Make sure that the necessary dependencies are settled.
         // But do not resolve any configurations until the execution phase.
