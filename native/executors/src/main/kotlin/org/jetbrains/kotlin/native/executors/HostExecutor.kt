@@ -15,7 +15,6 @@ import java.io.OutputStream
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.Semaphore
 import java.util.logging.Logger
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -148,24 +147,13 @@ private fun Process.waitFor(timeout: Duration): Boolean {
     return !isAlive
 }
 
-private val semaphore = Semaphore(2, true)
-
-private inline fun <T> Semaphore.acquiring(block: () -> T): T {
-    acquire()
-    try {
-        return block()
-    } finally {
-        release()
-    }
-}
-
 /**
  * [Executor] that runs the process on the host system.
  */
 class HostExecutor : Executor {
     private val logger = Logger.getLogger(HostExecutor::class.java.name)
 
-    override fun execute(request: ExecuteRequest): ExecuteResponse = semaphore.acquiring {
+    override fun execute(request: ExecuteRequest): ExecuteResponse {
         val workingDirectory = request.workingDirectory ?: File(request.executableAbsolutePath).parentFile
         val commandLine = "${request.executableAbsolutePath}${request.args.joinToString(separator = " ", prefix = " ")}"
         val environmentFormatted =
