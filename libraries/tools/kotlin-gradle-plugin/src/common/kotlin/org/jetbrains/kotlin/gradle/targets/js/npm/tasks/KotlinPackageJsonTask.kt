@@ -8,9 +8,7 @@ package org.jetbrains.kotlin.gradle.targets.js.npm.tasks
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.Configuration
-import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.file.ConfigurableFileCollection
-import org.gradle.api.file.FileCollection
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
@@ -90,6 +88,7 @@ abstract class KotlinPackageJsonTask :
     }
 
     @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
     val one: ConfigurableFileCollection = project.objects
         .fileCollection()
 
