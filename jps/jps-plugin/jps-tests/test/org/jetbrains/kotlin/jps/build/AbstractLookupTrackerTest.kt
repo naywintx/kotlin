@@ -30,6 +30,10 @@ import org.jetbrains.kotlin.incremental.utils.TestMessageCollector
 import org.jetbrains.kotlin.jps.build.fixtures.EnableICFixture
 import org.jetbrains.kotlin.jps.incremental.createTestingCompilerEnvironment
 import org.jetbrains.kotlin.jps.incremental.runJSCompiler
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.kotlinPathsForDistDirectoryForTests
 import org.jetbrains.kotlin.utils.JsMetadataVersion
@@ -39,6 +43,8 @@ import java.io.*
 abstract class AbstractJvmLookupTrackerTest : AbstractLookupTrackerTest() {
 
     private val sourceToOutputMapping = hashMapOf<File, MutableSet<File>>()
+
+    override var filterBuiltins = false
 
     override fun setUp() {
         super.setUp()
@@ -106,6 +112,8 @@ abstract class AbstractJvmLookupTrackerTest : AbstractLookupTrackerTest() {
 }
 
 abstract class AbstractK1JvmLookupTrackerTest : AbstractJvmLookupTrackerTest() {
+
+    override var filterBuiltins = true
 
     override fun setUp() {
         super.setUp()
@@ -208,6 +216,7 @@ abstract class AbstractLookupTrackerTest : TestWithWorkingDir() {
     protected lateinit var outDir: File
     private val enableICFixture = EnableICFixture()
     protected var optionalVariantPrefix: String = "K2"
+    protected open var filterBuiltins = false
 
     override fun setUp() {
         super.setUp()
@@ -349,23 +358,31 @@ abstract class AbstractLookupTrackerTest : TestWithWorkingDir() {
                 val end = column - 1
                 parts.add(lineContent.subSequence(start, end))
 
-                val lookups = lookupsFromColumn.mapTo(sortedSetOf()) { lookupInfo ->
-                    val rest = lineContent.substring(end)
+                lookupsFromColumn.mapNotNullTo(sortedSetOf()) { lookupInfo ->
+                    if (filterBuiltins &&
+                        ClassId(FqName(lookupInfo.scopeFqName), Name.identifier(lookupInfo.name)) in StandardClassIds.allBuiltinTypes
+                    ) {
+                        null
+                    } else {
+                        val rest = lineContent.substring(end)
 
-                    val name =
-                        when {
-                            rest.startsWith(lookupInfo.name) || // same name
-                                    rest.startsWith("$" + lookupInfo.name) || // backing field
-                                    DECLARATION_STARTS_WITH.any { rest.startsWith(it) } // it's declaration
-                            -> ""
-                            else -> "(" + lookupInfo.name + ")"
-                        }
+                        val name =
+                            when {
+                                rest.startsWith(lookupInfo.name) || // same name
+                                        rest.startsWith("$" + lookupInfo.name) || // backing field
+                                        DECLARATION_STARTS_WITH.any { rest.startsWith(it) } // it's declaration
+                                -> ""
+                                else -> "(" + lookupInfo.name + ")"
+                            }
 
-                    lookupInfo.scopeKind.toString()[0].lowercaseChar()
-                        .toString() + ":" + lookupInfo.scopeFqName.let { it.ifEmpty { "<root>" } } + name
-                }.joinToString(separator = " ", prefix = "/*", postfix = "*/")
-
-                parts.add(lookups)
+                        lookupInfo.scopeKind.toString()[0].lowercaseChar()
+                            .toString() + ":" + lookupInfo.scopeFqName.let { it.ifEmpty { "<root>" } } + name
+                    }
+                }.takeIf { it.isNotEmpty() }
+                    ?.joinToString(separator = " ", prefix = "/*", postfix = "*/")
+                    ?.also {
+                        parts.add(it)
+                    }
 
                 start = end
             }
