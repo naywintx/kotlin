@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.gradle.targets.js.npm.resolver
 
+import org.gradle.api.DomainObjectSet
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.FileCollectionDependency
 import org.gradle.api.artifacts.component.ComponentArtifactIdentifier
@@ -30,10 +31,6 @@ import org.jetbrains.kotlin.gradle.targets.js.npm.*
 import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinPackageJsonTask
 import org.jetbrains.kotlin.gradle.tasks.registerTask
 import org.jetbrains.kotlin.gradle.utils.*
-import org.jetbrains.kotlin.gradle.utils.createConsumable
-import org.jetbrains.kotlin.gradle.utils.createResolvable
-import org.jetbrains.kotlin.gradle.utils.currentBuildId
-import org.jetbrains.kotlin.gradle.utils.setAttribute
 import java.io.File
 import java.io.Serializable
 
@@ -70,8 +67,8 @@ class KotlinCompilationNpmResolver(
             it.map { it.id to it.file }.toMap()
         }
 
-    val packageJsonTaskHolder: TaskProvider<KotlinPackageJsonTask> =
-        KotlinPackageJsonTask.create(compilation, aggregatedConfiguration, compilationDisambiguatedName)
+    val externalNpmDependencies: DomainObjectSet<NpmDependency> = aggregatedConfiguration.allDependencies
+        .withType(NpmDependency::class.java)
 
     val publicPackageJsonTaskHolder: TaskProvider<PublicPackageJsonTask> = run {
         val npmResolutionManager = project.kotlinNpmResolutionManager
@@ -155,20 +152,17 @@ class KotlinCompilationNpmResolver(
     val compilationNpmResolution: Provider<KotlinCompilationNpmResolution> = project.provider {
         val all = aggregatedConfiguration
 
-        val externalNpmDependencies = mutableSetOf<NpmDependencyDeclaration>()
-        val fileCollectionDependencies = mutableSetOf<FileCollectionExternalGradleDependency>()
+        mutableSetOf<FileCollectionExternalGradleDependency>()
 
-        all.allDependencies.forEach { dependency ->
-            when (dependency) {
-                is NpmDependency -> externalNpmDependencies.add(dependency.toDeclaration())
-                is FileCollectionDependency -> fileCollectionDependencies.add(
-                    FileCollectionExternalGradleDependency(
-                        dependency.files.files,
-                        dependency.version
-                    )
+        val fileCollectionDependencies = all.allDependencies
+            .withType<FileCollectionDependency>()
+            .map {
+                FileCollectionExternalGradleDependency(
+                    it.files.files,
+                    it.version
                 )
             }
-        }
+            .toSet()
 //                val visitor = ConfigurationVisitor()
 //                visitor.visit(aggregatedConfiguration)
 //                visitor.toPackageJsonProducer()
@@ -177,7 +171,7 @@ class KotlinCompilationNpmResolver(
             buildPath,
 //            resolvedAggregatedConfiguration.first.get(),
 //            resolvedAggregatedConfiguration.second.get(),
-            externalNpmDependencies,
+            externalNpmDependencies.map { it.toDeclaration() }.toSet(),
             fileCollectionDependencies,
 //                    internalDependencies,
 //                    internalCompositeDependencies,
@@ -246,6 +240,9 @@ class KotlinCompilationNpmResolver(
 //                _compilationNpmResolution = it
 //            }
 //        }
+
+    val packageJsonTaskHolder: TaskProvider<KotlinPackageJsonTask> =
+        KotlinPackageJsonTask.create(compilation, aggregatedConfiguration, compilationDisambiguatedName, compilationNpmResolution)
 
     @Synchronized
     fun close(): KotlinCompilationNpmResolution? {
