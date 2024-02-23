@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.gradle.dsl.NativeTargetShortcutTrace
 import org.jetbrains.kotlin.gradle.internal.KOTLIN_BUILD_TOOLS_API_IMPL
 import org.jetbrains.kotlin.gradle.internal.KOTLIN_MODULE_GROUP
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
-import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType.*
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
@@ -24,6 +23,7 @@ import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLI
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.ToolingDiagnostic.Severity.*
 import org.jetbrains.kotlin.gradle.plugin.sources.android.multiplatformAndroidSourceSetLayoutV1
 import org.jetbrains.kotlin.gradle.plugin.sources.android.multiplatformAndroidSourceSetLayoutV2
+import org.jetbrains.kotlin.gradle.utils.prettyName
 import java.io.File
 
 @InternalKotlinGradlePluginApi // used in integration tests
@@ -703,16 +703,9 @@ object KotlinToolingDiagnostics {
             defaultSourceSetName: String,
             dependencies: List<String>,
         ): ToolingDiagnostic {
-            val platformName = when (targetPlatform) {
-                common -> "Kotlin/Common"
-                jvm -> "Kotlin/JVM"
-                js -> "Kotlin/JS"
-                androidJvm -> "Kotlin/Android"
-                native -> "Kotlin/Native"
-                wasm -> "Kotlin/Wasm"
-            }
+            val platformName = targetPlatform.prettyName
 
-            return build( /* language=text */ """
+            return build(/* language=text */ """
                 |A compileOnly dependency is used in the $platformName target '${targetName}':
                 |Compilation: $compilationName
                 |

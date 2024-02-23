@@ -7,10 +7,9 @@ package org.jetbrains.kotlin.gradle.plugin
 
 import org.gradle.api.Named
 import org.gradle.api.attributes.*
-import org.gradle.util.GradleVersion
 import java.io.Serializable
 
-enum class KotlinPlatformType: Named, Serializable {
+enum class KotlinPlatformType : Named, Serializable {
     common, jvm, js, androidJvm, native, wasm;
 
     override fun toString(): String = name
