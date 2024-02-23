@@ -78,7 +78,6 @@ class ProcessStreams(
     }
 }
 
-/*
 private object ProcessKiller {
     init {
         Runtime.getRuntime().addShutdownHook(Thread {
@@ -98,13 +97,12 @@ private object ProcessKiller {
 
     fun deregister(process: Process) = processes.remove(process)
 }
- */
 
 private fun <T> ProcessBuilder.scoped(block: suspend CoroutineScope.(Process) -> T): T {
     val process = start()
     // Make sure the process is killed even if the jvm process is being destroyed.
     // e.g. gradle --no-daemon task execution was cancelled by the user pressing ^C
-//    ProcessKiller.register(process)
+    ProcessKiller.register(process)
     return try {
         val result = runBlocking(Dispatchers.IO) {
             block(process)
@@ -115,7 +113,7 @@ private fun <T> ProcessBuilder.scoped(block: suspend CoroutineScope.(Process) ->
         // e.g. gradle task execution was cancelled by the user pressing ^C
         process.destroyForcibly()
         // The process is dead, no need to ensure its destruction during the shutdown.
-//        ProcessKiller.deregister(process)
+        ProcessKiller.deregister(process)
     }
 }
 
