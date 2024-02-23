@@ -371,6 +371,7 @@ class MppCInteropDependencyTransformationIT : KGPBaseTest() {
 
     @DisplayName("UP-TO-DATE transformations on adding/removing targets in project mode")
     @GradleTest
+    @GradleTestVersions(minVersion = TestVersions.Gradle.G_7_4)
     fun upToDateTransformationsAddingRemovingTargetRepositoriesMode(gradleVersion: GradleVersion) {
         project(cinteropProjectName, gradleVersion) {
             testUpToDateTransformationOnRemovingOrAddingTargets(projectDependencyMode)
