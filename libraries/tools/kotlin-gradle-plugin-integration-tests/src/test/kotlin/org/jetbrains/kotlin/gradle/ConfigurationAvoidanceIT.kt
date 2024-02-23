@@ -189,6 +189,7 @@ class ConfigurationAvoidanceIT : KGPBaseTest() {
     @JsGradlePluginTests
     @DisplayName("JS early configuration resolution")
     @GradleTest
+    @GradleTestVersions(minVersion = TestVersions.Gradle.G_7_4)
     fun testEarlyConfigurationsResolutionKotlinJs(gradleVersion: GradleVersion) {
         testEarlyConfigurationsResolution("kotlin-js-browser-project", gradleVersion, kts = true)
     }
