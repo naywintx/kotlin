@@ -78,4 +78,9 @@ public class K1JvmLookupTrackerTestGenerated extends AbstractK1JvmLookupTrackerT
   public void testSyntheticProperties() {
     runTest("jps/jps-plugin/testData/incremental/lookupTracker/jvm/syntheticProperties/");
   }
+
+  @TestMetadata("typeAliasAndUsage")
+  public void testTypeAliasAndUsage() {
+    runTest("jps/jps-plugin/testData/incremental/lookupTracker/jvm/typeAliasAndUsage/");
+  }
 }
