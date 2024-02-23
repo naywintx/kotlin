@@ -16,8 +16,6 @@ internal object IncorrectCompileOnlyDependenciesChecker : KotlinGradleProjectChe
     override suspend fun KotlinGradleProjectCheckerContext.runChecks(collector: KotlinToolingDiagnosticsCollector) {
         KotlinPluginLifecycle.Stage.AfterFinaliseDsl.await()
 
-        if (PropertiesProvider(project).ignoreIncorrectCompileOnlyDependencies == true) return
-
         KotlinPluginLifecycle.Stage.ReadyForExecution.await()
 
         val multiplatform = multiplatformExtension ?: return

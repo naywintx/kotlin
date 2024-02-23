@@ -66,7 +66,7 @@ open class MultiplatformIncorrectCompileOnlyDependenciesValidationIT : KGPBaseTe
                     @Language("properties")
                     val prop = """
                         |
-                        |kotlin.mpp.ignoreIncorrectCompileOnlyDependencies=true
+                        |kotlin.suppressGradlePluginWarnings=IncorrectCompileOnlyDependencyWarning
                         |
                     """.trimMargin()
                     it + prop

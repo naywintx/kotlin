@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
-import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.KOTLIN_IGNORE_INCORRECT_COMPILE_ONLY_DEPENDENCIES
+import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.KOTLIN_SUPPRESS_GRADLE_PLUGIN_WARNINGS_PROPERTY
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_MPP_APPLY_DEFAULT_HIERARCHY_TEMPLATE
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_NATIVE_IGNORE_DISABLED_TARGETS
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_NATIVE_SUPPRESS_EXPERIMENTAL_ARTIFACTS_DSL_WARNING
@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.gradle.plugin.sources.android.multiplatformAndroidSo
 import org.jetbrains.kotlin.gradle.plugin.sources.android.multiplatformAndroidSourceSetLayoutV2
 import org.jetbrains.kotlin.gradle.utils.prettyName
 import java.io.File
+
 
 @InternalKotlinGradlePluginApi // used in integration tests
 object KotlinToolingDiagnostics {
@@ -715,7 +716,8 @@ object KotlinToolingDiagnostics {
                 |Using compileOnly dependencies in $platformName targets is currently not supported. This is because
                 |compileOnly dependencies are required during the compilation of projects that depend on this project.
                 |
-                |To share compileOnly dependencies with consumers, expose the dependency as an `api()` dependency. 
+                |To share compileOnly dependencies with consumers, expose the dependency as an api dependency in the
+                |$platformName source sets.
                 |
                 |    kotlin {
                 |        sourceSets {
@@ -726,7 +728,7 @@ object KotlinToolingDiagnostics {
                 |            }
                 |            $defaultSourceSetName {
                 |                dependencies {
-                |                    // additionally add the dependency as an `api()` dependency:
+                |                    // additionally add the compileOnly dependency as an api dependency:
                 |                    api("org.example:lib:1.2.3")
                 |                }
                 |            }
@@ -734,7 +736,7 @@ object KotlinToolingDiagnostics {
                 |    }
                 |
                 |To suppress this warning, put the following in your gradle.properties:
-                |    ${KOTLIN_IGNORE_INCORRECT_COMPILE_ONLY_DEPENDENCIES}=true
+                |    ${KOTLIN_SUPPRESS_GRADLE_PLUGIN_WARNINGS_PROPERTY}=${IncorrectCompileOnlyDependencyWarning::class.simpleName}
                 |
                 """.trimMargin()
             )
