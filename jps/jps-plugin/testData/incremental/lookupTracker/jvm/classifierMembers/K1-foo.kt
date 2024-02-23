@@ -6,28 +6,28 @@ import bar.*
     val a = 1
     var b = ""
 
-    val c: /*c:foo.A c:foo.A.Companion p:foo*/String
-        get() = /*c:foo.A*/b
+    val c: /*p:foo p:foo.A p:foo.A.Companion*/String
+        get() = /*p:foo.A*/b
 
-    var d: /*c:foo.A c:foo.A.Companion p:foo*/String = "ddd"
+    var d: /*p:foo p:foo.A p:foo.A.Companion*/String = "ddd"
         get() = field
         set(v) { field = v }
 
     fun foo() {
-        /*c:foo.A*/a
-        /*c:foo.A*/foo()
-        /*p:foo(A)*/this./*c:foo.A*/a
-        /*p:foo(A)*/this./*c:foo.A*/foo()
-        /*c:foo.A c:foo.A(getBAZ) c:foo.A(getBaz) c:foo.A.Companion p:bar p:foo p:java.lang p:kotlin p:kotlin.annotation p:kotlin.collections p:kotlin.comparisons p:kotlin.io p:kotlin.jvm p:kotlin.ranges p:kotlin.sequences p:kotlin.text*/baz()
-        /*c:foo.A c:foo.A.Companion p:bar p:foo p:java.lang p:kotlin p:kotlin.annotation p:kotlin.collections p:kotlin.comparisons p:kotlin.io p:kotlin.jvm p:kotlin.ranges p:kotlin.sequences p:kotlin.text*/Companion./*c:foo.A.Companion*/a
-        /*c:foo.A c:foo.A.Companion p:bar p:foo p:java.lang p:kotlin p:kotlin.annotation p:kotlin.collections p:kotlin.comparisons p:kotlin.io p:kotlin.jvm p:kotlin.ranges p:kotlin.sequences p:kotlin.text*/O./*c:foo.A.O*/v = "OK"
+        /*p:foo.A*/a
+        /*p:foo.A*/foo()
+        /*p:foo(A)*/this./*p:foo.A*/a
+        /*p:foo(A)*/this./*p:foo.A*/foo()
+        /*p:bar p:foo p:foo.A p:foo.A(getBAZ) p:foo.A(getBaz) p:foo.A.Companion p:java.lang p:kotlin p:kotlin.annotation p:kotlin.collections p:kotlin.comparisons p:kotlin.io p:kotlin.jvm p:kotlin.ranges p:kotlin.sequences p:kotlin.text*/baz()
+        /*p:bar p:foo p:foo.A p:foo.A.Companion p:java.lang p:kotlin p:kotlin.annotation p:kotlin.collections p:kotlin.comparisons p:kotlin.io p:kotlin.jvm p:kotlin.ranges p:kotlin.sequences p:kotlin.text*/Companion./*p:foo.A.Companion*/a
+        /*p:bar p:foo p:foo.A p:foo.A.Companion p:java.lang p:kotlin p:kotlin.annotation p:kotlin.collections p:kotlin.comparisons p:kotlin.io p:kotlin.jvm p:kotlin.ranges p:kotlin.sequences p:kotlin.text*/O./*p:foo.A.O*/v = "OK"
     }
 
     class B {
         val a = 1
 
         companion object CO {
-            fun bar(a: /*c:foo.A c:foo.A.B c:foo.A.B.CO c:foo.A.Companion p:foo*/Int) {}
+            fun bar(a: /*p:foo p:foo.A p:foo.A.B p:foo.A.B.CO p:foo.A.Companion*/Int) {}
         }
     }
 
@@ -44,7 +44,7 @@ import bar.*
 }
 
 /*p:foo*/interface I {
-    var a: /*c:foo.I p:foo*/Int
+    var a: /*p:foo p:foo.I*/Int
     fun foo()
 
     class NI
@@ -54,7 +54,7 @@ import bar.*
     override var a = 1
     override fun foo() {}
     val b = 1
-    fun bar(): /*c:foo.Obj p:foo*/I = /*p:foo(I) p:kotlin(Nothing)*/null as /*c:foo.Obj p:foo*/I
+    fun bar(): /*p:foo p:foo.Obj*/I = /*p:foo(I) p:kotlin(Nothing)*/null as /*p:foo p:foo.Obj*/I
 }
 
 /*p:foo*/enum class E {
@@ -63,9 +63,9 @@ import bar.*
 
     val a = 1
     fun foo() {
-        /*c:foo.E*/a
-        /*c:foo.E p:bar p:foo p:java.lang p:kotlin p:kotlin.annotation p:kotlin.collections p:kotlin.comparisons p:kotlin.io p:kotlin.jvm p:kotlin.ranges p:kotlin.sequences p:kotlin.text*/Y./*c:foo.E*/a
-        /*c:foo.E*/foo()
-        /*c:foo.E p:bar p:foo p:java.lang p:kotlin p:kotlin.annotation p:kotlin.collections p:kotlin.comparisons p:kotlin.io p:kotlin.jvm p:kotlin.ranges p:kotlin.sequences p:kotlin.text*/X./*c:foo.E*/foo()
+        /*p:foo.E*/a
+        /*p:bar p:foo p:foo.E p:java.lang p:kotlin p:kotlin.annotation p:kotlin.collections p:kotlin.comparisons p:kotlin.io p:kotlin.jvm p:kotlin.ranges p:kotlin.sequences p:kotlin.text*/Y./*p:foo.E*/a
+        /*p:foo.E*/foo()
+        /*p:bar p:foo p:foo.E p:java.lang p:kotlin p:kotlin.annotation p:kotlin.collections p:kotlin.comparisons p:kotlin.io p:kotlin.jvm p:kotlin.ranges p:kotlin.sequences p:kotlin.text*/X./*p:foo.E*/foo()
     }
 }

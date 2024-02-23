@@ -43,7 +43,7 @@ import java.io.*
 abstract class AbstractJvmLookupTrackerTest : AbstractLookupTrackerTest() {
 
     private val sourceToOutputMapping = hashMapOf<File, MutableSet<File>>()
-
+    override var distinguishPackageAndClassLookups = false
     override var filterBuiltins = false
 
     override fun setUp() {
@@ -217,6 +217,7 @@ abstract class AbstractLookupTrackerTest : TestWithWorkingDir() {
     private val enableICFixture = EnableICFixture()
     protected var optionalVariantPrefix: String = "K2"
     protected open var filterBuiltins = false
+    protected open var distinguishPackageAndClassLookups = true
 
     override fun setUp() {
         super.setUp()
@@ -375,8 +376,10 @@ abstract class AbstractLookupTrackerTest : TestWithWorkingDir() {
                                 else -> "(" + lookupInfo.name + ")"
                             }
 
-                        lookupInfo.scopeKind.toString()[0].lowercaseChar()
-                            .toString() + ":" + lookupInfo.scopeFqName.let { it.ifEmpty { "<root>" } } + name
+                        val prefix =
+                            if (distinguishPackageAndClassLookups) lookupInfo.scopeKind.toString()[0].lowercaseChar().toString()
+                            else "p"
+                        prefix + ":" + lookupInfo.scopeFqName.let { it.ifEmpty { "<root>" } } + name
                     }
                 }.takeIf { it.isNotEmpty() }
                     ?.joinToString(separator = " ", prefix = "/*", postfix = "*/")

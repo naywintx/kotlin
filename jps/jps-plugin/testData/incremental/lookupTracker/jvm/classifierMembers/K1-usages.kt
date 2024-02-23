@@ -3,48 +3,48 @@ package foo
 import bar.*
 
 /*p:foo*/fun usages(i: /*p:foo*/I) /*p:foo(E)*/{
-    /*c:foo.A.Companion(invoke) p:foo p:foo(invoke)*/A()./*c:foo.A*/a
-    /*c:foo.A.Companion(invoke) p:foo p:foo(invoke)*/A()./*c:foo.A*/b
-    /*c:foo.A.Companion(invoke) p:foo p:foo(invoke)*/A()./*c:foo.A*/c
-    /*c:foo.A.Companion(invoke) p:foo p:foo(invoke)*/A()./*c:foo.A*/d = "new value"
-    /*c:foo.A.Companion(invoke) p:foo p:foo(invoke)*/A()./*c:foo.A*/foo()
-    /*p:foo*/A./*c:foo.A c:foo.A.B.CO(invoke) c:foo.A.Companion*/B()./*c:foo.A.B*/a
-    /*p:foo*/A./*c:foo.A*/B./*c:foo.A.B c:foo.A.B.CO*/bar(1)
-    /*p:foo*/A./*c:foo.A*/B./*c:foo.A.B*/CO./*c:foo.A.B.CO*/bar(1)
-    /*c:foo.A(Companion) p:foo*/A
-    /*p:foo*/A./*c:foo.A c:foo.A.Companion*/a
-    /*p:foo*/A./*c:foo.A c:foo.A.Companion*/baz()
-    /*c:foo.A(Companion) p:foo*/A./*c:foo.A c:foo.A.Companion*/Companion
-    /*p:foo*/A./*c:foo.A*/Companion./*c:foo.A.Companion*/baz()
-    /*c:foo.A(O) p:foo*/A./*c:foo.A c:foo.A.Companion*/O
-    /*p:foo*/A./*c:foo.A*/O./*c:foo.A.O*/v = "OK"
+    /*p:foo p:foo(invoke) p:foo.A.Companion(invoke)*/A()./*p:foo.A*/a
+    /*p:foo p:foo(invoke) p:foo.A.Companion(invoke)*/A()./*p:foo.A*/b
+    /*p:foo p:foo(invoke) p:foo.A.Companion(invoke)*/A()./*p:foo.A*/c
+    /*p:foo p:foo(invoke) p:foo.A.Companion(invoke)*/A()./*p:foo.A*/d = "new value"
+    /*p:foo p:foo(invoke) p:foo.A.Companion(invoke)*/A()./*p:foo.A*/foo()
+    /*p:foo*/A./*p:foo.A p:foo.A.B.CO(invoke) p:foo.A.Companion*/B()./*p:foo.A.B*/a
+    /*p:foo*/A./*p:foo.A*/B./*p:foo.A.B p:foo.A.B.CO*/bar(1)
+    /*p:foo*/A./*p:foo.A*/B./*p:foo.A.B*/CO./*p:foo.A.B.CO*/bar(1)
+    /*p:foo p:foo.A(Companion)*/A
+    /*p:foo*/A./*p:foo.A p:foo.A.Companion*/a
+    /*p:foo*/A./*p:foo.A p:foo.A.Companion*/baz()
+    /*p:foo p:foo.A(Companion)*/A./*p:foo.A p:foo.A.Companion*/Companion
+    /*p:foo*/A./*p:foo.A*/Companion./*p:foo.A.Companion*/baz()
+    /*p:foo p:foo.A(O)*/A./*p:foo.A p:foo.A.Companion*/O
+    /*p:foo*/A./*p:foo.A*/O./*p:foo.A.O*/v = "OK"
 
-    /*p:foo(I)*/i./*c:foo.I*/a = 2
-    /*p:foo*/Obj./*c:foo.Obj*/a
-    /*p:foo*/Obj./*c:foo.Obj*/foo()
+    /*p:foo(I)*/i./*p:foo.I*/a = 2
+    /*p:foo*/Obj./*p:foo.Obj*/a
+    /*p:foo*/Obj./*p:foo.Obj*/foo()
     var ii: /*p:foo*/I = /*p:foo*/Obj
-    /*p:foo(I)*/ii./*c:foo.I*/a
-    /*p:foo(I)*/ii./*c:foo.I*/foo()
-    /*p:foo*/Obj./*c:foo.Obj*/b
-    val iii = /*p:foo p:foo(I)*/Obj./*c:foo.Obj*/bar()
-    /*p:foo(I)*/iii./*c:foo.I*/foo()
+    /*p:foo(I)*/ii./*p:foo.I*/a
+    /*p:foo(I)*/ii./*p:foo.I*/foo()
+    /*p:foo*/Obj./*p:foo.Obj*/b
+    val iii = /*p:foo p:foo(I)*/Obj./*p:foo.Obj*/bar()
+    /*p:foo(I)*/iii./*p:foo.I*/foo()
 
-    /*p:bar p:foo p:java.lang p:kotlin p:kotlin.annotation p:kotlin.collections p:kotlin.comparisons p:kotlin.io p:kotlin.jvm p:kotlin.ranges p:kotlin.sequences p:kotlin.text*/E./*c:foo.E*/X
-    /*p:bar p:foo p:java.lang p:kotlin p:kotlin.annotation p:kotlin.collections p:kotlin.comparisons p:kotlin.io p:kotlin.jvm p:kotlin.ranges p:kotlin.sequences p:kotlin.text*/E./*c:foo.E*/X./*c:foo.E*/a
-    /*p:bar p:foo p:java.lang p:kotlin p:kotlin.annotation p:kotlin.collections p:kotlin.comparisons p:kotlin.io p:kotlin.jvm p:kotlin.ranges p:kotlin.sequences p:kotlin.text*/E./*c:foo.E*/Y./*c:foo.E*/foo()
-    /*p:bar p:foo p:java.lang p:kotlin p:kotlin(Array) p:kotlin.annotation p:kotlin.collections p:kotlin.comparisons p:kotlin.io p:kotlin.jvm p:kotlin.ranges p:kotlin.sequences p:kotlin.text*/E./*c:foo.E*/values()
-    /*p:bar p:foo p:java.lang p:kotlin p:kotlin.annotation p:kotlin.collections p:kotlin.comparisons p:kotlin.io p:kotlin.jvm p:kotlin.ranges p:kotlin.sequences p:kotlin.text*/E./*c:foo.E*/valueOf("")
+    /*p:bar p:foo p:java.lang p:kotlin p:kotlin.annotation p:kotlin.collections p:kotlin.comparisons p:kotlin.io p:kotlin.jvm p:kotlin.ranges p:kotlin.sequences p:kotlin.text*/E./*p:foo.E*/X
+    /*p:bar p:foo p:java.lang p:kotlin p:kotlin.annotation p:kotlin.collections p:kotlin.comparisons p:kotlin.io p:kotlin.jvm p:kotlin.ranges p:kotlin.sequences p:kotlin.text*/E./*p:foo.E*/X./*p:foo.E*/a
+    /*p:bar p:foo p:java.lang p:kotlin p:kotlin.annotation p:kotlin.collections p:kotlin.comparisons p:kotlin.io p:kotlin.jvm p:kotlin.ranges p:kotlin.sequences p:kotlin.text*/E./*p:foo.E*/Y./*p:foo.E*/foo()
+    /*p:bar p:foo p:java.lang p:kotlin p:kotlin(Array) p:kotlin.annotation p:kotlin.collections p:kotlin.comparisons p:kotlin.io p:kotlin.jvm p:kotlin.ranges p:kotlin.sequences p:kotlin.text*/E./*p:foo.E*/values()
+    /*p:bar p:foo p:java.lang p:kotlin p:kotlin.annotation p:kotlin.collections p:kotlin.comparisons p:kotlin.io p:kotlin.jvm p:kotlin.ranges p:kotlin.sequences p:kotlin.text*/E./*p:foo.E*/valueOf("")
 }
 
 /*p:foo*/fun classifiers(
         a: /*p:foo*/A,
-        ab: /*p:foo*/A./*c:foo.A*/B,
-        ac: /*p:foo*/A./*c:foo.A*/C,
-        abCo: /*p:foo*/A./*c:foo.A*/B./*c:foo.A.B*/CO,
-        aCompanion: /*p:foo*/A./*c:foo.A*/Companion,
-        aO: /*p:foo*/A./*c:foo.A*/O,
+        ab: /*p:foo*/A./*p:foo.A*/B,
+        ac: /*p:foo*/A./*p:foo.A*/C,
+        abCo: /*p:foo*/A./*p:foo.A*/B./*p:foo.A.B*/CO,
+        aCompanion: /*p:foo*/A./*p:foo.A*/Companion,
+        aO: /*p:foo*/A./*p:foo.A*/O,
         i: /*p:foo*/I,
-        ni: /*p:foo*/I./*c:foo.I*/NI,
+        ni: /*p:foo*/I./*p:foo.I*/NI,
         obj: /*p:foo*/Obj,
         e: /*p:foo*/E
 ) {}
