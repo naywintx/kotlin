@@ -437,9 +437,7 @@ open class NewMultiplatformIT : BaseGradleIT() {
                 )
             }
             // also check incremental Kapt class structure configurations, KT-33105
-            gradleProperties += """
-                kapt.incremental.apt=true
-            """.trimIndent()
+            projectDir.resolve("gradle.properties").appendText("\nkapt.incremental.apt=true")
 
             // Check Kapt:
             projectDir.resolve("src/jvm6Main/kotlin/Main.kt").appendText(

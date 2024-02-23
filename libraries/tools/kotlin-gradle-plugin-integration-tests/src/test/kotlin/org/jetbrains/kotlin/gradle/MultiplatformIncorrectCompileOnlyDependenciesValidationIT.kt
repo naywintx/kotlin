@@ -4,14 +4,15 @@
  */
 package org.jetbrains.kotlin.gradle
 
-import org.gradle.api.logging.LogLevel
-import org.jetbrains.kotlin.gradle.util.modify
-import org.junit.Test
+import org.gradle.util.GradleVersion
+import org.intellij.lang.annotations.Language
+import org.jetbrains.kotlin.gradle.testbase.*
 import kotlin.test.assertContentEquals
 
-open class MultiplatformIncorrectCompileOnlyDependenciesValidationIT : BaseGradleIT() {
+open class MultiplatformIncorrectCompileOnlyDependenciesValidationIT : KGPBaseTest() {
 
     private fun setupProject(
+        gradleVersion: GradleVersion,
         commonMainCompileOnlyDependencies: Boolean = false,
         commonMainApiDependencies: Boolean = false,
 
@@ -21,59 +22,71 @@ open class MultiplatformIncorrectCompileOnlyDependenciesValidationIT : BaseGradl
 
         kotlinNativeIgnoreIncorrectDependencies: Boolean = false,
         kotlinKmpIgnoreIncorrectCompileOnlyDependencies: Boolean = false,
-        exec: BaseGradleIT.Project.() -> Unit,
+        exec: TestProject.() -> Unit,
     ) {
-        with(Project("kmp-compileonly-dependency", minLogLevel = LogLevel.INFO)) {
-            setupWorkingDir()
-
+        project("kmp-compileonly-dependency", gradleVersion) {
             if (commonMainCompileOnlyDependencies) {
-                gradleBuildScript().modify {
+                buildGradleKts.modify {
                     it.replace("//commonMain-compileOnly:", "")
                 }
             }
 
             if (commonTestCompileOnlyDependencies) {
-                gradleBuildScript().modify {
+                buildGradleKts.modify {
                     it.replace("//commonTest-compileOnly:", "")
                 }
             }
 
             if (commonMainApiDependencies) {
-                gradleBuildScript().modify {
+                buildGradleKts.modify {
                     it.replace("//commonMain-api:", "")
                 }
             }
 
             if (targetMainApiDependencies) {
-                gradleBuildScript().modify {
+                buildGradleKts.modify {
                     it.replace("//targetMain-api:", "")
                 }
             }
 
             if (kotlinNativeIgnoreIncorrectDependencies) {
-                gradleProperties += """
-                    |
-                    |kotlin.native.ignoreIncorrectDependencies=true
-                    |
-                """.trimMargin()
+                gradleProperties.modify {
+                    @Language("properties")
+                    val prop = """
+                        |
+                        |kotlin.native.ignoreIncorrectDependencies=true
+                        |
+                    """.trimMargin()
+                    it + prop
+                }
             }
 
             if (kotlinKmpIgnoreIncorrectCompileOnlyDependencies) {
-                gradleProperties += """
-                    |
-                    |kotlin.mpp.ignoreIncorrectCompileOnlyDependencies=true
-                    |
-                """.trimMargin()
+                gradleProperties.modify {
+                    @Language("properties")
+                    val prop = """
+                        |
+                        |kotlin.mpp.ignoreIncorrectCompileOnlyDependencies=true
+                        |
+                    """.trimMargin()
+                    it + prop
+                }
             }
 
             exec()
         }
     }
 
-    @Test
-    fun `when compileOnly dependency is not defined anywhere, expect no warning`() {
-        setupProject {
-            assertOutputDoesNotContainCompileOnlyWarning()
+    @GradleTest
+    @MppGradlePluginTests
+    fun `when compileOnly dependency is not defined anywhere, expect no warning`(
+        gradleVersion: GradleVersion,
+    ) {
+        setupProject(gradleVersion) {
+            build("help") {
+                assertTasksExecuted(":help")
+                assertOutputDoesNotContain(compileOnlyDependencyWarningRegex)
+            }
         }
     }
 
@@ -82,22 +95,41 @@ open class MultiplatformIncorrectCompileOnlyDependenciesValidationIT : BaseGradl
      *
      * Verify `compileOnly()` dependencies in test sources do not trigger the warning.
      */
-    @Test
-    fun `when compileOnly dependency is defined in commonTest, expect no warning`() {
+    @GradleTest
+    @MppGradlePluginTests
+    fun `when compileOnly dependency is defined in commonTest, expect no warning`(
+        gradleVersion: GradleVersion,
+    ) {
         setupProject(
+            gradleVersion = gradleVersion,
             commonTestCompileOnlyDependencies = true,
         ) {
-            assertOutputDoesNotContainCompileOnlyWarning()
+            build("help") {
+                assertTasksExecuted(":help")
+                assertOutputDoesNotContain(compileOnlyDependencyWarningRegex)
+            }
         }
     }
 
-    @Test
-    fun `when dependency is defined as compileOnly but not api, expect warnings`() {
+    @GradleTest
+    @MppGradlePluginTests
+    fun `when dependency is defined as compileOnly but not api, expect warnings`(
+        gradleVersion: GradleVersion,
+    ) {
         setupProject(
+            gradleVersion = gradleVersion,
             commonMainCompileOnlyDependencies = true,
         ) {
             build("help") {
-                val warnings = extractCompileOnlyWarningPlatformNames()
+                val warnings = compileOnlyDependencyWarningRegex.findAll(output)
+                    .map {
+                        val (platformName) = it.destructured
+                        platformName
+                    }
+                    .distinct()
+                    .toList()
+                    .sorted()
+
                 assertContentEquals(
                     listOf(
                         "Kotlin/JS",
@@ -111,69 +143,76 @@ open class MultiplatformIncorrectCompileOnlyDependenciesValidationIT : BaseGradl
         }
     }
 
-    @Test
-    fun `when commonMain dependency is defined as compileOnly and api, expect no warning`() {
+    @GradleTest
+    @MppGradlePluginTests
+    fun `when commonMain dependency is defined as compileOnly and api, expect no warning`(
+        gradleVersion: GradleVersion,
+    ) {
         setupProject(
+            gradleVersion = gradleVersion,
             commonMainCompileOnlyDependencies = true,
             commonMainApiDependencies = true,
         ) {
-            assertOutputDoesNotContainCompileOnlyWarning()
+            build("help") {
+                assertTasksExecuted(":help")
+                assertOutputDoesNotContain(compileOnlyDependencyWarningRegex)
+            }
         }
     }
 
-    @Test
-    fun `when dependency is defined as compileOnly in commonMain, and api in target main sources, expect no warning`() {
+    @GradleTest
+    @MppGradlePluginTests
+    fun `when dependency is defined as compileOnly in commonMain, and api in target main sources, expect no warning`(
+        gradleVersion: GradleVersion,
+    ) {
         setupProject(
+            gradleVersion = gradleVersion,
             commonMainCompileOnlyDependencies = true,
-            targetMainApiDependencies = true
-        ) {
-            assertOutputDoesNotContainCompileOnlyWarning()
-        }
-    }
-
-    @Test
-    fun `when dependency is defined as compileOnly but not api, and kotlin-mpp warning is disabled, expect no warning`() {
-        setupProject(
-            commonMainCompileOnlyDependencies = true,
-            kotlinKmpIgnoreIncorrectCompileOnlyDependencies = true
-        ) {
-            assertOutputDoesNotContainCompileOnlyWarning()
-        }
-    }
-
-    @Test
-    fun `when dependency is defined as compileOnly but not api, and kotlin-native warning is disabled, expect no warning for native compilations`() {
-        setupProject(
-            commonMainCompileOnlyDependencies = true,
-            kotlinNativeIgnoreIncorrectDependencies = true
+            targetMainApiDependencies = true,
         ) {
             build("help") {
-                assertNotContains("A compileOnly dependency is used in the Kotlin/Native target")
+                assertTasksExecuted(":help")
+                assertOutputDoesNotContain(compileOnlyDependencyWarningRegex)
+            }
+        }
+    }
+
+    @GradleTest
+    @MppGradlePluginTests
+    fun `when dependency is defined as compileOnly but not api, and kotlin-mpp warning is disabled, expect no warning`(
+        gradleVersion: GradleVersion,
+    ) {
+        setupProject(
+            gradleVersion = gradleVersion,
+            commonMainCompileOnlyDependencies = true,
+            kotlinKmpIgnoreIncorrectCompileOnlyDependencies = true,
+        ) {
+            build("help") {
+                assertTasksExecuted(":help")
+                assertOutputDoesNotContain(compileOnlyDependencyWarningRegex)
+            }
+        }
+    }
+
+    @GradleTest
+    @MppGradlePluginTests
+    fun `when dependency is defined as compileOnly but not api, and kotlin-native warning is disabled, expect no warning for native compilations`(
+        gradleVersion: GradleVersion,
+    ) {
+        setupProject(
+            gradleVersion = gradleVersion,
+            commonMainCompileOnlyDependencies = true,
+            kotlinNativeIgnoreIncorrectDependencies = true,
+        ) {
+            build("help") {
+                assertOutputDoesNotContain("A compileOnly dependency is used in the Kotlin/Native target")
             }
         }
     }
 
     companion object {
-
-        private val warningRegex = Regex(
+        private val compileOnlyDependencyWarningRegex = Regex(
             "A compileOnly dependency is used in the (?<platformName>[^ ]*) target '[^']*':"
         )
-
-        private fun CompiledProject.extractCompileOnlyWarningPlatformNames(): List<String> =
-            warningRegex.findAll(output)
-                .map {
-                    val (platformName) = it.destructured
-                    platformName
-                }
-                .distinct()
-                .toList()
-                .sorted()
-
-        private fun BaseGradleIT.Project.assertOutputDoesNotContainCompileOnlyWarning(): Unit = with(testCase) {
-            build("help") {
-                assertSuccessful()
-                assertNotContains(warningRegex)
-            }
-        }
     }
 }
