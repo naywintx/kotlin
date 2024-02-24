@@ -7,6 +7,7 @@
 
 package org.jetbrains.kotlin.native.executors
 
+import kotlinx.coroutines.*
 import org.jetbrains.kotlin.konan.target.HostManager
 import java.io.File
 import java.io.IOException
@@ -23,38 +24,33 @@ import kotlin.time.TimeSource
 import kotlin.time.measureTimedValue
 
 class ProcessStreams(
+    scope: CoroutineScope,
     process: Process,
     stdin: InputStream,
     stdout: OutputStream,
     stderr: OutputStream,
 ) {
     private val ignoreIOErrors = AtomicBoolean(false)
-    private val stdin = Thread {
+    private val stdin = scope.launch {
         stdin.apply {
             copyStreams(this, process.outputStream)
             close()
         }
         process.outputStream.close()
-    }.apply {
-        start()
     }
-    private val stdout = Thread {
+    private val stdout = scope.launch {
         stdout.apply {
             copyStreams(process.inputStream, this)
             close()
         }
         process.inputStream.close()
-    }.apply {
-        start()
     }
-    private val stderr = Thread {
+    private val stderr = scope.launch {
         stderr.apply {
             copyStreams(process.errorStream, this)
             close()
         }
         process.errorStream.close()
-    }.apply {
-        start()
     }
 
     private fun copyStreams(from: InputStream, to: OutputStream) {
@@ -66,7 +62,7 @@ class ProcessStreams(
         }
     }
 
-    fun drain() {
+    suspend fun drain() {
         // First finish passing input into the process.
         stdin.join()
         // Now receive all the output in whatever order.
@@ -76,9 +72,9 @@ class ProcessStreams(
 
     fun cancel() {
         ignoreIOErrors.set(true)
-        stdout.interrupt()
-        stderr.interrupt()
-        stdin.interrupt()
+        stdout.cancel()
+        stderr.cancel()
+        stdin.cancel()
     }
 }
 
@@ -102,13 +98,16 @@ private object ProcessKiller {
     fun deregister(process: Process) = processes.remove(process)
 }
 
-private fun <T> ProcessBuilder.scoped(block: (Process) -> T): T {
+private fun <T> ProcessBuilder.scoped(block: suspend CoroutineScope.(Process) -> T): T {
     val process = start()
     // Make sure the process is killed even if the jvm process is being destroyed.
     // e.g. gradle --no-daemon task execution was cancelled by the user pressing ^C
     ProcessKiller.register(process)
     return try {
-        block(process)
+        val result = runBlocking(Dispatchers.IO) {
+            block(process)
+        }
+        result
     } finally {
         // Make sure the process is killed even if the current thread was interrupted.
         // e.g. gradle task execution was cancelled by the user pressing ^C
@@ -170,11 +169,11 @@ class HostExecutor : Executor {
             directory(workingDirectory)
             environment().putAll(request.environment)
         }.scoped { process ->
-            val streams = ProcessStreams(process, request.stdin, request.stdout, request.stderr)
+            val streams = ProcessStreams(this, process, request.stdin, request.stdout, request.stderr)
             val (isTimeout, duration) = measureTimedValue {
                 !process.waitFor(request.timeout)
             }
-            fun cancel() {
+            suspend fun cancel() {
                 streams.cancel()
                 process.destroyForcibly()
                 streams.drain()
@@ -188,7 +187,6 @@ class HostExecutor : Executor {
                 logger.info("Finished command: $commandLine")
                 // KT-65113: Looks like read() from stdout/stderr of a child process may hang on Windows
                 // even when the child process is already terminated.
-                /*
                 val waitStreamsDuration = if (HostManager.hostIsMingw) 10.seconds else Duration.INFINITE
                 try {
                     withTimeout(waitStreamsDuration) {
@@ -198,8 +196,6 @@ class HostExecutor : Executor {
                     logger.warning("Failed to join the streams in $waitStreamsDuration.")
                     cancel()
                 }
-                 */
-                streams.drain()
                 ExecuteResponse(exitCode, duration)
             }
             logger.info("Drained command: $commandLine")
