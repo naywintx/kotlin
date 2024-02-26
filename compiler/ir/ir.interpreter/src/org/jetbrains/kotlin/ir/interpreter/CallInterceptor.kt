@@ -171,7 +171,7 @@ internal class DefaultCallInterceptor(override val interpreter: IrInterpreter) :
     }
 
     private fun interpretBuiltinFunction(signature: Signature): Any? {
-        if (environment.configuration.platform.isJs()) {
+        if (environment.configuration.platform.isJs() && environment.configuration.applyPlatformEvaluationRules) {
             if (signature.name == "toString") return signature.args[0].value.specialToStringForJs()
             if (signature.name == "toFloat") signature.name = "toDouble"
             signature.args
