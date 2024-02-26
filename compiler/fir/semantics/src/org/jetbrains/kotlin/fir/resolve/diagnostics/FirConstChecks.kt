@@ -209,6 +209,15 @@ private class FirConstCheckVisitor(private val session: FirSession) : FirVisitor
         }
     }
 
+    override fun visitVarargArgumentsExpression(
+        varargArgumentsExpression: FirVarargArgumentsExpression, data: Nothing?
+    ): ConstantArgumentKind {
+        for (exp in varargArgumentsExpression.arguments) {
+            exp.accept(this, data).ifNotValidConst { return it }
+        }
+        return ConstantArgumentKind.VALID_CONST
+    }
+
     override fun visitArrayLiteral(arrayLiteral: FirArrayLiteral, data: Nothing?): ConstantArgumentKind {
         for (exp in arrayLiteral.arguments) {
             exp.accept(this, data).ifNotValidConst { return it }
