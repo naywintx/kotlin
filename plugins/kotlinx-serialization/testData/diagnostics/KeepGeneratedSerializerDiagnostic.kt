@@ -1,19 +1,6 @@
 // WITH_STDLIB
 // FIR_IDENTICAL
 
-// FILE: annotation.kt
-package kotlinx.serialization
-
-import kotlin.annotation.*
-
-/*
-  Until the annotation is added to the serialization runtime,
-  we have to create an annotation with that name in the project itself
- */
-@Target(AnnotationTarget.CLASS)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class KeepGeneratedSerializer
-
 // FILE: main.kt
 import kotlinx.serialization.*
 import kotlinx.serialization.encoding.*

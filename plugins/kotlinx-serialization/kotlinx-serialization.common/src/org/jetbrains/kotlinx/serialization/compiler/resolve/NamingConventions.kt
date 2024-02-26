@@ -27,7 +27,7 @@ object SerializationAnnotations {
     // Otherwise, there it might lead to exceptions from light classes when building them for serializer/serializable classes
     val serializableAnnotationFqName = FqName("kotlinx.serialization.Serializable")
     val serializerAnnotationFqName = FqName("kotlinx.serialization.Serializer")
-    val keepGeneratedSerializerAnnotationFqName = FqName("kotlin.serialization.KeepGeneratedSerializer")
+    val keepGeneratedSerializerAnnotationFqName = FqName("kotlinx.serialization.KeepGeneratedSerializer")
     val serialNameAnnotationFqName = FqName("kotlinx.serialization.SerialName")
     val requiredAnnotationFqName = FqName("kotlinx.serialization.Required")
     val serialTransientFqName = FqName("kotlinx.serialization.Transient")

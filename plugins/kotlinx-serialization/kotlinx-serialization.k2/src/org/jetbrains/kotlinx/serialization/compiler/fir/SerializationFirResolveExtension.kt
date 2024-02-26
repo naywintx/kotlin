@@ -330,7 +330,12 @@ class SerializationFirResolveExtension(session: FirSession) : FirDeclarationGene
     }
 
     override fun FirDeclarationPredicateRegistrar.registerPredicates() {
-        register(FirSerializationPredicates.annotatedWithSerializableOrMeta, FirSerializationPredicates.hasMetaAnnotation)
+        register(
+            FirSerializationPredicates.annotatedWithSerializableOrMeta,
+            FirSerializationPredicates.hasMetaAnnotation,
+            // registering predicate so that the annotation `KeepGeneratedSerializer` will be resolved on COMPILER_REQUIRED_ANNOTATIONS phase
+            FirSerializationPredicates.annotatedWithKeepSerializer
+        )
     }
 
     private val FirClassSymbol<*>.isSerializer: Boolean
