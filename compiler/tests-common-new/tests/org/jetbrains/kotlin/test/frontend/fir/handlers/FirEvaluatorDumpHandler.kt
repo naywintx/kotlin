@@ -134,7 +134,6 @@ class FirEvaluatorDumpHandler(testServices: TestServices) : FrontendOutputHandle
                 resolvedTypeRef.delegatedTypeRef?.accept(this, data)
                 return super.visitResolvedTypeRef(resolvedTypeRef, data)
             }
-        }, Options(renderLiterals = false))
         }
 
         firFile.accept(EvaluateAndRenderExpressions(), Options(renderLiterals = false))
