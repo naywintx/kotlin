@@ -209,6 +209,12 @@ private class FirConstCheckVisitor(private val session: FirSession) : FirVisitor
         }
     }
 
+    override fun visitSpreadArgumentExpression(
+        spreadArgumentExpression: FirSpreadArgumentExpression, data: Nothing?
+    ): ConstantArgumentKind {
+        return spreadArgumentExpression.expression.accept(this, data)
+    }
+
     override fun visitVarargArgumentsExpression(
         varargArgumentsExpression: FirVarargArgumentsExpression, data: Nothing?
     ): ConstantArgumentKind {
