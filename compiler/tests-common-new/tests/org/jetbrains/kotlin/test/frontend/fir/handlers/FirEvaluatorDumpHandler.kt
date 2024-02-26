@@ -11,12 +11,12 @@ import org.jetbrains.kotlin.codeMetaInfo.model.ParsedCodeMetaInfo
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.backend.ConstValueProviderImpl
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirLiteralExpression
-import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
 import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.resolve.transformers.compileTimeEvaluator
 import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
@@ -27,8 +27,6 @@ import org.jetbrains.kotlin.test.model.FrontendOutputHandler
 import org.jetbrains.kotlin.test.model.TestFile
 import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.services.TestServices
-import org.jetbrains.kotlin.test.services.globalMetadataInfoHandler
-import org.jetbrains.kotlin.test.services.sourceFileProvider
 
 private const val stopEvaluation = "// STOP_EVALUATION_CHECKS"
 private const val startEvaluation = "// START_EVALUATION_CHECKS"
@@ -62,9 +60,7 @@ class FirEvaluatorDumpHandler(testServices: TestServices) : FrontendOutputHandle
     private fun processFile(testFile: TestFile, firFile: FirFile, session: FirSession) {
         val rangesThatAreNotSupposedToBeRendered = testFile.extractRangesWithoutRender()
 
-        fun render(result: FirLiteralExpression<*>, source: KtSourceElement?) {
-            val start = source?.startOffset ?: return
-            val end = result.source?.endOffset ?: return
+        fun render(result: FirLiteralExpression<*>, start: Int, end: Int) {
             if (rangesThatAreNotSupposedToBeRendered.any { start >= it.first && start <= it.second }) return
 
             val message = result.value.toString()
@@ -75,6 +71,12 @@ class FirEvaluatorDumpHandler(testServices: TestServices) : FrontendOutputHandle
                 description = StringUtil.escapeLineBreak(message)
             )
             globalMetadataInfoHandler.addMetadataInfosForFile(testFile, listOf(metaInfo))
+        }
+
+        fun render(result: FirLiteralExpression<*>, source: KtSourceElement?) {
+            val start = source?.startOffset ?: return
+            val end = result.source?.endOffset ?: return
+            render(result, start, end)
         }
 
         data class Options(val renderLiterals: Boolean)
@@ -98,10 +100,10 @@ class FirEvaluatorDumpHandler(testServices: TestServices) : FrontendOutputHandle
 
                 super.visitProperty(property, data)
                 session.compileTimeEvaluator.evaluatePropertyInitializer(property)?.let { result ->
-                    val source = (property.initializer as? FirQualifiedAccessExpression)?.calleeReference?.source
-                        ?: result.source
-                        ?: return
-                    render(result, source)
+                    with(ConstValueProviderImpl) {
+                        val (start, end) = property.initializer?.getCorrespondingIrOffset() ?: return
+                        render(result, start, end)
+                    }
                 }
             }
 
