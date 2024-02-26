@@ -78,7 +78,8 @@ class FirEvaluatorDumpHandler(testServices: TestServices) : FrontendOutputHandle
         }
 
         data class Options(val renderLiterals: Boolean)
-        firFile.accept(object : FirVisitor<Unit, Options>() {
+
+        class EvaluateAndRenderExpressions : FirVisitor<Unit, Options>() {
             // This set is used to avoid double rendering
             private val visitedElements = mutableSetOf<FirElement>()
 
@@ -134,6 +135,9 @@ class FirEvaluatorDumpHandler(testServices: TestServices) : FrontendOutputHandle
                 return super.visitResolvedTypeRef(resolvedTypeRef, data)
             }
         }, Options(renderLiterals = false))
+        }
+
+        firFile.accept(EvaluateAndRenderExpressions(), Options(renderLiterals = false))
     }
 
     private fun TestFile.extractRangesWithoutRender(): List<Pair<Int, Int>> {
