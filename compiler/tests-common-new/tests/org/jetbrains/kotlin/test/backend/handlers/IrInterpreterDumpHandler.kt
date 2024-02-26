@@ -21,17 +21,37 @@ import org.jetbrains.kotlin.test.services.configuration.JsEnvironmentConfigurato
 private const val stopEvaluation = "// STOP_EVALUATION_CHECKS"
 private const val startEvaluation = "// START_EVALUATION_CHECKS"
 
-interface IrInterpreterDumpHandler {
+interface EvaluatorHandler {
     val testServices: TestServices
-    private val globalMetadataInfoHandler
+
+    val globalMetadataInfoHandler
         get() = testServices.globalMetadataInfoHandler
 
+    fun TestFile.extractRangesWithoutRender(): List<Pair<Int, Int>> {
+        val content = testServices.sourceFileProvider.getContentOfSourceFile(this)
+        return buildList {
+            var indexOfStop = -1
+            do {
+                indexOfStop = content.indexOf(stopEvaluation, indexOfStop + 1)
+                if (indexOfStop < 0) break
+
+                val indexOfStart = content.indexOf(startEvaluation, indexOfStop).takeIf { it != -1 } ?: content.length
+                add(indexOfStop to indexOfStart)
+            } while (true)
+        }
+    }
+
+    // Ignore render check in this test file. Copy the expected result and treat it as actual.
+    fun TestFile.ignoreTest() {
+        val expected = globalMetadataInfoHandler.getExistingMetaInfosForFile(this)
+        globalMetadataInfoHandler.addMetadataInfosForFile(this, expected)
+    }
+}
+
+interface IrInterpreterDumpHandler : EvaluatorHandler {
     fun processModule(module: TestModule) {
         if (!module.isSuppressedForK2() && testServices.defaultsProvider.defaultFrontend == FrontendKinds.ClassicFrontend) {
-            module.files.forEach { testFile ->
-                val expected = globalMetadataInfoHandler.getExistingMetaInfosForFile(testFile)
-                globalMetadataInfoHandler.addMetadataInfosForFile(testFile, expected)
-            }
+            module.files.forEach { testFile -> testFile.ignoreTest() }
             return
         }
 
@@ -63,20 +83,6 @@ interface IrInterpreterDumpHandler {
                 description = StringUtil.escapeLineBreak(message)
             )
             globalMetadataInfoHandler.addMetadataInfosForFile(testFile, listOf(metaInfo))
-        }
-    }
-
-    private fun TestFile.extractRangesWithoutRender(): List<Pair<Int, Int>> {
-        val content = testServices.sourceFileProvider.getContentOfSourceFile(this)
-        return buildList {
-            var indexOfStop = -1
-            do {
-                indexOfStop = content.indexOf(stopEvaluation, indexOfStop + 1)
-                if (indexOfStop < 0) break
-
-                val indexOfStart = content.indexOf(startEvaluation, indexOfStop).takeIf { it != -1 } ?: content.length
-                add(indexOfStop to indexOfStart)
-            } while (true)
         }
     }
 }

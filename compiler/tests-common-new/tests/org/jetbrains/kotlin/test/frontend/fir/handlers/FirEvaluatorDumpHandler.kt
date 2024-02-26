@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.resolve.transformers.compileTimeEvaluator
 import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
 import org.jetbrains.kotlin.fir.visitors.FirVisitor
+import org.jetbrains.kotlin.test.backend.handlers.EvaluatorHandler
 import org.jetbrains.kotlin.test.frontend.fir.FirOutputArtifact
 import org.jetbrains.kotlin.test.model.FrontendKinds
 import org.jetbrains.kotlin.test.model.FrontendOutputHandler
@@ -28,26 +29,18 @@ import org.jetbrains.kotlin.test.model.TestFile
 import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.services.TestServices
 
-private const val stopEvaluation = "// STOP_EVALUATION_CHECKS"
-private const val startEvaluation = "// START_EVALUATION_CHECKS"
-
-class FirEvaluatorDumpHandler(testServices: TestServices) : FrontendOutputHandler<FirOutputArtifact>(
+class FirEvaluatorDumpHandler(testServices: TestServices) : EvaluatorHandler, FrontendOutputHandler<FirOutputArtifact>(
     testServices,
     FrontendKinds.FIR,
     failureDisablesNextSteps = true,
     doNotRunIfThereWerePreviousFailures = true
 ) {
-    private val globalMetadataInfoHandler
-        get() = testServices.globalMetadataInfoHandler
-
     override fun processModule(module: TestModule, info: FirOutputArtifact) {
         info.partsForDependsOnModules.forEach {
             it.firFiles.forEach { (testFile, firFile) ->
                 val intrinsicConstEvaluation = it.session.languageVersionSettings.supportsFeature(LanguageFeature.IntrinsicConstEvaluation)
                 if (intrinsicConstEvaluation) {
-                    // Ignore this test. Copy the expected result and treat it as actual.
-                    val expected = globalMetadataInfoHandler.getExistingMetaInfosForFile(testFile)
-                    globalMetadataInfoHandler.addMetadataInfosForFile(testFile, expected)
+                    testFile.ignoreTest()
                 } else {
                     processFile(testFile, firFile, it.session)
                 }
@@ -139,19 +132,5 @@ class FirEvaluatorDumpHandler(testServices: TestServices) : FrontendOutputHandle
         }
 
         firFile.accept(EvaluateAndRenderExpressions(), Options(renderLiterals = false))
-    }
-
-    private fun TestFile.extractRangesWithoutRender(): List<Pair<Int, Int>> {
-        val content = testServices.sourceFileProvider.getContentOfSourceFile(this)
-        return buildList {
-            var indexOfStop = -1
-            do {
-                indexOfStop = content.indexOf(stopEvaluation, indexOfStop + 1)
-                if (indexOfStop < 0) break
-
-                val indexOfStart = content.indexOf(startEvaluation, indexOfStop).takeIf { it != -1 } ?: content.length
-                add(indexOfStop to indexOfStart)
-            } while (true)
-        }
     }
 }
