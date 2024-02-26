@@ -248,6 +248,15 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
             throw RecursiveEvaluationException()
         }
 
+        fun evaluateOrCopy(initializer: FirExpression?): FirExpression? = propertySymbol.visit {
+            if (initializer is FirLiteralExpression<*>) {
+                // We need a copy here to copy a source of the original expression
+                initializer.copy(propertyAccessExpression)
+            } else {
+                evaluate(initializer)
+            }
+        }
+
         return when (propertySymbol) {
             is FirPropertySymbol -> {
                 when {
@@ -257,10 +266,10 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
                                 ?.adjustTypeAndConvertToLiteral(propertyAccessExpression)
                         }
                     }
-                    else -> evaluate(propertySymbol.fir.initializer)
+                    else -> evaluateOrCopy(propertySymbol.fir.initializer)
                 }
             }
-            is FirFieldSymbol -> evaluate(propertySymbol.fir.initializer)
+            is FirFieldSymbol -> evaluateOrCopy(propertySymbol.fir.initializer)
             is FirEnumEntrySymbol -> propertyAccessExpression // Can't be evaluated, should be returned as is.
             else -> error("FIR symbol \"${propertySymbol::class}\" is not supported in constant evaluation")
         }
