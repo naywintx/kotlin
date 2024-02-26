@@ -36,8 +36,6 @@ interface ParcelizeExtensionBase {
             .isNotEmpty()
     }
 
-    val ClassDescriptor.isParcelizeClassDescriptor get() = kind in ALLOWED_CLASS_KINDS && isParcelize
-
     fun ClassDescriptor.hasSyntheticDescribeContents() = hasParcelizeSyntheticMethod(DESCRIBE_CONTENTS)
 
     fun ClassDescriptor.hasSyntheticWriteToParcel() = hasParcelizeSyntheticMethod(WRITE_TO_PARCEL)
