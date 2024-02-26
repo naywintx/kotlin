@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkReturnTypeRefIs
 import org.jetbrains.kotlin.fir.FirElementWithResolveState
 import org.jetbrains.kotlin.fir.FirFileAnnotationsContainer
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.isConst
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.isCopyCreatedInScope
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirImplicitAwareBodyResolveTransformer
@@ -181,7 +182,7 @@ internal class LLFirImplicitBodyTargetResolver(
             }
 
             target is FirProperty -> {
-                if (target.returnTypeRef is FirImplicitTypeRef || target.backingField?.returnTypeRef is FirImplicitTypeRef) {
+                if (target.isConst || target.returnTypeRef is FirImplicitTypeRef || target.backingField?.returnTypeRef is FirImplicitTypeRef) {
                     resolve(target, BodyStateKeepers.PROPERTY)
                 }
             }
