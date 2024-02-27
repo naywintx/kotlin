@@ -13,15 +13,16 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.constant.ErrorValue
 import org.jetbrains.kotlin.constant.EvaluatedConstTracker
 import org.jetbrains.kotlin.fir.FirElement
-import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.backend.ConstValueProviderImpl
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.declarations.FirProperty
+import org.jetbrains.kotlin.fir.declarations.utils.evaluatedDefaultValue
+import org.jetbrains.kotlin.fir.declarations.utils.evaluatedInitializer
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirLiteralExpression
+import org.jetbrains.kotlin.fir.expressions.arguments
 import org.jetbrains.kotlin.fir.languageVersionSettings
-import org.jetbrains.kotlin.fir.resolve.transformers.compileTimeEvaluator
 import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
 import org.jetbrains.kotlin.fir.visitors.FirVisitor
 import org.jetbrains.kotlin.ir.declarations.IrFile
@@ -116,14 +117,14 @@ interface FirEvaluatorDumpHandler : EvaluatorHandler {
                     if (intrinsicConstEvaluation) {
                         put(testFile, testFile.getExpectedResult())
                     } else {
-                        putAll(processFile(testFile, firFile, it.session))
+                        putAll(processFile(testFile, firFile))
                     }
                 }
             }
         }
     }
 
-    private fun processFile(testFile: TestFile, firFile: FirFile, session: FirSession): Map<TestFile, List<ParsedCodeMetaInfo>> {
+    private fun processFile(testFile: TestFile, firFile: FirFile): Map<TestFile, List<ParsedCodeMetaInfo>> {
         val resultMap = mutableMapOf<TestFile, MutableList<ParsedCodeMetaInfo>>()
         val rangesThatAreNotSupposedToBeRendered = testFile.extractRangesWithoutRender()
 
@@ -167,7 +168,7 @@ interface FirEvaluatorDumpHandler : EvaluatorHandler {
                 visitedElements.add(property)
 
                 super.visitProperty(property, data)
-                session.compileTimeEvaluator.evaluatePropertyInitializer(property)?.let { result ->
+                property.evaluatedInitializer?.let { result ->
                     with(ConstValueProviderImpl) {
                         val (start, end) = property.initializer?.getCorrespondingIrOffset() ?: return
                         render(result, start, end)
@@ -180,9 +181,9 @@ interface FirEvaluatorDumpHandler : EvaluatorHandler {
                 visitedElements.add(annotationCall)
 
                 super.visitAnnotationCall(annotationCall, data)
-                session.compileTimeEvaluator.evaluateAnnotationArgs(annotationCall)?.let { result ->
-                    result.mapping.values.forEach {
-                        it.accept(this, data.copy(renderLiterals = true))
+                annotationCall.argumentMapping.mapping.values.zip(annotationCall.arguments).forEach { (evaluated, original) ->
+                    if (evaluated !== original) {
+                        evaluated.accept(this, data.copy(renderLiterals = true))
                     }
                 }
             }
@@ -192,10 +193,8 @@ interface FirEvaluatorDumpHandler : EvaluatorHandler {
                 visitedElements.add(constructor)
 
                 super.visitConstructor(constructor, data)
-                session.compileTimeEvaluator.evaluateDefaultsOfAnnotationConstructor(constructor)?.let { result ->
-                    result.values.forEach {
-                        it.accept(this, data.copy(renderLiterals = true))
-                    }
+                constructor.valueParameters.forEach { parameter ->
+                    parameter.evaluatedDefaultValue?.accept(this, data.copy(renderLiterals = true))
                 }
             }
 
