@@ -32,6 +32,8 @@ import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.calls.*
 import org.jetbrains.kotlin.fir.resolve.diagnostics.*
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
+import org.jetbrains.kotlin.fir.resolve.transformers.FirEvaluationMode
+import org.jetbrains.kotlin.fir.resolve.transformers.compileTimeEvaluator
 import org.jetbrains.kotlin.fir.resolve.transformers.replaceLambdaArgumentInvocationKinds
 import org.jetbrains.kotlin.fir.scopes.impl.isWrappedIntegerOperator
 import org.jetbrains.kotlin.fir.scopes.impl.isWrappedIntegerOperatorForUnsignedType
@@ -1260,7 +1262,7 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
                 dataFlowAnalyzer.exitAnnotation()
                 if (result == null) return annotationCall
                 callCompleter.completeCall(result, ResolutionMode.ContextIndependent)
-                (result.argumentList as FirResolvedArgumentList).let { annotationCall.replaceArgumentMapping((it).toAnnotationArgumentMapping()) }
+                session.compileTimeEvaluator.transformAnnotationCall(annotationCall, FirEvaluationMode.ONLY_NECESSARY)
                 annotationCall
             }
         }
