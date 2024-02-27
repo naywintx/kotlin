@@ -181,10 +181,8 @@ interface FirEvaluatorDumpHandler : EvaluatorHandler {
                 visitedElements.add(annotationCall)
 
                 super.visitAnnotationCall(annotationCall, data)
-                annotationCall.argumentMapping.mapping.values.zip(annotationCall.arguments).forEach { (evaluated, original) ->
-                    if (evaluated !== original) {
-                        evaluated.accept(this, data.copy(renderLiterals = true))
-                    }
+                annotationCall.argumentMapping.mapping.values.forEach { evaluated ->
+                    evaluated.accept(this, data.copy(renderLiterals = true))
                 }
             }
 
