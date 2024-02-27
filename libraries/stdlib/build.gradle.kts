@@ -779,6 +779,15 @@ tasks {
         }
     }
 
+    // Temporary disable wasm compilation due to breaking changes.
+    // TODO: Enable after advancing bootstrap
+    val compileTestDevelopmentExecutableKotlinWasmWasi by existing {
+        enabled = false
+    }
+    val compileTestDevelopmentExecutableKotlinWasmJs by existing {
+        enabled = false
+    }
+
     /*
     We are using a custom 'kotlin-project-structure-metadata' to ensure 'nativeApiElements' lists 'commonMain' as source set
     */
