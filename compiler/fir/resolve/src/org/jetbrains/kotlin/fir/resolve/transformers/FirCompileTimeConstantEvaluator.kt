@@ -142,10 +142,12 @@ class FirCompileTimeConstantEvaluator(
             return super.transformAnnotationCall(annotationCall, data)
         }
 
-        val mappingWithEvaluatedExpressions = argumentList.mapping
-            .mapKeysTo(LinkedHashMap()) { (expression, _) -> tryToEvaluateExpression(expression) }
-        val evaluatedArgumentList = buildResolvedArgumentList(mappingWithEvaluatedExpressions, argumentList.source)
-        annotationCall.replaceArgumentMapping(evaluatedArgumentList.toAnnotationArgumentMapping())
+        val argumentMapping = annotationCall.argumentMapping
+        val evaluatedMapping = buildAnnotationArgumentMapping {
+            source = argumentMapping.source
+            mapping.putAll(argumentMapping.mapping.map { (name, expression) -> name to tryToEvaluateExpression(expression) })
+        }
+        annotationCall.replaceArgumentMapping(evaluatedMapping)
 
         return super.transformAnnotationCall(annotationCall, data)
     }
@@ -317,6 +319,16 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
         }
     }
 
+    override fun visitAnnotationCall(annotationCall: FirAnnotationCall, data: Nothing?): FirElement? {
+        val evaluatedArgs = annotationCall.argumentMapping.mapping.values.map { evaluate(it) ?: return null }
+        val evaluatedMapping = buildAnnotationArgumentMapping {
+            source = annotationCall.argumentMapping.source
+            mapping.putAll(annotationCall.argumentMapping.mapping.keys.zip(evaluatedArgs))
+        }
+        annotationCall.replaceArgumentMapping(evaluatedMapping)
+        return annotationCall
+    }
+
     override fun visitFunctionCall(functionCall: FirFunctionCall, data: Nothing?): FirElement? {
         val calleeReference = functionCall.calleeReference
         if (calleeReference !is FirResolvedNamedReference) return null
@@ -347,19 +359,11 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
     }
 
     private fun visitConstructorCall(constructorCall: FirFunctionCall): FirStatement? {
-        constructorCall.argumentList.accept(this, null)?.let {
-            constructorCall.replaceArgumentList(it as FirArgumentList)
-        } ?: return null
-
         val type = constructorCall.resolvedType.fullyExpandedType(session).lowerBoundIfFlexible()
-        when {
-            type.toRegularClassSymbol(session)?.classKind == ClassKind.ANNOTATION_CLASS -> return constructorCall
-            type.isUnsignedType -> {
-                val argument = (constructorCall.argument as? FirLiteralExpression<*>)?.value ?: return null
-                return argument.adjustTypeAndConvertToLiteral(constructorCall)
-            }
-            else -> return null
-        }
+        if (!type.isUnsignedType) return null
+
+        val evaluatedArg = (evaluate(constructorCall.argument) as? FirLiteralExpression<*>)?.value ?: return null
+        return evaluatedArg.adjustTypeAndConvertToLiteral(constructorCall)
     }
 
     override fun visitIntegerLiteralOperatorCall(
