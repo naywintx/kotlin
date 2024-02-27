@@ -918,9 +918,20 @@ open class FirDeclarationsResolveTransformer(
 
     override fun transformConstructor(constructor: FirConstructor, data: ResolutionMode): FirConstructor =
         whileAnalysing(session, constructor) {
-            if (implicitTypeOnly) return constructor
             val container = context.containerIfAny as? FirRegularClass
-            if (constructor.isPrimary && container?.classKind == ClassKind.ANNOTATION_CLASS) {
+            val isPrimaryConstructorForAnnotation = constructor.isPrimary && container?.classKind == ClassKind.ANNOTATION_CLASS
+
+            if (implicitTypeOnly) {
+                if (!isPrimaryConstructorForAnnotation) {
+                    return constructor
+                }
+
+                return withFirArrayOfCallTransformer {
+                    doTransformDefaultsOfAnnotationConstructor(constructor)
+                }
+            }
+
+            if (isPrimaryConstructorForAnnotation) {
                 return withFirArrayOfCallTransformer {
                     doTransformConstructor(constructor, data)
                 }
@@ -928,6 +939,35 @@ open class FirDeclarationsResolveTransformer(
 
             return doTransformConstructor(constructor, data)
         }
+
+    private fun doTransformDefaultsOfAnnotationConstructor(constructor: FirConstructor): FirConstructor {
+        val owningClass = context.containerIfAny as? FirRegularClass
+
+        dataFlowAnalyzer.enterFunction(constructor)
+
+        context.withConstructor(constructor) {
+            context.forConstructorParameters(constructor, owningClass, components) {
+                constructor.valueParameters.forEach { valueParameter ->
+                    whileAnalysing(session, valueParameter) {
+                        dataFlowAnalyzer.enterValueParameter(valueParameter)
+
+                        val newDefaultValue = valueParameter.defaultValue?.transformSingle(
+                            transformer, withExpectedType(valueParameter.returnTypeRef)
+                        )
+                        valueParameter.replaceDefaultValue(newDefaultValue)
+
+                        dataFlowAnalyzer.exitValueParameter(valueParameter)?.let { graph ->
+                            valueParameter.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(graph))
+                        }
+                    }
+                }
+            }
+        }
+
+        val controlFlowGraphReference = dataFlowAnalyzer.exitFunction(constructor)
+        constructor.replaceControlFlowGraphReference(controlFlowGraphReference)
+        return constructor
+    }
 
     override fun transformErrorPrimaryConstructor(
         errorPrimaryConstructor: FirErrorPrimaryConstructor,

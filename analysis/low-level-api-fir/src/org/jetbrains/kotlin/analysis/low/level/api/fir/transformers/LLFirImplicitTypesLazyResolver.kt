@@ -8,6 +8,8 @@ package org.jetbrains.kotlin.analysis.low.level.api.fir.transformers
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.targets.LLFirResolveTarget
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.throwUnexpectedFirElementError
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirDeclarationModificationService
+import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.llFirSession
+import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkDefaultValueIsResolved
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkInitializerIsResolved
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkReturnTypeRefIsResolved
 import org.jetbrains.kotlin.fir.FirElementWithResolveState
@@ -37,6 +39,9 @@ internal object LLFirImplicitTypesLazyResolver : LLFirLazyResolver(FirResolvePha
         when (target) {
             is FirProperty -> if (target.isConst) {
                 checkInitializerIsResolved(target)
+            }
+            is FirValueParameter -> if (target.containingFunctionSymbol.isAnnotationConstructor(target.llFirSession)) {
+                checkDefaultValueIsResolved(target)
             }
             else -> {}
         }
@@ -181,6 +186,12 @@ internal class LLFirImplicitBodyTargetResolver(
         when {
             target is FirCallableDeclaration && target.isCopyCreatedInScope -> {
                 transformer.returnTypeCalculator.callableCopyTypeCalculator.computeReturnType(target)
+            }
+
+            target is FirConstructor -> {
+                if (target.symbol.isAnnotationConstructor(resolveTargetSession)) {
+                    resolve(target, BodyStateKeepers.CONSTRUCTOR)
+                }
             }
 
             target is FirFunction -> {

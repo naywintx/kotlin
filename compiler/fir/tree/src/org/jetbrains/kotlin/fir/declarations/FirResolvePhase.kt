@@ -172,7 +172,8 @@ enum class FirResolvePhase(val noProcessor: Boolean = false) {
      * val baz get() = foo() // implicit type is Int
      * ```
      *
-     * Also resolve initializers of const properties.
+     * Also resolve initializers of const properties and defaults of annotation's constructor.
+     * These expressions will be used later on during constant evaluation.
      *
      * This is a [*jumping phase*][FirResolvePhase].
      *

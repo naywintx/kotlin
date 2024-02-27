@@ -144,6 +144,12 @@ open class FirImplicitAwareBodyResolveTransformer(
         super.transformDeclarationContent(declaration, data)
     }
 
+    override fun transformConstructor(constructor: FirConstructor, data: ResolutionMode): FirConstructor {
+        return computeCachedTransformationResult(constructor) {
+            super.transformConstructor(constructor, data)
+        }
+    }
+
     override fun transformSimpleFunction(
         simpleFunction: FirSimpleFunction,
         data: ResolutionMode
@@ -167,9 +173,13 @@ open class FirImplicitAwareBodyResolveTransformer(
             return transform()
         }
 
-        val canHaveDeepImplicitTypeRefs = member is FirProperty && member.backingField?.returnTypeRef is FirResolvedTypeRef == false
+        val canHaveDeepImplicitTypeRefs = member is FirProperty && member.backingField?.returnTypeRef !is FirResolvedTypeRef
         val isConstProperty = member is FirProperty && member.isConst
-        if (member.returnTypeRef is FirResolvedTypeRef && !canHaveDeepImplicitTypeRefs && !isConstProperty) return member
+        val hasDefaultFromAnnotationConstructor = member is FirConstructor && member.isAnnotationConstructorWithDefaults()
+        if (member.returnTypeRef is FirResolvedTypeRef && !canHaveDeepImplicitTypeRefs && !isConstProperty && !hasDefaultFromAnnotationConstructor) {
+            return member
+        }
+
         val symbol = member.symbol
         val status = implicitBodyResolveComputationSession.getStatus(symbol)
         if (status is ImplicitBodyResolveComputationStatus.Computed) {
@@ -183,6 +193,10 @@ open class FirImplicitAwareBodyResolveTransformer(
         }
 
         return implicitBodyResolveComputationSession.compute(symbol, transform)
+    }
+
+    private fun FirConstructor.isAnnotationConstructorWithDefaults(): Boolean {
+        return this.symbol.isAnnotationConstructor(session) && this.valueParameters.any { it.defaultValue != null }
     }
 }
 
