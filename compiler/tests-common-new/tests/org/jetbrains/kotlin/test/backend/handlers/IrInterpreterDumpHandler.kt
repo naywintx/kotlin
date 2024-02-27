@@ -6,14 +6,29 @@
 package org.jetbrains.kotlin.test.backend.handlers
 
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.codeMetaInfo.model.ParsedCodeMetaInfo
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.constant.ErrorValue
 import org.jetbrains.kotlin.constant.EvaluatedConstTracker
+import org.jetbrains.kotlin.fir.FirElement
+import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.backend.ConstValueProviderImpl
+import org.jetbrains.kotlin.fir.declarations.FirConstructor
+import org.jetbrains.kotlin.fir.declarations.FirFile
+import org.jetbrains.kotlin.fir.declarations.FirProperty
+import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
+import org.jetbrains.kotlin.fir.expressions.FirLiteralExpression
+import org.jetbrains.kotlin.fir.languageVersionSettings
+import org.jetbrains.kotlin.fir.resolve.transformers.compileTimeEvaluator
+import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
+import org.jetbrains.kotlin.fir.visitors.FirVisitor
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.nameWithPackage
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.test.directives.CodegenTestDirectives.IGNORE_BACKEND_K2
+import org.jetbrains.kotlin.test.frontend.fir.FirOutputArtifact
 import org.jetbrains.kotlin.test.model.*
 import org.jetbrains.kotlin.test.services.*
 import org.jetbrains.kotlin.test.services.configuration.JsEnvironmentConfigurator
@@ -41,25 +56,26 @@ interface EvaluatorHandler {
         }
     }
 
-    // Ignore render check in this test file. Copy the expected result and treat it as actual.
-    fun TestFile.ignoreTest() {
-        val expected = globalMetadataInfoHandler.getExistingMetaInfosForFile(this)
-        globalMetadataInfoHandler.addMetadataInfosForFile(this, expected)
+    fun TestFile.getExpectedResult(): List<ParsedCodeMetaInfo> {
+        return globalMetadataInfoHandler.getExistingMetaInfosForFile(this)
     }
 }
 
 interface IrInterpreterDumpHandler : EvaluatorHandler {
-    fun processModule(module: TestModule) {
+    fun processIrModule(module: TestModule): Map<TestFile, List<ParsedCodeMetaInfo>> {
         if (!module.isSuppressedForK2() && testServices.defaultsProvider.defaultFrontend == FrontendKinds.ClassicFrontend) {
-            module.files.forEach { testFile -> testFile.ignoreTest() }
-            return
+            return module.files.associateWith { testFile -> testFile.getExpectedResult() }
         }
 
         val configuration = testServices.compilerConfigurationProvider.getCompilerConfiguration(module)
-        val evaluatedConstTracker = configuration.get(CommonConfigurationKeys.EVALUATED_CONST_TRACKER) ?: return
+        val evaluatedConstTracker = configuration.get(CommonConfigurationKeys.EVALUATED_CONST_TRACKER)
+            ?: error("Couldn't find `EVALUATED_CONST_TRACKER` for IR interpreter dump handler")
         val irModule = testServices.dependencyProvider.getArtifact(module, BackendKinds.IrBackend).irModuleFragment
-        for ((irFile, testFile) in matchIrFileWithTestFile(irModule, module)) {
-            evaluatedConstTracker.processFile(testFile, irFile)
+
+        return buildMap {
+            for ((irFile, testFile) in matchIrFileWithTestFile(irModule, module)) {
+                putAll(evaluatedConstTracker.processFile(testFile, irFile))
+            }
         }
     }
 
@@ -69,7 +85,8 @@ interface IrInterpreterDumpHandler : EvaluatorHandler {
         return targetBackend in ignoredBackends || TargetBackend.ANY in ignoredBackends
     }
 
-    private fun EvaluatedConstTracker.processFile(testFile: TestFile, irFile: IrFile) {
+    private fun EvaluatedConstTracker.processFile(testFile: TestFile, irFile: IrFile): Map<TestFile, List<ParsedCodeMetaInfo>> {
+        val resultMap = mutableMapOf<TestFile, MutableList<ParsedCodeMetaInfo>>()
         val rangesThatAreNotSupposedToBeRendered = testFile.extractRangesWithoutRender()
         this.load(irFile.nameWithPackage)?.forEach { (pair, constantValue) ->
             val (start, end) = pair
@@ -82,14 +99,162 @@ interface IrInterpreterDumpHandler : EvaluatorHandler {
                 tag = if (constantValue is ErrorValue) "WAS_NOT_EVALUATED" else "EVALUATED",
                 description = StringUtil.escapeLineBreak(message)
             )
-            globalMetadataInfoHandler.addMetadataInfosForFile(testFile, listOf(metaInfo))
+
+            resultMap.getOrPut(testFile) { mutableListOf() }.add(metaInfo)
         }
+
+        return resultMap
     }
 }
 
-class JvmIrInterpreterDumpHandler(testServices: TestServices) : IrInterpreterDumpHandler, JvmBinaryArtifactHandler(testServices) {
+interface FirEvaluatorDumpHandler : EvaluatorHandler {
+    fun processFirModule(module: TestModule, info: FirOutputArtifact): Map<TestFile, List<ParsedCodeMetaInfo>> {
+        return buildMap {
+            info.partsForDependsOnModules.forEach {
+                it.firFiles.forEach { (testFile, firFile) ->
+                    val intrinsicConstEvaluation = it.session.languageVersionSettings.supportsFeature(LanguageFeature.IntrinsicConstEvaluation)
+                    if (intrinsicConstEvaluation) {
+                        put(testFile, testFile.getExpectedResult())
+                    } else {
+                        putAll(processFile(testFile, firFile, it.session))
+                    }
+                }
+            }
+        }
+    }
+
+    private fun processFile(testFile: TestFile, firFile: FirFile, session: FirSession): Map<TestFile, List<ParsedCodeMetaInfo>> {
+        val resultMap = mutableMapOf<TestFile, MutableList<ParsedCodeMetaInfo>>()
+        val rangesThatAreNotSupposedToBeRendered = testFile.extractRangesWithoutRender()
+
+        fun render(result: FirLiteralExpression<*>, start: Int, end: Int) {
+            if (rangesThatAreNotSupposedToBeRendered.any { start >= it.first && start <= it.second }) return
+
+            val message = result.value.toString()
+            val metaInfo = ParsedCodeMetaInfo(
+                start, end,
+                attributes = mutableListOf(),
+                tag = "EVALUATED",
+                description = StringUtil.escapeLineBreak(message)
+            )
+
+            resultMap.getOrPut(testFile) { mutableListOf() }.add(metaInfo)
+        }
+
+        fun render(result: FirLiteralExpression<*>, source: KtSourceElement?) {
+            val start = source?.startOffset ?: return
+            val end = result.source?.endOffset ?: return
+            render(result, start, end)
+        }
+
+        data class Options(val renderLiterals: Boolean)
+
+        class EvaluateAndRenderExpressions : FirVisitor<Unit, Options>() {
+            // This set is used to avoid double rendering
+            private val visitedElements = mutableSetOf<FirElement>()
+
+            override fun visitElement(element: FirElement, data: Options) {
+                element.acceptChildren(this, data)
+            }
+
+            override fun <T> visitLiteralExpression(literalExpression: FirLiteralExpression<T>, data: Options) {
+                if (!data.renderLiterals) return
+                render(literalExpression, literalExpression.source)
+            }
+
+            override fun visitProperty(property: FirProperty, data: Options) {
+                if (property in visitedElements) return
+                visitedElements.add(property)
+
+                super.visitProperty(property, data)
+                session.compileTimeEvaluator.evaluatePropertyInitializer(property)?.let { result ->
+                    with(ConstValueProviderImpl) {
+                        val (start, end) = property.initializer?.getCorrespondingIrOffset() ?: return
+                        render(result, start, end)
+                    }
+                }
+            }
+
+            override fun visitAnnotationCall(annotationCall: FirAnnotationCall, data: Options) {
+                if (annotationCall in visitedElements) return
+                visitedElements.add(annotationCall)
+
+                super.visitAnnotationCall(annotationCall, data)
+                session.compileTimeEvaluator.evaluateAnnotationArgs(annotationCall)?.let { result ->
+                    result.mapping.values.forEach {
+                        it.accept(this, data.copy(renderLiterals = true))
+                    }
+                }
+            }
+
+            override fun visitConstructor(constructor: FirConstructor, data: Options) {
+                if (constructor in visitedElements) return
+                visitedElements.add(constructor)
+
+                super.visitConstructor(constructor, data)
+                session.compileTimeEvaluator.evaluateDefaultsOfAnnotationConstructor(constructor)?.let { result ->
+                    result.values.forEach {
+                        it.accept(this, data.copy(renderLiterals = true))
+                    }
+                }
+            }
+
+            override fun visitResolvedTypeRef(resolvedTypeRef: FirResolvedTypeRef, data: Options) {
+                // Visit annotations on type arguments
+                resolvedTypeRef.delegatedTypeRef?.accept(this, data)
+                return super.visitResolvedTypeRef(resolvedTypeRef, data)
+            }
+        }
+
+        firFile.accept(EvaluateAndRenderExpressions(), Options(renderLiterals = false))
+
+        return resultMap
+    }
+}
+
+class JvmIrInterpreterDumpHandler(testServices: TestServices) : IrInterpreterDumpHandler, FirEvaluatorDumpHandler, JvmBinaryArtifactHandler(testServices) {
     override fun processModule(module: TestModule, info: BinaryArtifacts.Jvm) {
-        processModule(module)
+        val firArtifact = testServices.dependencyProvider.getArtifactSafe(module, FrontendKinds.FIR)
+        val firMetaInfo = firArtifact?.let { processFirModule(module, it) } ?: emptyMap() // TODO do we really need empty map?
+        val irMetaInfo = processIrModule(module)
+
+        val commonMetaInfo = irMetaInfo.map { (irTestFile, irTestData) ->
+            val firTestData = firMetaInfo[irTestFile] ?: return@map irTestFile to emptyList()
+            val common = irTestData.filter { irMetaInfo ->
+                firTestData.any { firMetaInfo ->
+                    firMetaInfo.start == irMetaInfo.start && firMetaInfo.end == irMetaInfo.end && firMetaInfo.description == irMetaInfo.description
+                }
+            }
+            irTestFile to common
+        }.toMap()
+
+        val irOnlyMetaInfo = irMetaInfo.map { (irTestFile, irTestData) ->
+            val commonTestData = commonMetaInfo[irTestFile] ?: return@map irTestFile to irTestData
+            val irOnly = irTestData.filter { irMetaInfo ->
+                !commonTestData.contains(irMetaInfo)
+            }
+            irTestFile to irOnly
+        }.toMap()
+
+        val firOnlyMetaInfo = firMetaInfo.map { (firTestFile, firTestData) ->
+            val commonTestData = commonMetaInfo[firTestFile] ?: return@map firTestFile to firTestData
+            val firOnly = firTestData.filter { irMetaInfo ->
+                !commonTestData.contains(irMetaInfo)
+            }
+            firTestFile to firOnly
+        }.toMap()
+
+        commonMetaInfo.forEach { (testFile, metaInfo) ->
+            globalMetadataInfoHandler.addMetadataInfosForFile(testFile, metaInfo)
+        }
+
+        irOnlyMetaInfo.forEach { (testFile, metaInfo) ->
+            globalMetadataInfoHandler.addMetadataInfosForFile(testFile, metaInfo.map { it.copy().apply { attributes.add("IR") } })
+        }
+
+        firOnlyMetaInfo.forEach { (testFile, metaInfo) ->
+            globalMetadataInfoHandler.addMetadataInfosForFile(testFile, metaInfo.map { it.copy().apply { attributes.add("FIR") } })
+        }
     }
 
     override fun processAfterAllModules(someAssertionWasFailed: Boolean) {}
@@ -97,7 +262,7 @@ class JvmIrInterpreterDumpHandler(testServices: TestServices) : IrInterpreterDum
 
 class JsIrInterpreterDumpHandler(testServices: TestServices) : IrInterpreterDumpHandler, JsBinaryArtifactHandler(testServices) {
     override fun processModule(module: TestModule, info: BinaryArtifacts.Js) {
-        processModule(module)
+        processIrModule(module)
     }
 
     override fun processAfterAllModules(someAssertionWasFailed: Boolean) {}
@@ -105,7 +270,7 @@ class JsIrInterpreterDumpHandler(testServices: TestServices) : IrInterpreterDump
 
 class WasmIrInterpreterDumpHandler(testServices: TestServices) : IrInterpreterDumpHandler, WasmBinaryArtifactHandler(testServices) {
     override fun processModule(module: TestModule, info: BinaryArtifacts.Wasm) {
-        processModule(module)
+        processIrModule(module)
     }
 
     override fun processAfterAllModules(someAssertionWasFailed: Boolean) {}
@@ -114,7 +279,7 @@ class WasmIrInterpreterDumpHandler(testServices: TestServices) : IrInterpreterDu
 class KlibInterpreterDumpHandler(testServices: TestServices) : IrInterpreterDumpHandler, KlibArtifactHandler(testServices) {
     override fun processModule(module: TestModule, info: BinaryArtifacts.KLib) {
         if (JsEnvironmentConfigurator.isMainModule(module, testServices)) return
-        processModule(module)
+        processIrModule(module)
     }
 
     override fun processAfterAllModules(someAssertionWasFailed: Boolean) {}
