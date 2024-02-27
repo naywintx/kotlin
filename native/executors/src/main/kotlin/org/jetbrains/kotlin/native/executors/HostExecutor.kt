@@ -146,6 +146,40 @@ private fun Process.waitFor(timeout: Duration): Boolean {
     return !isAlive
 }
 
+private fun Array<StackTraceElement>.shortString(): String {
+    return first().toString()
+}
+
+private fun printThreads(logger: Logger) {
+    val emptyThreads = mutableSetOf<Long>()
+    val defaultDispatcherThreads = mutableSetOf<Long>()
+    val forkJoinPoolThreads = mutableSetOf<Long>()
+    val processReaperThreads = mutableSetOf<Long>()
+    for ((thread, stackTrace) in Thread.getAllStackTraces()) {
+        if (Thread.currentThread().id == thread.id) {
+            continue
+        }
+        if (thread.name.startsWith("DefaultDispatcher")) {
+            defaultDispatcherThreads.add(thread.id)
+            continue
+        }
+        if (thread.name.startsWith("ForkJoinPool")) {
+            forkJoinPoolThreads.add(thread.id)
+            continue
+        }
+        if (thread.name.startsWith("process reaper")) {
+            processReaperThreads.add(thread.id)
+            continue
+        }
+        if (stackTrace.isEmpty()) {
+            emptyThreads.add(thread.id)
+            continue
+        }
+        logger.info("Thread ${thread.id} (${thread.name}): ${stackTrace.shortString()}")
+    }
+    logger.info("Active thread count: ${Thread.activeCount()} (${defaultDispatcherThreads.count()} default dispatcher) (${forkJoinPoolThreads.count()} fork join pool) (${processReaperThreads.count()} process reaper) (${emptyThreads.count()} with no stacktraces)")
+}
+
 /**
  * [Executor] that runs the process on the host system.
  */
@@ -199,7 +233,7 @@ class HostExecutor : Executor {
                 ExecuteResponse(exitCode, duration)
             }
             logger.info("Drained command: $commandLine")
-            logger.info("Active thread count: ${Thread.activeCount()}")
+            printThreads(logger)
             response
         }
     }
