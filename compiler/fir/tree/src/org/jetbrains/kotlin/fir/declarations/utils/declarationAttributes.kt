@@ -10,6 +10,8 @@ import org.jetbrains.kotlin.descriptors.SourceElement
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyBackingField
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyGetter
+import org.jetbrains.kotlin.fir.expressions.FirExpression
+import org.jetbrains.kotlin.fir.expressions.FirLiteralExpression
 import org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression
 import org.jetbrains.kotlin.fir.references.impl.FirPropertyFromParameterResolvedNamedReference
 import org.jetbrains.kotlin.fir.symbols.impl.*
@@ -24,6 +26,7 @@ private object ComponentFunctionSymbolKey : FirDeclarationDataKey()
 private object SourceElementKey : FirDeclarationDataKey()
 private object ModuleNameKey : FirDeclarationDataKey()
 private object DanglingTypeConstraintsKey : FirDeclarationDataKey()
+private object EvaluatedValue : FirDeclarationDataKey()
 
 var FirProperty.isFromVararg: Boolean? by FirDeclarationDataRegistry.data(IsFromVarargKey)
 var FirProperty.isReferredViaField: Boolean? by FirDeclarationDataRegistry.data(IsReferredViaField)
@@ -37,6 +40,9 @@ val FirClassLikeSymbol<*>.sourceElement: SourceElement?
 
 val FirPropertySymbol.fromPrimaryConstructor: Boolean
     get() = fir.fromPrimaryConstructor ?: false
+
+var FirProperty.evaluatedInitializer: FirLiteralExpression<*>? by FirDeclarationDataRegistry.data(EvaluatedValue)
+var FirValueParameter.evaluatedDefaultValue: FirExpression? by FirDeclarationDataRegistry.data(EvaluatedValue)
 
 /**
  * Constraint without corresponding type argument
