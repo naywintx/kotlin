@@ -105,7 +105,7 @@ class FirCompileTimeConstantEvaluator(
         }
 
         val evaluatedProperty = transformProperty(firProperty, data) as FirProperty
-        return (evaluatedProperty.initializer as? FirLiteralExpression<*>)?.asString() ?: throw UnknownEvaluationException()
+        return evaluatedProperty.evaluatedInitializer?.asString() ?: throw UnknownEvaluationException()
     }
 
     override fun transformProperty(property: FirProperty, data: FirEvaluationMode): FirStatement {
