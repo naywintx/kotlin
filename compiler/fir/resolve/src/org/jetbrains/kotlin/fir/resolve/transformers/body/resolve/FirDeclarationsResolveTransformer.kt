@@ -918,7 +918,29 @@ open class FirDeclarationsResolveTransformer(
 
     override fun transformConstructor(constructor: FirConstructor, data: ResolutionMode): FirConstructor =
         whileAnalysing(session, constructor) {
-            if (implicitTypeOnly) return constructor
+            if (implicitTypeOnly) {
+                val container = context.containerIfAny as? FirRegularClass
+                if (!constructor.isPrimary || container?.classKind != ClassKind.ANNOTATION_CLASS) {
+                    return constructor
+                }
+
+                return withFirArrayOfCallTransformer {
+                    val owningClass = context.containerIfAny as? FirRegularClass
+
+                    dataFlowAnalyzer.enterFunction(constructor)
+
+                    context.withConstructor(constructor) {
+                        context.forConstructorParameters(constructor, owningClass, components) {
+                            constructor.transformValueParameters(transformer, data)
+                        }
+                    }
+
+                    val controlFlowGraphReference = dataFlowAnalyzer.exitFunction(constructor)
+                    constructor.replaceControlFlowGraphReference(controlFlowGraphReference)
+                    constructor
+                }
+            }
+
             val container = context.containerIfAny as? FirRegularClass
             if (constructor.isPrimary && container?.classKind == ClassKind.ANNOTATION_CLASS) {
                 return withFirArrayOfCallTransformer {
