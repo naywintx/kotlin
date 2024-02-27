@@ -47,7 +47,7 @@ class FirConstInitializerBodyResolveTransformer(
 ) : FirBodyResolveTransformer(
     session,
     FirResolvePhase.CONST_INITIALIZERS,
-    implicitTypeOnly = false,
+    implicitTypeOnly = true,
     scopeSession,
 ) {
     override fun transformProperty(property: FirProperty, data: ResolutionMode): FirProperty {
