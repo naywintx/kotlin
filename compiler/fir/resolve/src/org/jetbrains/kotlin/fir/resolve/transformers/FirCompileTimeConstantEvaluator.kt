@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.declarations.FirValueParameter
+import org.jetbrains.kotlin.fir.declarations.isAnnotationConstructor
 import org.jetbrains.kotlin.fir.declarations.utils.evaluatedDefaultValue
 import org.jetbrains.kotlin.fir.declarations.utils.evaluatedInitializer
 import org.jetbrains.kotlin.fir.declarations.utils.isConst
@@ -151,8 +152,7 @@ class FirCompileTimeConstantEvaluator(
 
     override fun transformConstructor(constructor: FirConstructor, data: FirEvaluationMode): FirStatement {
         // We should evaluate default arguments for primary constructor of an annotation
-        val classSymbol = constructor.symbol.containingClassLookupTag()?.toSymbol(session) as? FirClassSymbol<*>
-        if (classSymbol?.classKind != ClassKind.ANNOTATION_CLASS) return super.transformConstructor(constructor, data)
+        if (!constructor.symbol.isAnnotationConstructor(session)) return super.transformConstructor(constructor, data)
 
         constructor.getParametersWithDefaultValueToBeEvaluated().forEach { parameter ->
             val defaultValueToEvaluate = parameter.defaultValue ?: return@forEach
@@ -252,10 +252,15 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
         }
     }
 
+    @OptIn(UnresolvedExpressionTypeAccess::class)
     override fun visitArrayLiteral(arrayLiteral: FirArrayLiteral, data: Nothing?): FirStatement? {
         val newArgumentList = visitArgumentList(arrayLiteral.argumentList, data) ?: return null
-        arrayLiteral.replaceArgumentList(newArgumentList)
-        return arrayLiteral
+        return buildArrayLiteral {
+            source = arrayLiteral.source
+            coneTypeOrNull = arrayLiteral.coneTypeOrNull
+            annotations.addAll(arrayLiteral.annotations)
+            argumentList = newArgumentList
+        }
     }
 
     @OptIn(UnresolvedExpressionTypeAccess::class)
