@@ -176,7 +176,7 @@ internal class LLFirImplicitBodyTargetResolver(
             }
 
             target is FirFunction -> {
-                if (target.returnTypeRef is FirImplicitTypeRef) {
+                if (target is FirConstructor && target.symbol.isAnnotationConstructor(resolveTargetSession) || target.returnTypeRef is FirImplicitTypeRef) {
                     resolve(target, BodyStateKeepers.FUNCTION)
                 }
             }
