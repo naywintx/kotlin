@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.generators.tree
 
-abstract class AbstractField<Field : AbstractField<Field>> {
+abstract class AbstractField<Field : AbstractField<Field>> : AbstractFieldWithDefaultValue<Field> {
 
     abstract val name: String
 
@@ -29,8 +29,6 @@ abstract class AbstractField<Field : AbstractField<Field>> {
     open var optInAnnotation: ClassRef<*>? = null
 
     abstract var isMutable: Boolean
-    open val withGetter: Boolean get() = false
-    open val customSetter: String? get() = null
 
     open var customInitializationCall: String? = null
 
@@ -48,8 +46,6 @@ abstract class AbstractField<Field : AbstractField<Field>> {
      */
     open val containsElement: Boolean
         get() = typeRef is ElementOrRef<*> || this is ListField && baseType is ElementOrRef<*>
-
-    open val defaultValueInImplementation: String? get() = null
 
     /**
      * @see org.jetbrains.kotlin.generators.tree.detectBaseTransformerTypes
