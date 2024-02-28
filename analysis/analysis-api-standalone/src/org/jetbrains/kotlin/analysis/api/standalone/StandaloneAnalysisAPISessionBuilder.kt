@@ -10,7 +10,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.FirStandaloneServiceRegistrar
@@ -18,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.KtSta
 import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.LLFirStandaloneLibrarySymbolProviderFactory
 import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.StandaloneProjectFactory
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.services.LLSealedInheritorsProviderFactory
+import org.jetbrains.kotlin.analysis.api.standalone.base.providers.KotlinStandaloneDirectInheritorsProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.LLFirLibrarySymbolProviderFactory
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.builder.KtModuleProviderBuilder
@@ -146,6 +146,7 @@ public class StandaloneAnalysisAPISessionBuilder(
                     }
                 }
             )
+            registerService(KotlinDirectInheritorsProvider::class.java, KotlinStandaloneDirectInheritorsProvider(project))
 
             registerService(
                 PackagePartProviderFactory::class.java,
