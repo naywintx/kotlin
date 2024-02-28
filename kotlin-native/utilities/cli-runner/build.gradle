@@ -6,7 +6,9 @@ buildscript {
     apply from: "$rootDir/kotlin-native/gradle/kotlinGradlePlugin.gradle"
 }
 
-apply plugin: 'kotlin'
+plugins {
+    id "org.jetbrains.kotlin.jvm"
+}
 
 compileKotlin {
     compilerOptions.freeCompilerArgs.add('-Xskip-metadata-version-check')

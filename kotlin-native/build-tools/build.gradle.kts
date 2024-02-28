@@ -102,6 +102,10 @@ gradlePlugin {
             id = "compile-to-bitcode"
             implementationClass = "org.jetbrains.kotlin.bitcode.CompileToBitcodePlugin"
         }
+        create("cppBase") {
+            id = "kn-cpp-base"
+            implementationClass = "org.jetbrains.kotlin.cpp.CppConsumerPlugin"
+        }
         create("runtimeTesting") {
             id = "runtime-testing"
             implementationClass = "org.jetbrains.kotlin.testing.native.RuntimeTestingPlugin"
@@ -129,6 +133,14 @@ gradlePlugin {
         create("nativeDependencies") {
             id = "native-dependencies"
             implementationClass = "org.jetbrains.kotlin.dependencies.NativeDependenciesPlugin"
+        }
+        create("xcodeOverride") {
+            id = "xcode-override"
+            implementationClass = "org.jetbrains.kotlin.xcode.XcodeOverridePlugin"
+        }
+        create("gitClangFormat") {
+            id = "git-clang-format"
+            implementationClass = "org.jetbrains.kotlin.cpp.GitClangFormatPlugin"
         }
     }
 }

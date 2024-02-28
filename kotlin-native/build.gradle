@@ -18,11 +18,8 @@ import org.jetbrains.kotlin.konan.target.*
 import org.jetbrains.kotlin.konan.util.*
 import org.jetbrains.kotlin.CopySamples
 import org.jetbrains.kotlin.PlatformInfo
-import org.jetbrains.kotlin.cpp.CompilationDatabasePlugin
 import org.jetbrains.kotlin.cpp.CppUsage
-import org.jetbrains.kotlin.cpp.GitClangFormatPlugin
 import org.jetbrains.kotlin.CompareDistributionSignatures
-import org.jetbrains.kotlin.xcode.XcodeOverridePlugin
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.apache.tools.ant.filters.ReplaceTokens
 import org.jetbrains.kotlin.UtilsKt
@@ -32,26 +29,20 @@ import java.security.MessageDigest
 
 buildscript {
     apply from: "gradle/kotlinGradlePlugin.gradle"
+}
 
-    repositories {
-        mavenCentral()
-        gradlePluginPortal()
-    }
-
-    dependencies {
-        classpath 'com.github.johnrengelman:shadow:8.1.1'
-    }
+plugins {
+    id "kotlin.native.build-tools-conventions"
+    id "base"
+    id "maven-publish"
+    id "xcode-override"
 }
 
 defaultTasks 'clean', 'dist'
 
-apply plugin: XcodeOverridePlugin
-
 if (PlatformInfo.isMac()) {
     PlatformInfo.checkXcodeVersion(project)
 }
-
-apply plugin: "kotlin.native.build-tools-conventions"
 
 ext {
     distDir = UtilsKt.getKotlinNativeDist(project)
@@ -92,6 +83,10 @@ allprojects {
     loadLocalProperties()
     setupClang(project)
 }
+
+// TODO: These plugins depend on the setup being done before this line. Break this dependency and move them into plugins {} section.
+apply plugin: "compilation-database"
+apply plugin: "git-clang-format"
 
 void setupHostAndTarget() {
     ext.hostName = platformManager.hostName
@@ -165,7 +160,6 @@ configurations {
     }
 }
 
-apply plugin: CompilationDatabasePlugin
 
 dependencies {
     ftpAntTask 'org.apache.ant:ant-commons-net:1.9.9'
@@ -189,10 +183,6 @@ dependencies {
     objcExportApi project(":kotlin-native:runtime")
     embeddableJar project(path: ':kotlin-native:prepare:kotlin-native-compiler-embeddable', configuration: 'runtimeElements')
 }
-
-apply plugin: GitClangFormatPlugin
-apply plugin: 'maven-publish'
-apply plugin: BasePlugin
 
 tasks.register("dist_compiler") {
     dependsOn("distCompiler")
