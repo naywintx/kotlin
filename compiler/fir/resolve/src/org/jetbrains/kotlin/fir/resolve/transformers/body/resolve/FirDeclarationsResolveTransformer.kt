@@ -918,9 +918,11 @@ open class FirDeclarationsResolveTransformer(
 
     override fun transformConstructor(constructor: FirConstructor, data: ResolutionMode): FirConstructor =
         whileAnalysing(session, constructor) {
+            val container = context.containerIfAny as? FirRegularClass
+            val isPrimaryConstructorForAnnotation = constructor.isPrimary && container?.classKind == ClassKind.ANNOTATION_CLASS
+
             if (implicitTypeOnly) {
-                val container = context.containerIfAny as? FirRegularClass
-                if (!constructor.isPrimary || container?.classKind != ClassKind.ANNOTATION_CLASS) {
+                if (!isPrimaryConstructorForAnnotation) {
                     return constructor
                 }
 
@@ -931,7 +933,17 @@ open class FirDeclarationsResolveTransformer(
 
                     context.withConstructor(constructor) {
                         context.forConstructorParameters(constructor, owningClass, components) {
-                            constructor.transformValueParameters(transformer, data)
+                            constructor.valueParameters.forEach { valueParameter ->
+                                whileAnalysing(session, valueParameter) {
+                                    dataFlowAnalyzer.enterValueParameter(valueParameter)
+
+                                    valueParameter.replaceDefaultValue(valueParameter.defaultValue?.transformSingle(transformer, data))
+
+                                    dataFlowAnalyzer.exitValueParameter(valueParameter)?.let { graph ->
+                                        valueParameter.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(graph))
+                                    }
+                                }
+                            }
                         }
                     }
 
@@ -941,8 +953,7 @@ open class FirDeclarationsResolveTransformer(
                 }
             }
 
-            val container = context.containerIfAny as? FirRegularClass
-            if (constructor.isPrimary && container?.classKind == ClassKind.ANNOTATION_CLASS) {
+            if (isPrimaryConstructorForAnnotation) {
                 return withFirArrayOfCallTransformer {
                     doTransformConstructor(constructor, data)
                 }
