@@ -1,5 +1,4 @@
 // FIR_IDENTICAL
-// !LANGUAGE: -ForbidInferringTypeVariablesIntoEmptyIntersection
 class Expression<T>(val x: T)
 
 class GreaterOp(val expr1: Expression<*>, val expr2: Expression<*>)
