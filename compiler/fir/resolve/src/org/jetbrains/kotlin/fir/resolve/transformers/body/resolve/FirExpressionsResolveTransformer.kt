@@ -1262,6 +1262,7 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
                 dataFlowAnalyzer.exitAnnotation()
                 if (result == null) return annotationCall
                 callCompleter.completeCall(result, ResolutionMode.ContextIndependent)
+                (result.argumentList as FirResolvedArgumentList).let { annotationCall.replaceArgumentMapping((it).toAnnotationArgumentMapping()) }
                 session.compileTimeEvaluator.transformAnnotationCall(annotationCall, FirEvaluationMode.ONLY_NECESSARY)
                 annotationCall
             }
