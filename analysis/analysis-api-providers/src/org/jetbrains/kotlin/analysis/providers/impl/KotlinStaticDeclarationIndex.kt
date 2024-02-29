@@ -22,4 +22,12 @@ internal class KotlinStaticDeclarationIndex {
      * Allows quickly finding [KtClassOrObject]s which have a given simple name as a supertype. The map may contain local classes as well.
      */
     internal val classesBySupertypeName: MutableMap<Name, MutableSet<KtClassOrObject>> = mutableMapOf()
+
+    /**
+     * Maps a simple name `N` to type aliases `A` in whose definition `N` occurs as the topmost user type, which allows other classes to
+     * inherit from `N` by referring to `A`. Does not support function types (e.g. `Function1`).
+     *
+     * The map is used to find direct class inheritors.
+     */
+    internal val inheritableTypeAliasesByAliasedName: MutableMap<Name, MutableSet<KtTypeAlias>> = mutableMapOf()
 }

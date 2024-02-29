@@ -1,2 +1,3 @@
 /OneSealedChild
-class OneSealedChild : MySealedClass()
+/ThreeSealedChild
+/TwoSealedChild
