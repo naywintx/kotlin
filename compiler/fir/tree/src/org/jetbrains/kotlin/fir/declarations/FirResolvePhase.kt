@@ -182,6 +182,11 @@ enum class FirResolvePhase(val noProcessor: Boolean = false) {
     IMPLICIT_TYPES_BODY_RESOLVE,
 
     /**
+     * The compiler evaluates expressions that are used as initializers for const properties and defaults of annotation's constructor.
+     */
+    CONST_INITIALIZERS,
+
+    /**
      * The compiler resolves arguments of annotations in declaration headers.
      */
     ANNOTATION_ARGUMENTS,

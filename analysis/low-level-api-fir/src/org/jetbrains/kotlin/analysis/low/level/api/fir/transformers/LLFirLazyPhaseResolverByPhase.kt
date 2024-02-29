@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.analysis.low.level.api.fir.transformers
 
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
+import org.jetbrains.kotlin.fir.resolve.transformers.FirConstInitializersProcessor
 import java.util.*
 
 /**
@@ -22,6 +23,7 @@ internal object LLFirLazyPhaseResolverByPhase {
         this[FirResolvePhase.EXPECT_ACTUAL_MATCHING] = LLFirExpectActualMatcherLazyResolver
         this[FirResolvePhase.CONTRACTS] = LLFirContractsLazyResolver
         this[FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE] = LLFirImplicitTypesLazyResolver
+        this[FirResolvePhase.CONST_INITIALIZERS] = LLFirConstInitializersLazyResolver
         this[FirResolvePhase.ANNOTATION_ARGUMENTS] = LLFirAnnotationArgumentsLazyResolver
         this[FirResolvePhase.BODY_RESOLVE] = LLFirBodyLazyResolver
     }
