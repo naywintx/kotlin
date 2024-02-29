@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisApiInternals
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeTokenProvider
 import org.jetbrains.kotlin.analysis.api.lifetime.KtReadActionConfinementLifetimeTokenProvider
 import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.StandaloneProjectFactory
-import org.jetbrains.kotlin.analysis.api.standalone.base.providers.KotlinStandaloneDirectInheritorsProvider
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.ClsJavaStubByVirtualFileCache
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightClassesFactory
 import org.jetbrains.kotlin.analysis.decompiler.konan.KlibMetaFileType
@@ -128,7 +127,6 @@ object AnalysisApiBaseTestServiceRegistrar : AnalysisApiTestServiceRegistrar() {
                 KotlinStaticPackageProviderFactory(project, testKtFiles + ktFilesForBinaries)
             )
             registerService(KotlinPackageProviderMerger::class.java, KotlinStaticPackageProviderMerger(project))
-            registerService(KotlinDirectInheritorsProvider::class.java, KotlinStandaloneDirectInheritorsProvider(project))
             registerService(KotlinResolutionScopeProvider::class.java, KotlinByModulesResolutionScopeProvider::class.java)
         }
     }

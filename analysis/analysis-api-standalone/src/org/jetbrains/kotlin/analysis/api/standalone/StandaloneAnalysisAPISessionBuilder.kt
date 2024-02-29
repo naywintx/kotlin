@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.FirSt
 import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.KtStaticProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.LLFirStandaloneLibrarySymbolProviderFactory
 import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.StandaloneProjectFactory
-import org.jetbrains.kotlin.analysis.api.standalone.base.providers.KotlinStandaloneDirectInheritorsProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.LLFirLibrarySymbolProviderFactory
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.builder.KtModuleProviderBuilder
@@ -134,7 +133,6 @@ public class StandaloneAnalysisAPISessionBuilder(
                 KotlinStaticPackageProviderFactory(project, sourceKtFiles + declarationProviderFactory.getAdditionalCreatedKtFiles())
             )
             registerService(KotlinPackageProviderMerger::class.java, KotlinStaticPackageProviderMerger(this))
-            registerService(KotlinDirectInheritorsProvider::class.java, KotlinStandaloneDirectInheritorsProvider(project))
 
             registerService(
                 PackagePartProviderFactory::class.java,
