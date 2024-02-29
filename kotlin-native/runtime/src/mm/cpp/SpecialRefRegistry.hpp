@@ -66,11 +66,7 @@ class SpecialRefRegistry : private Pinned {
             RuntimeAssert(rc >= 0, "Creating StableRef with negative rc %d", rc);
         }
 
-    private:
-        // Only for internal use by SpecialRefRegistry
         Node() noexcept : obj_(nullptr), rc_(disposedMarker) {}
-
-    public:
 
         ~Node() {
             if (compiler::runtimeAssertsEnabled()) {
@@ -284,9 +280,9 @@ public:
 
     class RootsIterable : private MoveOnly {
     public:
-        RootsIterator begin() const noexcept { return RootsIterator(*owner_, owner_->nextRoot(owner_->rootsHead())); }
+        RootsIterator begin() const noexcept { return RootsIterator(*owner_, owner_->nextRoot(&owner_->rootsHead_)); }
 
-        RootsIterator end() const noexcept { return RootsIterator(*owner_, owner_->rootsTail()); }
+        RootsIterator end() const noexcept { return RootsIterator(*owner_, &owner_->rootsTail_); }
 
     private:
         friend class SpecialRefRegistry;
@@ -333,14 +329,14 @@ public:
         std::unique_lock<Mutex> guard_;
     };
 
-    SpecialRefRegistry() noexcept { rootsHead()->nextRoot_.store(rootsTail(), std::memory_order_relaxed); }
+    SpecialRefRegistry() noexcept { rootsHead_.nextRoot_.store(&rootsTail_, std::memory_order_relaxed); }
 
     ~SpecialRefRegistry() = default;
 
     static SpecialRefRegistry& instance() noexcept;
 
     void clearForTests() noexcept {
-        rootsHead()->nextRoot_ = rootsTail();
+        rootsHead_.nextRoot_ = &rootsTail_;
         for (auto& node : all_) {
             // Allow the tests not to run the finalizers for weaks.
             node.rc_ = Node::disposedMarker;
@@ -367,10 +363,6 @@ private:
     std::pair<Node*, Node*> eraseFromRoots(Node* prev, Node* node) noexcept;
     void insertIntoRootsHead(Node& node) noexcept;
     std::list<Node>::iterator findAliveNode(std::list<Node>::iterator it) noexcept;
-
-    Node* rootsHead() noexcept { return &rootsHead_; }
-    const Node* rootsHead() const noexcept { return &rootsHead_; }
-    static Node* rootsTail() noexcept { return &rootsTail_; }
 
     // TODO: Iteration over `all_` will be slow, because it's `std::list`
     //       collected at different times from different threads, and so the nodes
