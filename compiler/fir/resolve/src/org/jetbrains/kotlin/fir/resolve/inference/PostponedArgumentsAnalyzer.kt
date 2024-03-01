@@ -159,6 +159,7 @@ class PostponedArgumentsAnalyzer(
             lambda,
             candidate,
             results,
+            expectedTypeForReturnArguments,
             ::substitute
         )
         return results
@@ -169,6 +170,7 @@ class PostponedArgumentsAnalyzer(
         lambda: ResolvedLambdaAtom,
         candidate: Candidate,
         results: ReturnArgumentsAnalysisResult,
+        expectedReturnType: ConeKotlinType? = null,
         substitute: (ConeKotlinType) -> ConeKotlinType = c.createSubstituteFunctorForLambdaAnalysis(),
     ) {
         val (returnArguments, additionalConstraintStorage) = results
@@ -182,9 +184,7 @@ class PostponedArgumentsAnalyzer(
 
         val lastExpression = lambda.atom.body?.statements?.lastOrNull() as? FirExpression
         var hasExpressionInReturnArguments = false
-        val returnTypeRef = lambda.atom.returnTypeRef.let {
-            it as? FirResolvedTypeRef ?: it.resolvedTypeFromPrototype(substitute(lambda.returnType))
-        }
+        val returnTypeRef = lambda.atom.returnTypeRef.resolvedTypeFromPrototype(expectedReturnType ?: substitute(lambda.returnType))
         val lambdaExpectedTypeIsUnit = returnTypeRef.type.isUnitOrFlexibleUnit
         returnArguments.forEach {
             // If the lambda returns Unit, the last expression is not returned and should not be constrained.

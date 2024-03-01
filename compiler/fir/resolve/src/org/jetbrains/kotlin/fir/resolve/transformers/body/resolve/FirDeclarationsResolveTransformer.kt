@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.impl.FirSingleExpressionBlock
+import org.jetbrains.kotlin.fir.expressions.impl.FirUnitExpression
 import org.jetbrains.kotlin.fir.references.FirResolvedErrorReference
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.resolve.*
@@ -1014,7 +1015,17 @@ open class FirDeclarationsResolveTransformer(
             is ResolutionMode.LambdaResolution -> {
                 val expectedReturnTypeRef =
                     data.expectedReturnTypeRef ?: anonymousFunction.returnTypeRef.takeUnless { it is FirImplicitTypeRef }
-                transformAnonymousFunctionBody(anonymousFunction, expectedReturnTypeRef, data)
+                transformAnonymousFunctionBody(anonymousFunction, expectedReturnTypeRef, data).apply {
+                    if (expectedReturnTypeRef is FirResolvedTypeRef) {
+                        val computedReturnType = computeReturnTypeRef(expectedReturnTypeRef)
+                        if (computedReturnType.coneType.fullyExpandedType(session).isUnit) {
+                            // Match the K1 behavior, which infers the return type to `Unit` instead of the expected type
+                            // if the type computed from the lambda body is `Unit`.
+                            replaceReturnTypeRef(computedReturnType)
+                            session.lookupTracker?.recordTypeResolveAsLookup(computedReturnType, source, context.file.source)
+                        }
+                    }
+                }
             }
             is ResolutionMode.WithExpectedType ->
                 transformAnonymousFunctionWithExpectedType(anonymousFunction, data.expectedTypeRef, data)
@@ -1107,11 +1118,23 @@ open class FirDeclarationsResolveTransformer(
     }
 
     private fun FirAnonymousFunction.computeReturnTypeRef(expected: FirResolvedTypeRef?): FirResolvedTypeRef {
+        if (isLambda && expected?.type?.isUnit == true) {
+            // If the expected type is Unit, always infer the lambda's type to Unit.
+            // If a return statement in a lambda has a different type, RETURN_TYPE_MISMATCH will be reported for that return statement.
+            return expected
+        }
+
         val returnExpressions = dataFlowAnalyzer.returnExpressionsOfAnonymousFunction(this)
-        // Any lambda expression assigned to `(...) -> Unit` returns Unit if all return expressions are implicit
-        // `lambda@ { return@lambda }` always returns Unit
-        if (isLambda && expected?.type?.isUnit == true && returnExpressions.all { !it.isExplicit }) return expected
-        if (shouldReturnUnit(returnExpressions.map { it.expression })) return session.builtinTypes.unitType
+        if (shouldReturnUnit(returnExpressions.map { it.expression })) {
+            return if (expected != null && returnExpressions.any { it.isExplicit && it.expression is FirUnitExpression }) {
+                // If the expected type is not Unit, and we have an explicit expressionless return, don't infer the return type to Unit.
+                // For this situation, RETURN_TYPE_MISMATCH will be reported later.
+                expected
+            } else {
+                session.builtinTypes.unitType
+            }
+        }
+
         // Here is a questionable moment where we could prefer the expected type over an inferred one.
         // In correct code this doesn't matter, as all return expression types should be subtypes of the expected type.
         // In incorrect code, this would change diagnostics: we can get errors either on the entire lambda, or only on its
