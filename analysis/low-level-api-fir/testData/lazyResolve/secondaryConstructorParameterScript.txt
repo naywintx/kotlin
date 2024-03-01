@@ -248,6 +248,31 @@ FILE: [ResolvedTo(IMPORTS)] secondaryConstructorParameterScript.kts
         public? final? [ResolvedTo(RAW_FIR)] fun String.myToInt(): Int { LAZY_BLOCK }
 
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] secondaryConstructorParameterScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(TYPES)] <script-secondaryConstructorParameterScript.kts>
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final [ResolvedTo(CONST_INITIALIZERS)] class A : R|kotlin/Any| {
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] [CorrespondingProperty=/A.prop] prop: R|kotlin/Int| = LAZY_EXPRESSION, [ResolvedTo(STATUS)] c: R|kotlin/String|): R|A| {
+                LAZY_super<R|kotlin/Any|>
+            }
+
+            public final [ResolvedTo(STATUS)] [IsFromPrimaryConstructor=true] val prop: R|kotlin/Int| = R|<local>/prop|
+                public [ResolvedTo(STATUS)] [ContainingClassKey=A] get(): R|kotlin/Int|
+
+            public [ResolvedTo(CONST_INITIALIZERS)] [ContainingClassKey=A] constructor([ResolvedTo(CONST_INITIALIZERS)] str: R|kotlin/String|): R|A| {
+                this<R|A|>(str#.myToInt#(), str#)
+            }
+
+            public final [ResolvedTo(STATUS)] fun foo(): <implicit> { LAZY_BLOCK }
+
+        }
+
+        public? final? [ResolvedTo(RAW_FIR)] fun String.myToInt(): Int { LAZY_BLOCK }
+
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] secondaryConstructorParameterScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)

@@ -142,6 +142,22 @@ FILE: [ResolvedTo(IMPORTS)] propertyWithGetterScript.kts
             public? [ResolvedTo(RAW_FIR)] get(): Int { LAZY_BLOCK }
 
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] propertyWithGetterScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(TYPES)] <script-propertyWithGetterScript.kts>
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final [ResolvedTo(CONST_INITIALIZERS)] fun resolveMe(): R|kotlin/Unit| {
+            receive#(withGetter#)
+        }
+
+        public? final? [ResolvedTo(RAW_FIR)] fun receive([ResolvedTo(RAW_FIR)] value: Int): R|kotlin/Unit| { LAZY_BLOCK }
+
+        public? final? [ResolvedTo(RAW_FIR)] val withGetter: Int
+            public? [ResolvedTo(RAW_FIR)] get(): Int { LAZY_BLOCK }
+
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] propertyWithGetterScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
@@ -194,3 +210,4 @@ FILE: [ResolvedTo(BODY_RESOLVE)] propertyWithGetterScript.kts
             public [ResolvedTo(BODY_RESOLVE)] get(): R|kotlin/Int| {
                 ^ Int(42)
             }
+

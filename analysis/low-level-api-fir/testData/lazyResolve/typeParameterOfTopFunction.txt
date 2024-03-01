@@ -40,6 +40,11 @@ FILE: [ResolvedTo(IMPORTS)] typeParameterOfTopFunction.kt
     public final [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] fun <[ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] resolveMe> ddd(): R|kotlin/Unit| {
     }
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] typeParameterOfTopFunction.kt
+    public final [ResolvedTo(CONST_INITIALIZERS)] fun <[ResolvedTo(CONST_INITIALIZERS)] resolveMe> ddd(): R|kotlin/Unit| {
+    }
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] typeParameterOfTopFunction.kt
     public final [ResolvedTo(ANNOTATION_ARGUMENTS)] fun <[ResolvedTo(ANNOTATION_ARGUMENTS)] resolveMe> ddd(): R|kotlin/Unit| {

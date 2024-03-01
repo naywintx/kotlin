@@ -160,6 +160,23 @@ FILE: [ResolvedTo(IMPORTS)] typeParameterOfNonLocalFunctionScript.kts
         }
 
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] typeParameterOfNonLocalFunctionScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(TYPES)] <script-typeParameterOfNonLocalFunctionScript.kts>
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final [ResolvedTo(STATUS)] class X : R|kotlin/Any| {
+            public [ResolvedTo(STATUS)] [ContainingClassKey=X] constructor(): R|X| {
+                LAZY_super<R|kotlin/Any|>
+            }
+
+            public final [ResolvedTo(CONST_INITIALIZERS)] fun <[ResolvedTo(CONST_INITIALIZERS)] resolveMe> ddd(): R|kotlin/Unit| {
+            }
+
+        }
+
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] typeParameterOfNonLocalFunctionScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)

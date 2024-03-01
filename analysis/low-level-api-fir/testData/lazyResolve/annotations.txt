@@ -60,6 +60,13 @@ FILE: [ResolvedTo(IMPORTS)] annotations.kt
     @R|kotlin/Suppress|[Types](LAZY_EXPRESSION) public final [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] fun resolveMe(): R|kotlin/Unit| {
     }
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] annotations.kt
+    @FILE:Suppress[Unresolved](LAZY_EXPRESSION)
+    [ResolvedTo(RAW_FIR)] annotations container
+    @R|kotlin/Suppress|[Types](LAZY_EXPRESSION) public final [ResolvedTo(CONST_INITIALIZERS)] fun resolveMe(): R|kotlin/Unit| {
+    }
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] annotations.kt
     @FILE:Suppress[Unresolved](LAZY_EXPRESSION)

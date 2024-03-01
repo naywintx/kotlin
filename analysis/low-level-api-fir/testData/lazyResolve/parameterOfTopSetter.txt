@@ -62,6 +62,14 @@ FILE: [ResolvedTo(IMPORTS)] parameterOfTopSetter.kt
             ^ Unit#
         }
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] parameterOfTopSetter.kt
+    public final [ResolvedTo(CONST_INITIALIZERS)] var x: R|kotlin/Int| = IntegerLiteral(2)
+        public [ResolvedTo(CONST_INITIALIZERS)] get(): R|kotlin/Int|
+        public [ResolvedTo(CONST_INITIALIZERS)] set([ResolvedTo(CONST_INITIALIZERS)] resolveMe: R|kotlin/Int|): R|kotlin/Unit| {
+            ^ Unit#
+        }
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] parameterOfTopSetter.kt
     public final [ResolvedTo(ANNOTATION_ARGUMENTS)] var x: R|kotlin/Int| = IntegerLiteral(2)

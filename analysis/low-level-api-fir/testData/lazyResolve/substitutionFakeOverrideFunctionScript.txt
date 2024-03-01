@@ -98,6 +98,31 @@ FILE: [ResolvedTo(IMPORTS)] substitutionFakeOverrideFunctionScript.kts
         }
 
 
+CONST_INITIALIZERS:
+TARGET: public abstract override [ResolvedTo(CONST_INITIALIZERS)] [SubstitutedOverrideOriginalKey=second/AbstractClass.resolveMe] fun R|kotlin/Int|.resolveMe([ResolvedTo(CONST_INITIALIZERS)] param: R|kotlin/Int|): R|kotlin/Int|
+
+FILE: [ResolvedTo(IMPORTS)] substitutionFakeOverrideFunctionScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(TYPES)] <script-substitutionFakeOverrideFunctionScript.kts>
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public abstract [ResolvedTo(STATUS)] class SubClass : R|second/AbstractClass<kotlin/Int>| {
+            public [ResolvedTo(STATUS)] [ContainingClassKey=SubClass] constructor(): R|second/SubClass| {
+                LAZY_super<R|second/AbstractClass<kotlin/Int>|>
+            }
+
+        }
+
+        public abstract [ResolvedTo(STATUS)] class AbstractClass<[ResolvedTo(STATUS)] T> : R|kotlin/Any| {
+            public [ResolvedTo(STATUS)] [ContainingClassKey=AbstractClass] constructor<[ResolvedTo(STATUS)] T>(): R|second/AbstractClass<T>| {
+                LAZY_super<R|kotlin/Any|>
+            }
+
+            public abstract [ResolvedTo(CONST_INITIALIZERS)] fun R|T|.resolveMe([ResolvedTo(CONST_INITIALIZERS)] param: R|T|): R|T|
+
+        }
+
+
 ANNOTATION_ARGUMENTS:
 TARGET: public abstract override [ResolvedTo(ANNOTATION_ARGUMENTS)] [SubstitutedOverrideOriginalKey=second/AbstractClass.resolveMe] fun R|kotlin/Int|.resolveMe([ResolvedTo(ANNOTATION_ARGUMENTS)] param: R|kotlin/Int|): R|kotlin/Int|
 

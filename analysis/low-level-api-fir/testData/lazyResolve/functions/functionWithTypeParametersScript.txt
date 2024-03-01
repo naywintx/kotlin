@@ -90,6 +90,16 @@ FILE: [ResolvedTo(IMPORTS)] functionWithTypeParametersScript.kts
         }
 
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] functionWithTypeParametersScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(TYPES)] <script-functionWithTypeParametersScript.kts>
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final [ResolvedTo(CONST_INITIALIZERS)] fun <[ResolvedTo(CONST_INITIALIZERS)] T : R|kotlin/Int|, [ResolvedTo(CONST_INITIALIZERS)] K> resolveMe(): R|kotlin/Unit| {
+        }
+
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] functionWithTypeParametersScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
@@ -118,3 +128,4 @@ FILE: [ResolvedTo(BODY_RESOLVE)] functionWithTypeParametersScript.kts
 
         public final [ResolvedTo(BODY_RESOLVE)] fun <[ResolvedTo(BODY_RESOLVE)] T : R|kotlin/Int|, [ResolvedTo(BODY_RESOLVE)] K> resolveMe(): R|kotlin/Unit| {
         }
+

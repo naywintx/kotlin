@@ -158,6 +158,22 @@ FILE: [ResolvedTo(IMPORTS)] primaryConstructorParameterScript.kts
         }
 
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] primaryConstructorParameterScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(TYPES)] <script-primaryConstructorParameterScript.kts>
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final [ResolvedTo(CONST_INITIALIZERS)] class A : R|kotlin/Any| {
+            public [ResolvedTo(CONST_INITIALIZERS)] [ContainingClassKey=A] constructor([ResolvedTo(CONST_INITIALIZERS)] a: R|kotlin/Boolean|, [ResolvedTo(CONST_INITIALIZERS)] param: R|kotlin/Int| = LAZY_EXPRESSION, [ResolvedTo(CONST_INITIALIZERS)] c: R|kotlin/Long|): R|A| {
+                LAZY_super<R|kotlin/Any|>
+            }
+
+            public final [ResolvedTo(STATUS)] fun foo(): <implicit> { LAZY_BLOCK }
+
+        }
+
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] primaryConstructorParameterScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)

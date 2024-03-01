@@ -48,6 +48,11 @@ FILE: [ResolvedTo(IMPORTS)] unresolvedAnnotationOnTypeAlias.kt
     public final [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] val myAlias: <ERROR TYPE REF: Unresolved name: Foo> = @<ERROR TYPE REF: Symbol not found for Anno>[Types]() <Unresolved name: Foo>#
         public [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] get(): <ERROR TYPE REF: Unresolved name: Foo>
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] unresolvedAnnotationOnTypeAlias.kt
+    public final [ResolvedTo(CONST_INITIALIZERS)] val myAlias: <ERROR TYPE REF: Unresolved name: Foo> = @<ERROR TYPE REF: Symbol not found for Anno>[Types]() <Unresolved name: Foo>#
+        public [ResolvedTo(CONST_INITIALIZERS)] get(): <ERROR TYPE REF: Unresolved name: Foo>
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] unresolvedAnnotationOnTypeAlias.kt
     public final [ResolvedTo(ANNOTATION_ARGUMENTS)] val myAlias: <ERROR TYPE REF: Unresolved name: Foo> = @<ERROR TYPE REF: Symbol not found for Anno>[Types]() <Unresolved name: Foo>#

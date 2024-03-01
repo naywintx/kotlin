@@ -158,6 +158,22 @@ FILE: [ResolvedTo(IMPORTS)] typeParameterOfTypeAliasScript.kts
         public final [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] typealias Alias<[ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] TypeParam> = R|X<TypeParam>|
 
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] typeParameterOfTypeAliasScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(TYPES)] <script-typeParameterOfTypeAliasScript.kts>
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final? [ResolvedTo(SUPER_TYPES)] class X<[ResolvedTo(SUPER_TYPES)] T> : R|kotlin/Any| {
+            public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=X] constructor<[ResolvedTo(SUPER_TYPES)] T>(): R|X<T>| {
+                LAZY_super<R|kotlin/Any|>
+            }
+
+        }
+
+        public final [ResolvedTo(CONST_INITIALIZERS)] typealias Alias<[ResolvedTo(CONST_INITIALIZERS)] TypeParam> = R|X<TypeParam>|
+
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] typeParameterOfTypeAliasScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)

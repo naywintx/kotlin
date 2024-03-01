@@ -138,6 +138,20 @@ FILE: [ResolvedTo(IMPORTS)] annotationClassWithJavaTargetScript.kts
         }
 
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] annotationClassWithJavaTargetScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(TYPES)] <script-annotationClassWithJavaTargetScript.kts>
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        @R|java/lang/annotation/Target|[Types](ElementType#.TYPE_USE#) public final [ResolvedTo(CONST_INITIALIZERS)] annotation class ResolveMe : R|kotlin/Annotation| {
+            public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=ResolveMe] constructor(): R|ResolveMe| {
+                LAZY_super<R|kotlin/Any|>
+            }
+
+        }
+
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] annotationClassWithJavaTargetScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)

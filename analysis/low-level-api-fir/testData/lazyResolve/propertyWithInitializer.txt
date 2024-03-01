@@ -62,6 +62,14 @@ FILE: [ResolvedTo(IMPORTS)] propertyWithInitializer.kt
     public? final? [ResolvedTo(RAW_FIR)] val property: Int = LAZY_EXPRESSION
         public? [ResolvedTo(RAW_FIR)] get(): Int
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] propertyWithInitializer.kt
+    public final [ResolvedTo(CONST_INITIALIZERS)] fun resolveMe(): R|kotlin/Unit| {
+        receive#(property#)
+    }
+    public? final? [ResolvedTo(RAW_FIR)] val property: Int = LAZY_EXPRESSION
+        public? [ResolvedTo(RAW_FIR)] get(): Int
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] propertyWithInitializer.kt
     public final [ResolvedTo(ANNOTATION_ARGUMENTS)] fun resolveMe(): R|kotlin/Unit| {

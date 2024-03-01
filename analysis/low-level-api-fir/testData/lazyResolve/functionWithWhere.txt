@@ -80,6 +80,16 @@ FILE: [ResolvedTo(IMPORTS)] functionWithWhere.kt
         ^foo R|<local>/t|
     }
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] functionWithWhere.kt
+    public final? [ResolvedTo(RAW_FIR)] interface One : R|kotlin/Any| {
+    }
+    public final? [ResolvedTo(RAW_FIR)] interface Two : R|kotlin/Any| {
+    }
+    public final [ResolvedTo(CONST_INITIALIZERS)] fun <[ResolvedTo(CONST_INITIALIZERS)] T : R|One|, R|Two|> foo([ResolvedTo(CONST_INITIALIZERS)] t: R|T|): R|T| {
+        ^foo R|<local>/t|
+    }
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] functionWithWhere.kt
     public final? [ResolvedTo(RAW_FIR)] interface One : R|kotlin/Any| {

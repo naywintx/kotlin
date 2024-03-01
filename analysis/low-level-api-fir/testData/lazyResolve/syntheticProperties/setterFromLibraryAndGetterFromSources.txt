@@ -66,6 +66,25 @@ FILE: [ResolvedTo(IMPORTS)] main.kt
 
     }
 
+CONST_INITIALIZERS:
+TARGET: public open override [<synthetic> CONST_INITIALIZERS] var something: R|kotlin/String|
+    public [<synthetic> ResolvedTo(CONST_INITIALIZERS)] get(): R|kotlin/String| {
+        ^getSomething String(42)
+    }
+    public [<synthetic> ResolvedTo(BODY_RESOLVE)] set([ResolvedTo(BODY_RESOLVE)] s: R|kotlin/String|): R|kotlin/Unit|
+
+FILE: [ResolvedTo(IMPORTS)] main.kt
+    public final [ResolvedTo(STATUS)] class Derived : R|BaseKotlin| {
+        public [ResolvedTo(STATUS)] [ContainingClassKey=Derived] constructor(): R|Derived| {
+            LAZY_super<R|BaseKotlin|>
+        }
+
+        public open override [ResolvedTo(CONST_INITIALIZERS)] fun getSomething(): R|kotlin/String| {
+            ^getSomething String(42)
+        }
+
+    }
+
 ANNOTATION_ARGUMENTS:
 TARGET: public open override [<synthetic> ANNOTATION_ARGUMENTS] var something: R|kotlin/String|
     public [<synthetic> ResolvedTo(ANNOTATION_ARGUMENTS)] get(): R|kotlin/String| {

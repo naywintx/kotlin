@@ -182,6 +182,26 @@ FILE: [ResolvedTo(IMPORTS)] functionCallWithGenericResultScript.kts
         }
 
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] functionCallWithGenericResultScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(TYPES)] <script-functionCallWithGenericResultScript.kts>
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public open [ResolvedTo(RAW_FIR)] class Foo<[ResolvedTo(RAW_FIR)] T : CharSequence> : R|kotlin/Any| {
+            public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] constructor<[ResolvedTo(RAW_FIR)] T : CharSequence>(): R|Foo<T>| {
+                LAZY_super<R|kotlin/Any|>
+            }
+
+        }
+
+        public? final? [ResolvedTo(RAW_FIR)] fun bar(): Foo<String>? { LAZY_BLOCK }
+
+        public final [ResolvedTo(CONST_INITIALIZERS)] fun resolveMe(): R|kotlin/Unit| {
+            [ResolvedTo(RAW_FIR)] lval x: <implicit> = bar#()
+        }
+
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] functionCallWithGenericResultScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)

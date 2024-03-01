@@ -92,6 +92,17 @@ FILE: [ResolvedTo(IMPORTS)] secondaryConstructor.kt
 
     }
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] secondaryConstructor.kt
+    public final [ResolvedTo(CONST_INITIALIZERS)] fun resolveMe(): R|kotlin/Unit| {
+        receive#(A#(IntegerLiteral(42)))
+    }
+    public? final? [ResolvedTo(RAW_FIR)] fun receive([ResolvedTo(RAW_FIR)] value: A): R|kotlin/Unit| { LAZY_BLOCK }
+    public final? [ResolvedTo(RAW_FIR)] class A : R|kotlin/Any| {
+        public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=A] constructor([ResolvedTo(RAW_FIR)] x: Int): R|A| { LAZY_BLOCK }
+
+    }
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] secondaryConstructor.kt
     public final [ResolvedTo(ANNOTATION_ARGUMENTS)] fun resolveMe(): R|kotlin/Unit| {

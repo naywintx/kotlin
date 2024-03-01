@@ -278,6 +278,34 @@ FILE: [ResolvedTo(IMPORTS)] cyclicNestedHierarchyScript.kts
         }
 
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] cyclicNestedHierarchyScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(TYPES)] <script-cyclicNestedHierarchyScript.kts>
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public open [ResolvedTo(CONST_INITIALIZERS)] class C : <ERROR TYPE REF: Loop in supertype: /C -> /D> {
+            public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=C] constructor(): R|C| {
+                LAZY_super<D>
+            }
+
+            public open [ResolvedTo(SUPER_TYPES)] class CC : <ERROR TYPE REF: Loop in supertype: /C.CC -> kotlin/Any> {
+                public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=CC] constructor(): R|C.CC| {
+                    LAZY_super<R|kotlin/Any|>
+                }
+
+            }
+
+        }
+
+        public open [ResolvedTo(SUPER_TYPES)] class D : <ERROR TYPE REF: Loop in supertype: /D -> /C.CC> {
+            public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=D] constructor(): R|D| {
+                LAZY_super<C.CC>
+            }
+
+        }
+
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] cyclicNestedHierarchyScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)

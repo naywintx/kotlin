@@ -48,6 +48,11 @@ FILE: [ResolvedTo(IMPORTS)] expectClass.kt
     public final expect [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] class Foo : R|kotlin/Any| {
     }
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] expectClass.kt
+    public final expect [ResolvedTo(CONST_INITIALIZERS)] class Foo : R|kotlin/Any| {
+    }
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] expectClass.kt
     public final expect [ResolvedTo(ANNOTATION_ARGUMENTS)] class Foo : R|kotlin/Any| {

@@ -288,6 +288,39 @@ FILE: [ResolvedTo(IMPORTS)] delegatesScript.kts
             public? [ResolvedTo(RAW_FIR)] set([ResolvedTo(RAW_FIR)] <set-?>: <implicit>): R|kotlin/Unit| { LAZY_BLOCK }
 
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] delegatesScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(TYPES)] <script-delegatesScript.kts>
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final [ResolvedTo(CONST_INITIALIZERS)] fun resolveMe(): R|kotlin/Unit| {
+            receive#(valueWithExplicitType#)
+            receive#(valueWithImplicitType#)
+            variableWithExplicitType# = IntegerLiteral(10)
+            variableWithImplicitType# = IntegerLiteral(10)
+        }
+
+        public? final? [ResolvedTo(RAW_FIR)] fun receive([ResolvedTo(RAW_FIR)] value: Int): R|kotlin/Unit| { LAZY_BLOCK }
+
+        public? final? [ResolvedTo(RAW_FIR)] val delegate: <implicit> = LAZY_EXPRESSION
+            public? [ResolvedTo(RAW_FIR)] get(): <implicit>
+
+        public? final? [ResolvedTo(RAW_FIR)] val valueWithExplicitType: Intby LAZY_EXPRESSION
+            public? [ResolvedTo(RAW_FIR)] get(): <implicit> { LAZY_BLOCK }
+
+        public? final? [ResolvedTo(RAW_FIR)] val valueWithImplicitType: <implicit>by LAZY_EXPRESSION
+            public? [ResolvedTo(RAW_FIR)] get(): <implicit> { LAZY_BLOCK }
+
+        public? final? [ResolvedTo(RAW_FIR)] var variableWithExplicitType: Intby LAZY_EXPRESSION
+            public? [ResolvedTo(RAW_FIR)] get(): <implicit> { LAZY_BLOCK }
+            public? [ResolvedTo(RAW_FIR)] set([ResolvedTo(RAW_FIR)] <set-?>: <implicit>): R|kotlin/Unit| { LAZY_BLOCK }
+
+        public? final? [ResolvedTo(RAW_FIR)] var variableWithImplicitType: <implicit>by LAZY_EXPRESSION
+            public? [ResolvedTo(RAW_FIR)] get(): <implicit> { LAZY_BLOCK }
+            public? [ResolvedTo(RAW_FIR)] set([ResolvedTo(RAW_FIR)] <set-?>: <implicit>): R|kotlin/Unit| { LAZY_BLOCK }
+
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] delegatesScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)

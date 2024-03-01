@@ -148,6 +148,21 @@ FILE: [ResolvedTo(IMPORTS)] fileAnnotations.kt
 
     }
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] fileAnnotations.kt
+    @FILE:R|kotlin/Deprecated|[Types](String())
+    @FILE:R|one/Anno|[Types](LAZY_EXPRESSION)
+    [ResolvedTo(CONST_INITIALIZERS)] annotations container
+    @R|kotlin/annotation/Target|[CompilerRequiredAnnotations](Q|kotlin/annotation/AnnotationTarget|.R|kotlin/annotation/AnnotationTarget.FILE|) public final? [ResolvedTo(COMPILER_REQUIRED_ANNOTATIONS)] annotation class Anno : R|kotlin/Annotation| {
+        public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=Anno] constructor([ResolvedTo(RAW_FIR)] [CorrespondingProperty=one/Anno.s] s: String): R|one/Anno| {
+            LAZY_super<R|kotlin/Any|>
+        }
+
+        public? final? [ResolvedTo(RAW_FIR)] [IsFromPrimaryConstructor=true] val s: String = R|<local>/s|
+            public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=Anno] get(): String
+
+    }
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] fileAnnotations.kt
     @FILE:R|kotlin/Deprecated|[Types](message = String())

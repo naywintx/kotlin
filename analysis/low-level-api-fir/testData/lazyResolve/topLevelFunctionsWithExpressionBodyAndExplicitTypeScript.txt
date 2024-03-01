@@ -132,6 +132,21 @@ FILE: [ResolvedTo(IMPORTS)] topLevelFunctionsWithExpressionBodyAndExplicitTypeSc
         public? final? [ResolvedTo(RAW_FIR)] fun functionWithLazyBody(): String { LAZY_BLOCK }
 
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] topLevelFunctionsWithExpressionBodyAndExplicitTypeScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(TYPES)] <script-topLevelFunctionsWithExpressionBodyAndExplicitTypeScript.kts>
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final [ResolvedTo(CONST_INITIALIZERS)] fun resolveMe(): R|kotlin/Unit| {
+            receive#(functionWithLazyBody#())
+        }
+
+        public? final? [ResolvedTo(RAW_FIR)] fun receive([ResolvedTo(RAW_FIR)] value: String): R|kotlin/Unit| { LAZY_BLOCK }
+
+        public? final? [ResolvedTo(RAW_FIR)] fun functionWithLazyBody(): String { LAZY_BLOCK }
+
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] topLevelFunctionsWithExpressionBodyAndExplicitTypeScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
@@ -181,3 +196,4 @@ FILE: [ResolvedTo(BODY_RESOLVE)] topLevelFunctionsWithExpressionBodyAndExplicitT
         public final [ResolvedTo(BODY_RESOLVE)] fun functionWithLazyBody(): R|kotlin/String| {
             ^functionWithLazyBody String(42)
         }
+

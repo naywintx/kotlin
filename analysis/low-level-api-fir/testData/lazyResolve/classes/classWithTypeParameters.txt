@@ -88,6 +88,15 @@ FILE: [ResolvedTo(IMPORTS)] classWithTypeParameters.kt
 
     }
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] classWithTypeParameters.kt
+    public final [ResolvedTo(CONST_INITIALIZERS)] class ResolveMe<[ResolvedTo(CONST_INITIALIZERS)] T : R|kotlin/Int|, [ResolvedTo(CONST_INITIALIZERS)] K> : R|kotlin/Any| {
+        public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=ResolveMe] constructor<[ResolvedTo(CONST_INITIALIZERS)] T : R|kotlin/Int|, [ResolvedTo(CONST_INITIALIZERS)] K>(): R|ResolveMe<T, K>| {
+            LAZY_super<R|kotlin/Any|>
+        }
+
+    }
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] classWithTypeParameters.kt
     public final [ResolvedTo(ANNOTATION_ARGUMENTS)] class ResolveMe<[ResolvedTo(ANNOTATION_ARGUMENTS)] T : R|kotlin/Int|, [ResolvedTo(ANNOTATION_ARGUMENTS)] K> : R|kotlin/Any| {

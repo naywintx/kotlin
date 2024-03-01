@@ -112,6 +112,19 @@ FILE: [ResolvedTo(IMPORTS)] parameterOfTopSetterScript.kts
             }
 
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] parameterOfTopSetterScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(TYPES)] <script-parameterOfTopSetterScript.kts>
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final [ResolvedTo(CONST_INITIALIZERS)] var x: R|kotlin/Int| = IntegerLiteral(2)
+            public [ResolvedTo(CONST_INITIALIZERS)] get(): R|kotlin/Int|
+            public [ResolvedTo(CONST_INITIALIZERS)] set([ResolvedTo(CONST_INITIALIZERS)] resolveMe: R|kotlin/Int|): R|kotlin/Unit| {
+                ^ Unit#
+            }
+
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] parameterOfTopSetterScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
@@ -149,3 +162,4 @@ FILE: [ResolvedTo(BODY_RESOLVE)] parameterOfTopSetterScript.kts
             public [ResolvedTo(BODY_RESOLVE)] set([ResolvedTo(BODY_RESOLVE)] resolveMe: R|kotlin/Int|): R|kotlin/Unit| {
                 ^ Q|kotlin/Unit|
             }
+

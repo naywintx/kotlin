@@ -308,6 +308,37 @@ FILE: [ResolvedTo(IMPORTS)] implicitTypeFromIncorrectAccessorsScript.kts
             public [ResolvedTo(RAW_FIR)] get(): <implicit>
 
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] implicitTypeFromIncorrectAccessorsScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(TYPES)] <script-implicitTypeFromIncorrectAccessorsScript.kts>
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        @Target[Unresolved](LAZY_EXPRESSION) public final? [ResolvedTo(RAW_FIR)] annotation class Anno : R|kotlin/Annotation| {
+            public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=Anno] constructor([ResolvedTo(RAW_FIR)] [CorrespondingProperty=low/Anno.position] position: String): R|low/Anno| {
+                LAZY_super<R|kotlin/Any|>
+            }
+
+            public? final? [ResolvedTo(RAW_FIR)] [IsFromPrimaryConstructor=true] val position: String = R|<local>/position|
+                public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=Anno] get(): String
+
+        }
+
+        public? final? const [ResolvedTo(RAW_FIR)] val prop: <implicit> = LAZY_EXPRESSION
+            public? [ResolvedTo(RAW_FIR)] get(): <implicit>
+
+        public final [ResolvedTo(CONST_INITIALIZERS)] var resolveMe: <ERROR TYPE REF: Cannot infer variable type without initializer / getter / delegate>
+            public [ResolvedTo(CONST_INITIALIZERS)] get(): <ERROR TYPE REF: Cannot infer variable type without initializer / getter / delegate>
+            public [ResolvedTo(CONST_INITIALIZERS)] set([ResolvedTo(CONST_INITIALIZERS)] value: <ERROR TYPE REF: Cannot infer variable type without initializer / getter / delegate>): R|kotlin/Unit|
+
+        [ResolvedTo(RAW_FIR)] init { LAZY_BLOCK }
+
+        [ResolvedTo(RAW_FIR)] init { LAZY_BLOCK }
+
+        public final [ResolvedTo(RAW_FIR)] val $$result: <implicit> = value#
+            public [ResolvedTo(RAW_FIR)] get(): <implicit>
+
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] implicitTypeFromIncorrectAccessorsScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)

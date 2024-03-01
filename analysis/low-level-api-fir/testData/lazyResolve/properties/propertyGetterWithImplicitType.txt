@@ -52,6 +52,13 @@ FILE: [ResolvedTo(IMPORTS)] propertyGetterWithImplicitType.kt
             ^ Int(42)
         }
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] propertyGetterWithImplicitType.kt
+    public final [ResolvedTo(CONST_INITIALIZERS)] val prop: R|kotlin/Int|
+        public [ResolvedTo(CONST_INITIALIZERS)] get(): R|kotlin/Int| {
+            ^ Int(42)
+        }
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] propertyGetterWithImplicitType.kt
     public final [ResolvedTo(ANNOTATION_ARGUMENTS)] val prop: R|kotlin/Int|

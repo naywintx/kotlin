@@ -128,6 +128,19 @@ FILE: [ResolvedTo(IMPORTS)] getterWithDelegation.kt
 
     }
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] getterWithDelegation.kt
+    public final [ResolvedTo(CONST_INITIALIZERS)] val one: R|kotlin/Int|by LAZY_EXPRESSION
+        @R|kotlin/Deprecated|[Types](String(reason)) public [ResolvedTo(CONST_INITIALIZERS)] get(): R|kotlin/Int| { LAZY_BLOCK }
+    public final? [ResolvedTo(RAW_FIR)] class Prp : R|kotlin/Any| {
+        public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=Prp] constructor(): R|Prp| {
+            LAZY_super<R|kotlin/Any|>
+        }
+
+        public? final? [ResolvedTo(RAW_FIR)] fun getValue(): <implicit> { LAZY_BLOCK }
+
+    }
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] getterWithDelegation.kt
     public final [ResolvedTo(ANNOTATION_ARGUMENTS)] val one: R|kotlin/Int|by LAZY_EXPRESSION

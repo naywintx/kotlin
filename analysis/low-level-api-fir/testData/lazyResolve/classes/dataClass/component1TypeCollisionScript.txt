@@ -348,6 +348,41 @@ FILE: [ResolvedTo(IMPORTS)] component1TypeCollisionScript.kts
         }
 
 
+CONST_INITIALIZERS:
+FILE: [ResolvedTo(IMPORTS)] component1TypeCollisionScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(TYPES)] <script-component1TypeCollisionScript.kts>
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final? [ResolvedTo(RAW_FIR)] class MyClass : R|kotlin/Any| {
+            public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=MyClass] constructor(): R|one/two/MyClass| {
+                LAZY_super<R|kotlin/Any|>
+            }
+
+        }
+
+        public final data [ResolvedTo(CONST_INITIALIZERS)] class MyDataClass : R|kotlin/Any| {
+            public [ResolvedTo(CONST_INITIALIZERS)] [ContainingClassKey=MyDataClass] constructor([ResolvedTo(CONST_INITIALIZERS)] [CorrespondingProperty=one/two/MyDataClass.prop] prop: R|one/two/MyDataClass.MyClass|): R|one/two/MyDataClass| {
+                LAZY_super<R|kotlin/Any|>
+            }
+
+            public final [ResolvedTo(CONST_INITIALIZERS)] [ComponentFunctionSymbolKey=one/two/MyDataClass.component1, IsFromPrimaryConstructor=true] val prop: R|one/two/MyDataClass.MyClass| = R|<local>/prop|
+                public [ResolvedTo(CONST_INITIALIZERS)] [ContainingClassKey=MyDataClass] get(): R|one/two/MyDataClass.MyClass|
+
+            public final? [ResolvedTo(RAW_FIR)] class MyClass : R|kotlin/Any| {
+                public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=MyClass] constructor(): R|one/two/MyDataClass.MyClass| {
+                    LAZY_super<R|kotlin/Any|>
+                }
+
+            }
+
+            public final operator [ResolvedTo(CONST_INITIALIZERS)] fun component1(): R|one/two/MyDataClass.MyClass|
+
+            public final [ResolvedTo(STATUS)] fun copy([ResolvedTo(STATUS)] prop: R|one/two/MyDataClass.MyClass| = this@R|one/two/MyDataClass|.R|one/two/MyDataClass.prop|): R|one/two/MyDataClass|
+
+        }
+
+
 ANNOTATION_ARGUMENTS:
 FILE: [ResolvedTo(IMPORTS)] component1TypeCollisionScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
