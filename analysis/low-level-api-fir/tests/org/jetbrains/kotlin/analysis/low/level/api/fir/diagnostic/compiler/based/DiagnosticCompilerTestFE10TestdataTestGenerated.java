@@ -14284,6 +14284,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
         }
 
         @Test
+        @TestMetadata("LocalReturnWithExpectedTypeUnitReturn.kt")
+        public void testLocalReturnWithExpectedTypeUnitReturn() {
+          runTest("compiler/testData/diagnostics/tests/functionLiterals/return/LocalReturnWithExpectedTypeUnitReturn.kt");
+        }
+
+        @Test
         @TestMetadata("LocalReturnWithExplicitUnit.kt")
         public void testLocalReturnWithExplicitUnit() {
           runTest("compiler/testData/diagnostics/tests/functionLiterals/return/LocalReturnWithExplicitUnit.kt");
