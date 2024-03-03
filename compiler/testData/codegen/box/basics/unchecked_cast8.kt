@@ -1,4 +1,5 @@
 // IGNORE_NATIVE: optimizationMode=OPT
+// IGNORE_BACKEND: WASM
 // WITH_STDLIB
 
 interface I1
