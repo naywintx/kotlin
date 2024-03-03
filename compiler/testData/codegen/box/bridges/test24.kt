@@ -1,4 +1,5 @@
 // IGNORE_NATIVE: optimizationMode=OPT
+// WITH_STDLIB
 
 interface I<T> {
     fun foo(p: T)
@@ -6,7 +7,7 @@ interface I<T> {
 
 class C : I<Nothing> {
     override fun foo(p: Nothing) {
-        println(p)
+        println(p.toString())
     }
 }
 

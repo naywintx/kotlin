@@ -1,3 +1,5 @@
+// WITH_STDLIB
+
 abstract class AbstractCollectionSerializer<Collection, Builder> {
     abstract fun builder(): Builder
     abstract fun Builder.toResult(): Collection
