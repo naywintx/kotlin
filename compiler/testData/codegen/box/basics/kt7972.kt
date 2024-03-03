@@ -1,4 +1,5 @@
 // IGNORE_NATIVE: optimizationMode=OPT
+// WITH_STDLIB
 
 fun <E> List<E>.addAnything(element: E) {
     if (this is MutableList<E>) {

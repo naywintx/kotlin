@@ -1,4 +1,5 @@
 // IGNORE_NATIVE: optimizationMode=OPT
+// WITH_STDLIB
 
 class Data(val x: Int)
 

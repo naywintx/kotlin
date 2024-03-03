@@ -1,4 +1,5 @@
 // IGNORE_NATIVE: optimizationMode=OPT
+// WITH_STDLIB
 
 interface I1
 interface I2 {
