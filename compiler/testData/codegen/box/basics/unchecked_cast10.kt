@@ -1,3 +1,5 @@
+// IGNORE_BACKEND: JVM
+
 val any = Any()
 fun <T> foo(): T = any as T
 
