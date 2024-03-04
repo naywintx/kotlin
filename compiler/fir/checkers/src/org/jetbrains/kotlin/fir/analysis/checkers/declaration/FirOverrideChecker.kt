@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.KtRealSourceElementKind
 import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
@@ -110,22 +111,9 @@ abstract class FirAbstractOverrideChecker(mppKind: MppCheckerKind) : FirClassChe
     }
 }
 
-sealed class FirOverrideChecker(mppKind: MppCheckerKind) : FirAbstractOverrideChecker(mppKind) {
-    object Regular : FirOverrideChecker(MppCheckerKind.Platform) {
-        override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
-            if (declaration.isExpect) return
-            super.check(declaration, context, reporter)
-        }
-    }
-
-    object ForExpectClass : FirOverrideChecker(MppCheckerKind.Common) {
-        override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
-            if (!declaration.isExpect) return
-            super.check(declaration, context, reporter)
-        }
-    }
-
+object FirOverrideChecker : FirAbstractOverrideChecker(MppCheckerKind.Platform) {
     override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+        if (declaration.isExpect && !context.languageVersionSettings.getFlag(AnalysisFlags.metadataCompilation)) return
         val typeCheckerState = context.session.typeContext.newTypeCheckerState(
             errorTypesEqualToAnything = false,
             stubTypesEqualToAnything = false
