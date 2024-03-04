@@ -325,6 +325,12 @@ public class ParcelizeFirLightTreeBoxTestGenerated extends AbstractParcelizeFirL
   }
 
   @Test
+  @TestMetadata("multiplat.kt")
+  public void testMultiplat() {
+    runTest("plugins/parcelize/parcelize-compiler/testData/box/multiplat.kt");
+  }
+
+  @Test
   @TestMetadata("nestedArrays.kt")
   public void testNestedArrays() {
     runTest("plugins/parcelize/parcelize-compiler/testData/box/nestedArrays.kt");
