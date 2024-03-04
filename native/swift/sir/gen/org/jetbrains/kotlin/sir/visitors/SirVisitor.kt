@@ -41,6 +41,9 @@ abstract class SirVisitor<out R, in D> {
     open fun visitCallable(callable: SirCallable, data: D): R =
         visitDeclaration(callable, data)
 
+    open fun visitConstructor(constructor: SirConstructor, data: D): R =
+        visitCallable(constructor, data)
+
     open fun visitFunction(function: SirFunction, data: D): R =
         visitCallable(function, data)
 

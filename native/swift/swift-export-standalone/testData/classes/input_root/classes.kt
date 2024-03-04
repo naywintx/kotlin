@@ -1,5 +1,6 @@
 
-class Foo {
+class Foo (a: Int) {
+    constructor(f: Float) : this(f.toInt())
     class INSIDE_CLASS {
         fun my_func(): Boolean = TODO()
 

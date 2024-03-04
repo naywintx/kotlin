@@ -4,6 +4,9 @@ import KotlinRuntime
 public enum namespace {
     public enum deeper {
         public class NAMESPACED_CLASS {
+            public init() {
+                fatalError()
+            }
         }
         public class Foo {
             public class INSIDE_CLASS {
@@ -61,6 +64,9 @@ public enum namespace {
         }
     }
     public class NAMESPACED_CLASS {
+        public init() {
+            fatalError()
+        }
     }
     public class Foo {
         public class INSIDE_CLASS {

@@ -87,6 +87,14 @@ abstract class SirTransformer<in D> : SirVisitor<SirElement, D>() {
         return transformCallable(callable, data)
     }
 
+    open fun transformConstructor(constructor: SirConstructor, data: D): SirDeclaration {
+        return transformCallable(constructor, data)
+    }
+
+    final override fun visitConstructor(constructor: SirConstructor, data: D): SirDeclaration {
+        return transformConstructor(constructor, data)
+    }
+
     open fun transformFunction(function: SirFunction, data: D): SirDeclaration {
         return transformCallable(function, data)
     }

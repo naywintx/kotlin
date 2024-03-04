@@ -102,19 +102,7 @@ public class SirAsSwiftSourcesPrinter(private val printer: SmartPrinter) : SirVi
             function.name.swiftIdentifier,
             "("
         )
-        if (function.parameters.isNotEmpty()) {
-            println()
-            withIndent {
-                function.parameters.forEachIndexed { index, sirParameter ->
-                    print(sirParameter.swift)
-                    if (index != function.parameters.lastIndex) {
-                        println(",")
-                    } else {
-                        println()
-                    }
-                }
-            }
-        }
+        printParameters(function.parameters)
         print(
             ")",
             " -> ",
@@ -123,6 +111,25 @@ public class SirAsSwiftSourcesPrinter(private val printer: SmartPrinter) : SirVi
         println(" {")
         withIndent {
             printFunctionBody(function.body).forEach {
+                println(it)
+            }
+        }
+        println("}")
+    }
+
+    override fun visitConstructor(constructor: SirConstructor): Unit = with(printer) {
+        constructor.documentation?.let { println(it) }
+        printVisibility(constructor)
+        print("init")
+        "?".takeIf { constructor.isNullable }?.let { print(it) }
+        print("(")
+        printParameters(constructor.parameters)
+        print(
+            ")"
+        )
+        println(" {")
+        withIndent {
+            printFunctionBody(constructor.body).forEach {
                 println(it)
             }
         }
@@ -194,3 +201,20 @@ internal fun SmartPrinter.printCallableKind(callableKind: SirCallableKind) {
         }
     )
 }
+
+internal fun SmartPrinter.printParameters(params: List<SirParameter>): Unit = params
+    .takeIf { it.isNotEmpty() }
+    ?.let {
+        println()
+        withIndent {
+            params.forEachIndexed { index, sirParameter ->
+                print(sirParameter.swift)
+                if (index != params.lastIndex) {
+                    println(",")
+                } else {
+                    println()
+                }
+            }
+        }
+    }
+    ?: Unit

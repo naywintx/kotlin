@@ -81,6 +81,16 @@ object SwiftIrTree : AbstractSwiftIrTreeBuilder() {
         +field("body", functionBodyType, nullable = true, mutable = true)
     }
 
+    val constructor by element {
+        customParentInVisitor = callable
+        parent(callable)
+
+        +field("isNullable", boolean)
+        +listField("parameters", parameterType)
+
+        +field(name = "documentation", string, nullable = true, mutable = true)
+    }
+
     val function by element {
         customParentInVisitor = callable
         parent(callable)
