@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.konan.target.KonanTarget
 import java.io.File
 import javax.inject.Inject
 
-private const val KONAN_DIRECTORY_NAME_TO_CHECK_EXISTENCE = "konan"
+private const val MARKER_FILE = "provisioned.ok"
 
 internal interface UsesKotlinNativeBundleBuildService : Task {
     @get:Internal
@@ -71,7 +71,7 @@ internal abstract class KotlinNativeBundleBuildService : BuildService<BuildServi
 
             removeBundleIfNeeded(reinstallFlag, bundleDir)
 
-            if (!bundleDir.resolve(KONAN_DIRECTORY_NAME_TO_CHECK_EXISTENCE).exists()) {
+            if (!bundleDir.resolve(MARKER_FILE).exists()) {
                 val gradleCachesKotlinNativeDir =
                     resolveKotlinNativeConfiguration(kotlinNativeVersion, kotlinNativeCompilerConfiguration)
 
@@ -80,6 +80,7 @@ internal abstract class KotlinNativeBundleBuildService : BuildService<BuildServi
                     it.from(gradleCachesKotlinNativeDir)
                     it.into(bundleDir)
                 }
+                createSuccessfulInstallationFile(bundleDir)
                 project.logger.info("Moved Kotlin/Native bundle from $gradleCachesKotlinNativeDir to ${bundleDir.absolutePath}")
             }
         }
@@ -122,5 +123,9 @@ internal abstract class KotlinNativeBundleBuildService : BuildService<BuildServi
                 PlatformLibrariesGenerator(project, konanTarget).generatePlatformLibsIfNeeded()
             }
         }
+    }
+
+    private fun createSuccessfulInstallationFile(bundleDir: File) {
+        bundleDir.resolve(MARKER_FILE).createNewFile()
     }
 }
