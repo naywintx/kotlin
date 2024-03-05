@@ -178,13 +178,13 @@ class HostExecutor : Executor {
                 process.destroyForcibly()
                 streams.drain()
             }
-            val response = if (isTimeout) {
-                logger.warning("Timeout command: $commandLine")
+            if (isTimeout) {
+                logger.warning("Timeout running $commandLine in $duration")
                 cancel()
                 ExecuteResponse(null, duration)
             } else {
                 val exitCode = process.exitValue()
-                logger.info("Finished command: $commandLine")
+                logger.info("Finished executing $commandLine in $duration exit code $exitCode")
                 // KT-65113: Looks like read() from stdout/stderr of a child process may hang on Windows
                 // even when the child process is already terminated.
                 val waitStreamsDuration = if (HostManager.hostIsMingw) 10.seconds else Duration.INFINITE
@@ -198,9 +198,6 @@ class HostExecutor : Executor {
                 }
                 ExecuteResponse(exitCode, duration)
             }
-            logger.info("Drained command: $commandLine")
-            logger.info("Active thread count: ${Thread.activeCount()}")
-            response
         }
     }
 }
