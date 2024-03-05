@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.konan.target.AppleConfigurables
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.test.blackbox.support.NativeTestSupport
-import org.jetbrains.kotlin.konan.test.blackbox.support.settings.KotlinNativeHome
 import org.jetbrains.kotlin.konan.test.blackbox.support.settings.KotlinNativeTargets
 import org.jetbrains.kotlin.native.executors.RunProcessException
 import org.jetbrains.kotlin.native.executors.runProcess
@@ -122,19 +121,6 @@ internal fun callCompilerWithoutOutputInterceptor(
     // Alternatively, we can look for 'error:' and 'exception:' in the output.
 
     return CompilationToolCallResult(exitCode, compilerOutput, toolOutputHasErrors = toolOutputHasErrors, duration)
-}
-
-internal fun callCompilerOutOfProcess(
-    compilerArgs: Array<String>,
-    home: KotlinNativeHome,
-): CompilationToolCallResult {
-    val konanc = home.dir.resolve("bin").resolve(if (HostManager.hostIsMingw) "konanc.bat" else "konanc")
-    try {
-        val result = runProcess(konanc.absolutePath, *compilerArgs)
-        return CompilationToolCallResult(ExitCode.OK, result.output, toolOutputHasErrors = false, result.executionTime)
-    } catch (e: RunProcessException) {
-        return CompilationToolCallResult(ExitCode.COMPILATION_ERROR, e.output, toolOutputHasErrors = true, e.executionTime)
-    }
 }
 
 @OptIn(ExperimentalTime::class)
