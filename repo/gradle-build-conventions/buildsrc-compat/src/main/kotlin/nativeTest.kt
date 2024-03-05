@@ -3,6 +3,7 @@ import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.tasks.testing.Test
+import org.gradle.kotlin.dsl.environment
 import org.gradle.kotlin.dsl.project
 import java.io.File
 
@@ -206,6 +207,8 @@ fun Project.nativeTest(
 
         // Pass the current Gradle task name so test can use it in logging.
         environment("GRADLE_TASK_NAME", path)
+
+        environment("LIBCLANG_DISABLE_CRASH_RECOVERY" to "1")
 
         useJUnitPlatform {
             tag?.let { includeTags(it) }
