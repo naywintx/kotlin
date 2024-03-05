@@ -7,6 +7,8 @@ package org.jetbrains.kotlin.analysis.api.klib.reader
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
+import org.jetbrains.kotlin.library.metadata.DeserializedSourceFile
 
 /**
  * Note: A single [KlibDeclarationAddress] can be shared by multiple symbols.
@@ -40,11 +42,13 @@ public fun KlibDeclarationAddress.getSymbols(): Sequence<KtSymbol> {
 context(KtAnalysisSession)
 public fun KlibClassAddress.getClassOrObjectSymbol(): KtClassOrObjectSymbol? {
     return getClassOrObjectSymbolByClassId(classId)
+        ?.takeIf { symbol -> symbol in this }
 }
 
 context(KtAnalysisSession)
 public fun KlibTypeAliasAddress.getTypeAliasSymbol(): KtTypeAliasSymbol? {
     return getTypeAliasByClassId(classId)
+        ?.takeIf { symbol -> symbol in this }
 }
 
 /**
@@ -65,6 +69,7 @@ context(KtAnalysisSession)
 public fun KlibFunctionAddress.getFunctionSymbols(): Sequence<KtFunctionSymbol> {
     return getTopLevelCallableSymbols(packageFqName, callableName)
         .filterIsInstance<KtFunctionSymbol>()
+        .filter { symbol -> symbol in this }
 }
 
 /**
@@ -74,5 +79,28 @@ context(KtAnalysisSession)
 public fun KlibPropertyAddress.getPropertySymbols(): Sequence<KtPropertySymbol> {
     return getTopLevelCallableSymbols(packageFqName, callableName)
         .filterIsInstance<KtPropertySymbol>()
+        .filter { symbol -> symbol in this }
 }
 
+context(KtAnalysisSession)
+private operator fun KlibDeclarationAddress.contains(symbol: KtDeclarationSymbol): Boolean {
+    val symbolKlibSourceFile = symbol.getKlibSourceFile() as? DeserializedSourceFile
+    val symbolLibraryModule = symbol.getContainingModule() as? KtLibraryModule ?: return false
+
+    /* check if symbol comes from the same klib library: symbolKlibSourceFile known */
+    if (symbolKlibSourceFile != null && symbolKlibSourceFile.library.libraryFile.path != this.libraryPath.toString()) {
+        return false
+    }
+
+    /* check if symbol comes from the same klib library: symbolKlibSourceFile not known -> checking library module */
+    if (symbolKlibSourceFile == null && libraryPath !in symbolLibraryModule.getBinaryRoots()) {
+        return false
+    }
+
+    /* Check if symbol comes from the same source file (if known) */
+    if (this.sourceFileName != null && symbolKlibSourceFile?.name != sourceFileName) {
+        return false
+    }
+
+    return true
+}
