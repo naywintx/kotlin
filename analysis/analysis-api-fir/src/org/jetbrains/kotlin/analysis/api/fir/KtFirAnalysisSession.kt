@@ -126,6 +126,8 @@ private constructor(
 
     override val substitutorProviderImpl: KtSubstitutorProvider = KtFirSubstitutorProvider(this)
 
+    override val klibSourceFileProviderImpl: KtKlibSourceFileProvider = KtFirKlibSourceFileProvider(this)
+
     internal val useSiteSession: FirSession get() = firResolveSession.useSiteFirSession
     internal val firSymbolProvider: FirSymbolProvider get() = useSiteSession.symbolProvider
     internal val targetPlatform: TargetPlatform get() = useSiteSession.moduleData.platform

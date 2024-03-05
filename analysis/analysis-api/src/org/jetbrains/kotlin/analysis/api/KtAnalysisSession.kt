@@ -92,7 +92,8 @@ public abstract class KtAnalysisSession(final override val token: KtLifetimeToke
     KtResolveExtensionInfoProviderMixIn,
     KtCompilerFacilityMixIn,
     KtMetadataCalculatorMixIn,
-    KtSubstitutorProviderMixIn {
+    KtSubstitutorProviderMixIn,
+    KtKlibSourceFileProviderMixIn {
 
     public abstract val useSiteModule: KtModule
 
@@ -200,6 +201,7 @@ public abstract class KtAnalysisSession(final override val token: KtLifetimeToke
 
     @KtAnalysisApiInternals
     public val symbolProviderByJavaPsi: KtSymbolProviderByJavaPsi get() = symbolProviderByJavaPsiImpl
+
     @KtAnalysisApiInternals
     protected abstract val symbolProviderByJavaPsiImpl: KtSymbolProviderByJavaPsi
 
@@ -213,6 +215,9 @@ public abstract class KtAnalysisSession(final override val token: KtLifetimeToke
 
     internal val substitutorProvider: KtSubstitutorProvider get() = substitutorProviderImpl
     protected abstract val substitutorProviderImpl: KtSubstitutorProvider
+
+    internal val klibSourceFileProvider: KtKlibSourceFileProvider get() = klibSourceFileProviderImpl
+    protected abstract val klibSourceFileProviderImpl: KtKlibSourceFileProvider
 }
 
 public fun KtAnalysisSession.getModule(element: PsiElement): KtModule {
