@@ -120,9 +120,43 @@ internal object NativeTestSupport {
         return BaseDirs(testBuildDir)
     }
 
+    private fun Array<StackTraceElement>.shortString(): String {
+        return first().toString()
+    }
+
+    private fun printThreads(logger: TestLogger) {
+        val emptyThreads = mutableSetOf<Long>()
+        val defaultDispatcherThreads = mutableSetOf<Long>()
+        val forkJoinPoolThreads = mutableSetOf<Long>()
+        val processReaperThreads = mutableSetOf<Long>()
+        for ((thread, stackTrace) in Thread.getAllStackTraces()) {
+            if (Thread.currentThread().id == thread.id) {
+                continue
+            }
+            if (thread.name.startsWith("DefaultDispatcher")) {
+                defaultDispatcherThreads.add(thread.id)
+                continue
+            }
+            if (thread.name.startsWith("ForkJoinPool")) {
+                forkJoinPoolThreads.add(thread.id)
+                continue
+            }
+            if (thread.name.startsWith("process reaper")) {
+                processReaperThreads.add(thread.id)
+                continue
+            }
+            if (stackTrace.isEmpty()) {
+                emptyThreads.add(thread.id)
+                continue
+            }
+            logger.log("Thread ${thread.id} (${thread.name}): ${stackTrace.shortString()}")
+        }
+        logger.log("Active thread count: ${Thread.activeCount()} (${defaultDispatcherThreads.count()} default dispatcher) (${forkJoinPoolThreads.count()} fork join pool) (${processReaperThreads.count()} process reaper) (${emptyThreads.count()} with no stacktraces)")
+    }
+
     private fun ExtensionContext.setUpMemoryTracking() {
-        if (ProcessLevelProperty.TEAMCITY.readValue().toBoolean())
-            return // Don't track memory when running at TeamCity. It tracks memory by itself.
+//        if (ProcessLevelProperty.TEAMCITY.readValue().toBoolean())
+//            return // Don't track memory when running at TeamCity. It tracks memory by itself.
 
         TestLogger.initialize() // Initialize special logging (directly to Gradle's console).
 
@@ -141,6 +175,7 @@ internal object NativeTestSupport {
                     append(", max=").append(memoryMark.maxMemory.toMBs())
                 }
             )
+            printThreads(TestLogger)
         }
 
         // Stop tracking memory when all tests are finished:
