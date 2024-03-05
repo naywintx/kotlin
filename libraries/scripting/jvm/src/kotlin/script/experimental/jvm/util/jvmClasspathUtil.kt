@@ -69,9 +69,9 @@ fun classpathFromClassloader(currentClassLoader: ClassLoader, unpackJarCollectio
             setWritable(true, true)
             setExecutable(true, true)
 
-            Runtime.getRuntime().addShutdownHook(Thread {
+            Runtime.getRuntime().addShutdownHook(Thread({
                 deleteRecursively()
-            })
+            }, "classpathFromClassloader-shutdownHook"))
         }
     }
     return allRelatedClassLoaders(currentClassLoader).flatMap { classLoader ->

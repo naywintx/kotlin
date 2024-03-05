@@ -368,11 +368,11 @@ private fun generatePlatformLibraries(target: KonanTarget, cinteropOptions: CInt
 
     val tmpDirectory = createTempDir("build-", outputDirectory)
     // Delete the tmp directory in case of execution interruption.
-    val deleteTmpHook = Thread {
+    val deleteTmpHook = Thread({
         if (!saveTemps) {
             tmpDirectory.deleteRecursively()
         }
-    }
+    }, "generatePlatformLibraries-shutdownHook")
     Runtime.getRuntime().addShutdownHook(deleteTmpHook)
 
     // Build dependencies graph.

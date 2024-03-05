@@ -79,7 +79,7 @@ public class Preloader {
                         }
                         handler.done();
                     }
-                })
+                }, "org.jetbrains.kotlin.preloading.Preloader")
         );
 
         try {

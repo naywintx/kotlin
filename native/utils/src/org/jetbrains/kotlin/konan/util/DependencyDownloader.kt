@@ -38,8 +38,7 @@ class DependencyDownloader(
 
     val executor = ExecutorCompletionService<Unit>(Executors.newSingleThreadExecutor(object : ThreadFactory {
         override fun newThread(r: Runnable?): Thread {
-            val thread = Thread(r)
-            thread.name = "konan-dependency-downloader"
+            val thread = Thread(r, "konan-dependency-downloader")
             thread.isDaemon = true
 
             return thread
