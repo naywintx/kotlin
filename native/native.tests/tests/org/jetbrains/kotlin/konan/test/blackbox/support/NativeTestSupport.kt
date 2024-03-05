@@ -170,8 +170,8 @@ internal object NativeTestSupport {
     }
 
     private fun ExtensionContext.setUpMemoryTracking() {
-        if (ProcessLevelProperty.TEAMCITY.readValue().toBoolean())
-            return // Don't track memory when running at TeamCity. It tracks memory by itself.
+//        if (ProcessLevelProperty.TEAMCITY.readValue().toBoolean())
+//            return // Don't track memory when running at TeamCity. It tracks memory by itself.
 
         TestLogger.initialize() // Initialize special logging (directly to Gradle's console).
 
