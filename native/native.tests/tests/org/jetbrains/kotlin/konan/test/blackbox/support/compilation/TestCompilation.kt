@@ -374,6 +374,7 @@ internal class GivenLibraryCompilation(givenArtifact: KLIB) : TestCompilation<KL
 
 internal class CInteropCompilation(
     targets: KotlinNativeTargets,
+    home: KotlinNativeHome,
     classLoader: KotlinNativeClassLoader,
     freeCompilerArgs: TestCompilerArgs,
     defFile: File,
@@ -402,17 +403,18 @@ internal class CInteropCompilation(
             }
             add("-Xsource-compiler-option")
             add("-fobjc-arc")
-            add("-Xsource-compiler-option")
-            add("-DNS_FORMAT_ARGUMENT(A)=")
+//            add("-Xsource-compiler-option")
+//            add("-DNS_FORMAT_ARGUMENT(A)=")
             add("-compiler-option")
             add("-I${defFile.parentFile}")
         }
 
         val loggedCInteropParameters = LoggedData.CInteropParameters(args, defFile)
         val (loggedCall: LoggedData, immediateResult: TestCompilationResult.ImmediateResult<out KLIB>) = try {
-            val (exitCode, cinteropOutput, cinteropOutputHasErrors, duration) = invokeCInterop(
-                classLoader.classLoader,
-                expectedArtifact.klibFile,
+            val (exitCode, cinteropOutput, cinteropOutputHasErrors, duration) = invokeCInteropOutOfProcess(
+                // classLoader.classLoader,
+                // expectedArtifact.klibFile,
+                home,
                 args.toTypedArray()
             )
 

@@ -472,7 +472,7 @@ private fun compileSources(
     val mangledFileName = "${index}_${File(source).nameWithoutExtension}"
     val outputFileName = "$nativeLibsDir/${mangledFileName}.bc"
     val compilerArgs = cinteropArguments.sourceCompileOptions.toTypedArray()
-    val compilerCmd = toolConfig.clang.clangCXX(*compilerArgs, source, "-emit-llvm", "-c", "-o", outputFileName)
+    val compilerCmd = toolConfig.clang.clangCXX(*compilerArgs, "-DNS_FORMAT_ARGUMENT(A)=", source, "-emit-llvm", "-c", "-o", outputFileName)
     runCmd(compilerCmd.toTypedArray(), verbose = cinteropArguments.verbose)
     outputFileName
 }
