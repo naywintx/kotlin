@@ -129,7 +129,6 @@ internal fun invokeCInterop(
     outputLib: File,
     args: Array<String>
 ): CompilationToolCallResult {
-    error("Go away")
     val buildDir = KonanFile("${outputLib.canonicalPath}-build")
     val generatedDir = KonanFile(buildDir, "kotlin")
     val nativesDir = KonanFile(buildDir, "natives")
