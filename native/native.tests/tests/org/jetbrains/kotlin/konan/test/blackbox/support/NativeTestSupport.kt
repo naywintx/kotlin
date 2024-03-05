@@ -124,14 +124,28 @@ internal object NativeTestSupport {
         return first().toString()
     }
 
+    val emptyThreads = mutableSetOf<Long>()
+
     private fun printThreads(logger: TestLogger) {
-        val emptyThreads = mutableSetOf<Long>()
+        val currentEmptyThreads = mutableSetOf<Long>()
         val defaultDispatcherThreads = mutableSetOf<Long>()
         val forkJoinPoolThreads = mutableSetOf<Long>()
         val processReaperThreads = mutableSetOf<Long>()
         for ((thread, stackTrace) in Thread.getAllStackTraces()) {
             if (Thread.currentThread().id == thread.id) {
                 continue
+            }
+            if (stackTrace.isEmpty()) {
+                currentEmptyThreads.add(thread.id)
+                if (thread.id !in emptyThreads) {
+                    logger.log("Thread ${thread.id} (${thread.name}): NO_STACKTRACE")
+                    emptyThreads.add(thread.id)
+                }
+                continue
+            }
+            if (thread.id in emptyThreads) {
+                logger.log("Thread ${thread.id} (${thread.name}): YES_STACKTRACE ${stackTrace.shortString()}")
+                emptyThreads.remove(thread.id)
             }
             if (thread.name.startsWith("DefaultDispatcher")) {
                 defaultDispatcherThreads.add(thread.id)
@@ -145,13 +159,14 @@ internal object NativeTestSupport {
                 processReaperThreads.add(thread.id)
                 continue
             }
-            if (stackTrace.isEmpty()) {
-                emptyThreads.add(thread.id)
-                continue
-            }
             logger.log("Thread ${thread.id} (${thread.name}): ${stackTrace.shortString()}")
         }
-        logger.log("Active thread count: ${Thread.activeCount()} (${defaultDispatcherThreads.count()} default dispatcher) (${forkJoinPoolThreads.count()} fork join pool) (${processReaperThreads.count()} process reaper) (${emptyThreads.count()} with no stacktraces)")
+        val deadThreads = emptyThreads - currentEmptyThreads
+        emptyThreads.removeAll(deadThreads)
+        for (threadId in deadThreads) {
+            logger.log("Thread ${threadId}: GONE")
+        }
+        logger.log("Active thread count: ${Thread.activeCount()} (${defaultDispatcherThreads.count()} default dispatcher) (${forkJoinPoolThreads.count()} fork join pool) (${processReaperThreads.count()} process reaper) (${currentEmptyThreads.count()} with no stacktraces)")
     }
 
     private fun ExtensionContext.setUpMemoryTracking() {
