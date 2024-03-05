@@ -80,9 +80,9 @@ class ProcessStreams(
 
 private object ProcessKiller {
     init {
-        Runtime.getRuntime().addShutdownHook(Thread({
+        Runtime.getRuntime().addShutdownHook(Thread {
             killAllProcesses()
-        }, "ProcessKiller"))
+        })
     }
 
     private var processes = ConcurrentLinkedQueue<Process>()
