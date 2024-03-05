@@ -132,9 +132,10 @@ internal abstract class BasicCompilation<A : TestCompilationArtifact>(
 
         val (loggedCompilerCall: LoggedData, result: TestCompilationResult.ImmediateResult<out A>) = try {
             val compilerToolCallResult = when (compilerOutputInterceptor) {
-                CompilerOutputInterceptor.DEFAULT -> callCompiler(
+                CompilerOutputInterceptor.DEFAULT -> callCompilerOutOfProcess(
                     compilerArgs = compilerArgs,
-                    kotlinNativeClassLoader = classLoader.classLoader
+                    // kotlinNativeClassLoader = classLoader.classLoader
+                    home = home,
                 )
                 CompilerOutputInterceptor.NONE -> callCompilerWithoutOutputInterceptor(
                     compilerArgs = compilerArgs,
