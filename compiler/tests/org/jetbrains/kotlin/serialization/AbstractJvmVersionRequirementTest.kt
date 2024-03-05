@@ -14,10 +14,10 @@ import org.jetbrains.kotlin.resolve.lazy.JvmResolveUtil
 import org.jetbrains.kotlin.test.ConfigurationKind
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.TestJdkKind
-import org.jetbrains.kotlin.test.testFramework.IrFirConfigurableTestCase
+import org.jetbrains.kotlin.test.testFramework.FrontendBackendConfiguration
 import java.io.File
 
-abstract class AbstractJvmVersionRequirementTest : AbstractVersionRequirementTest(), IrFirConfigurableTestCase {
+abstract class AbstractJvmVersionRequirementTest : AbstractVersionRequirementTest(), FrontendBackendConfiguration {
     override fun compileFiles(
         files: List<File>,
         outputDirectory: File,

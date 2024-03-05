@@ -18,10 +18,10 @@ package org.jetbrains.kotlin.jvm.compiler
 
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.test.KotlinTestUtils
-import org.jetbrains.kotlin.test.testFramework.IrFirConfigurableTestCase
+import org.jetbrains.kotlin.test.testFramework.FrontendBackendConfiguration
 import java.io.File
 
-abstract class AbstractLoadJavaWithPsiClassReadingTest : AbstractLoadJavaTest(), IrFirConfigurableTestCase {
+abstract class AbstractLoadJavaWithPsiClassReadingTest : AbstractLoadJavaTest(), FrontendBackendConfiguration {
     override fun updateConfiguration(configuration: CompilerConfiguration) {
         configureIrFir(configuration)
         super.updateConfiguration(configuration)

@@ -32,7 +32,7 @@ abstract class AbstractWriteSignatureTest : CodegenTestCase() {
         val header: String,
         val name: String,
         val expectedJvmSignature: String?,
-        expectedGenericSignature: String,
+        expectedGenericSignature: String
     ) {
         private val expectedFormattedSignature = formatSignature(header, expectedJvmSignature, expectedGenericSignature)
         private val jvmDescriptorToFormattedSignature = mutableMapOf<String, String>()
@@ -42,7 +42,7 @@ abstract class AbstractWriteSignatureTest : CodegenTestCase() {
                 Assert.assertFalse(jvmDescriptorToFormattedSignature.containsKey(actualJvmSignature))
 
                 jvmDescriptorToFormattedSignature[actualJvmSignature] =
-                    formatSignature(header, expectedJvmSignature?.let { actualJvmSignature }, actualGenericSignature)
+                        formatSignature(header, expectedJvmSignature?.let { actualJvmSignature }, actualGenericSignature)
             }
         }
 
@@ -127,7 +127,7 @@ abstract class AbstractWriteSignatureTest : CodegenTestCase() {
                 name: String,
                 signature: String?,
                 superName: String?,
-                interfaces: Array<out String>?,
+                interfaces: Array<out String>?
             ) {
                 classExpectations.forEach { it.accept(name, name, signature ?: "null") }
                 super.visit(version, access, name, signature, superName, interfaces)
@@ -138,7 +138,7 @@ abstract class AbstractWriteSignatureTest : CodegenTestCase() {
                 name: String,
                 desc: String,
                 signature: String?,
-                exceptions: Array<out String>?,
+                exceptions: Array<out String>?
             ): MethodVisitor? {
                 methodExpectations.forEach { it.accept(name, desc, signature ?: "null") }
                 return super.visitMethod(access, name, desc, signature, exceptions)
@@ -234,3 +234,4 @@ abstract class AbstractWriteSignatureTest : CodegenTestCase() {
         }
     }
 }
+

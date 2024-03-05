@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.test.FirParser
 import org.jetbrains.kotlin.test.TargetBackend
 
-interface IrFirConfigurableTestCase {
+interface FrontendBackendConfiguration {
     val useFir: Boolean
         get() = false
     val firParser: FirParser

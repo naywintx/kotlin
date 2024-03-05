@@ -9,12 +9,12 @@ import org.jetbrains.kotlin.checkers.ENABLE_JVM_PREVIEW
 import org.jetbrains.kotlin.checkers.parseLanguageVersionSettings
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.config.*
-import org.jetbrains.kotlin.test.testFramework.IrFirConfigurableTestCase
+import org.jetbrains.kotlin.test.testFramework.FrontendBackendConfiguration
 import org.jetbrains.kotlin.test.testFramework.KtUsefulTestCase
 import org.jetbrains.kotlin.test.util.KtTestUtil
 import java.io.File
 
-abstract class KotlinBaseTest<F : KotlinBaseTest.TestFile> : KtUsefulTestCase(), IrFirConfigurableTestCase {
+abstract class KotlinBaseTest<F : KotlinBaseTest.TestFile> : KtUsefulTestCase(), FrontendBackendConfiguration {
     @Throws(Exception::class)
     override fun setUp() {
         super.setUp()
@@ -32,7 +32,7 @@ abstract class KotlinBaseTest<F : KotlinBaseTest.TestFile> : KtUsefulTestCase(),
     @Throws(java.lang.Exception::class)
     protected open fun doMultiFileTest(
         wholeFile: File,
-        files: List<F>,
+        files: List<F>
     ) {
         throw UnsupportedOperationException("Multi-file test cases are not supported in this test")
     }
@@ -68,7 +68,7 @@ abstract class KotlinBaseTest<F : KotlinBaseTest.TestFile> : KtUsefulTestCase(),
         jdkKind: TestJdkKind,
         classpath: List<File?>,
         javaSource: List<File?>,
-        testFilesWithConfigurationDirectives: List<TestFile>,
+        testFilesWithConfigurationDirectives: List<TestFile>
     ): CompilerConfiguration {
         val configuration = KotlinTestUtils.newConfiguration(kind, jdkKind, classpath, javaSource)
         updateConfigurationByDirectivesInTestFiles(
@@ -84,7 +84,7 @@ abstract class KotlinBaseTest<F : KotlinBaseTest.TestFile> : KtUsefulTestCase(),
     open class TestFile @JvmOverloads constructor(
         @JvmField val name: String,
         @JvmField val content: String,
-        @JvmField val directives: Directives = Directives(),
+        @JvmField val directives: Directives = Directives()
     ) : Comparable<TestFile> {
         override operator fun compareTo(other: TestFile): Int {
             return name.compareTo(other.name)
@@ -124,7 +124,7 @@ abstract class KotlinBaseTest<F : KotlinBaseTest.TestFile> : KtUsefulTestCase(),
         @JvmStatic
         fun updateConfigurationByDirectivesInTestFiles(
             testFilesWithConfigurationDirectives: List<TestFile>,
-            configuration: CompilerConfiguration,
+            configuration: CompilerConfiguration
         ) {
             updateConfigurationByDirectivesInTestFiles(testFilesWithConfigurationDirectives, configuration, false)
         }
@@ -133,7 +133,7 @@ abstract class KotlinBaseTest<F : KotlinBaseTest.TestFile> : KtUsefulTestCase(),
         private fun updateConfigurationByDirectivesInTestFiles(
             testFilesWithConfigurationDirectives: List<TestFile>,
             configuration: CompilerConfiguration,
-            usePreparsedDirectives: Boolean,
+            usePreparsedDirectives: Boolean
         ) {
             var explicitLanguageVersionSettings: LanguageVersionSettings? = null
             val kotlinConfigurationFlags: MutableList<String> = ArrayList(0)

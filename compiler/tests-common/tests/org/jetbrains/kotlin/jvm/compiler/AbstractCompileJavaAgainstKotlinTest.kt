@@ -38,7 +38,7 @@ import org.jetbrains.kotlin.test.KotlinTestUtils.createEnvironmentWithMockJdkAnd
 import org.jetbrains.kotlin.test.KotlinTestUtils.newConfiguration
 import org.jetbrains.kotlin.test.TestCaseWithTmpdir
 import org.jetbrains.kotlin.test.TestJdkKind
-import org.jetbrains.kotlin.test.testFramework.IrFirConfigurableTestCase
+import org.jetbrains.kotlin.test.testFramework.FrontendBackendConfiguration
 import org.jetbrains.kotlin.test.util.KtTestUtil
 import org.jetbrains.kotlin.test.util.RecursiveDescriptorComparatorAdaptor.validateAndCompareDescriptorWithFile
 import org.junit.Assert
@@ -46,7 +46,7 @@ import java.io.File
 import java.io.IOException
 import java.lang.annotation.Retention
 
-abstract class AbstractCompileJavaAgainstKotlinTest : TestCaseWithTmpdir(), IrFirConfigurableTestCase {
+abstract class AbstractCompileJavaAgainstKotlinTest : TestCaseWithTmpdir(), FrontendBackendConfiguration {
 
     protected fun doTestWithJavac(ktFilePath: String) {
         doTest(ktFilePath, true)
