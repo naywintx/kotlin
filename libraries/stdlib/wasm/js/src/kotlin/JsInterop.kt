@@ -24,4 +24,4 @@ public annotation class JsFun(val code: String)
 /**
  * Exception thrown by the JavaScript code.
  */
-public class JsException : Throwable()
+public class JsException : Throwable(message = "Exception was thrown while running JavaScript code")
