@@ -741,14 +741,14 @@ private inline fun printToString(block: Printer.() -> Unit): String =
 
 private fun defaultValue(type: PsiType): String =
     when (type) {
-        PsiType.BYTE -> "0"
-        PsiType.BOOLEAN -> "false"
-        PsiType.CHAR -> "\'\\u0000\'"
-        PsiType.SHORT -> "0"
-        PsiType.INT -> "0"
-        PsiType.LONG -> "0L"
-        PsiType.FLOAT -> "0.0F"
-        PsiType.DOUBLE -> "0.0"
+        PsiTypes.byteType() -> "0"
+        PsiTypes.booleanType() -> "false"
+        PsiTypes.charType() -> "\'\\u0000\'"
+        PsiTypes.shortType() -> "0"
+        PsiTypes.intType() -> "0"
+        PsiTypes.longType() -> "0L"
+        PsiTypes.floatType() -> "0.0F"
+        PsiTypes.doubleType() -> "0.0"
         else -> "null"
     }
 
