@@ -38,14 +38,57 @@
 #import "Mutex.hpp"
 #import "Exceptions.h"
 #import "Natives.h"
+#import "std_support/AtomicRef.hpp"
 
 using namespace kotlin;
+
+namespace kotlin::std_support {
+
+template<>
+class atomic_ref<Class> {
+public:
+    explicit atomic_ref(Class& ref) : ref_(ref) {}
+    atomic_ref(const atomic_ref& other) noexcept : ref_(other.ref_) {}
+
+    ALWAYS_INLINE void store(Class desired, std::memory_order order = std::memory_order_seq_cst) const noexcept {
+        __atomic_store(&ref_, &desired, internal::builtinOrder(order));
+    }
+
+    ALWAYS_INLINE Class load(std::memory_order order = std::memory_order_seq_cst) const noexcept {
+        Class res;
+        __atomic_load(&ref_, &res, internal::builtinOrder(order));
+        return res;
+    }
+
+private:
+    Class& ref_;
+};
+
+}
 
 namespace {
 
 template <typename T>
 inline T* konanAllocArray(size_t length) {
     return reinterpret_cast<T*>(std::calloc(length, sizeof(T)));
+}
+
+Class getClassAcquireInitialization(const TypeInfo* typeInfo) {
+    auto aRef = std_support::atomic_ref<Class>(typeInfo->writableInfo_->objCExport.objCClass);
+    return aRef.load(std::memory_order_acquire);
+}
+
+void setClassEnsureInitialized(const TypeInfo* typeInfo, Class cls) {
+    RuntimeAssert(cls != nullptr, "");
+
+    if (kotlin::mm::IsCurrentThreadRegistered()) {
+        AssertThreadState(ThreadState::kNative);
+    }
+
+    // Calls +initialize on cls if not yet initialized
+    [cls self];
+    auto aRef = std_support::atomic_ref<Class>(typeInfo->writableInfo_->objCExport.objCClass);
+    aRef.store(cls, std::memory_order_release);
 }
 
 }
@@ -247,6 +290,11 @@ extern "C" void Kotlin_ObjCExport_initializeClass(Class clazz) {
     getOrCreateTypeInfo(clazz);
     return;
   }
+
+  // We aren't really sure we've checked all the cases when initialize is called, and guarded them with a switch to native.
+  // If panic asserts above are disabled, let's ensure the native state here,
+  // to avoid potentially more frequent deadlock cases.
+  kotlin::NativeOrUnregisteredThreadGuard threadStateGuard(/* reentrant = */ true);
 
   const TypeInfo* typeInfo = typeAdapter->kotlinTypeInfo;
   bool isClassForPackage = typeInfo == nullptr;
@@ -465,13 +513,8 @@ static ALWAYS_INLINE id Kotlin_ObjCExport_refToObjCImpl(ObjHeader* obj) {
 
   convertReferenceToRetainedObjC convertToRetained = (convertReferenceToRetainedObjC)obj->type_info()->writableInfo_->objCExport.convertToRetained;
 
-  {
-    // ObjC runtime calls +initialize under a global lock on the first access to an object.
-    // Let's force this initialization process here in a native state.
-    kotlin::NativeOrUnregisteredThreadGuard threadStateGuard(true);
-    Class cls = getOrCreateClass(obj->type_info());
-    [cls self];
-  }
+  // Ensure that class object is created and properly initialized
+  getOrCreateClass(obj->type_info());
 
   id retainedResult;
   if (convertToRetained != nullptr) {
@@ -522,8 +565,9 @@ extern "C" OBJ_GETTER(Kotlin_ObjCExport_refFromObjC, id obj) {
 }
 
 static id convertKotlinObjectToRetained(ObjHeader* obj) {
-  Class clazz = obj->type_info()->writableInfo_->objCExport.objCClass;
-  RuntimeAssert(clazz != nullptr, "");
+  // actually, the initialization acquisition should already happen by this point
+  // but better safe than data race
+  Class clazz = getClassAcquireInitialization(obj->type_info());
   return [clazz createRetainedWrapper:obj];
 }
 
@@ -919,7 +963,7 @@ static const TypeInfo* createTypeInfo(Class clazz, const TypeInfo* superType, co
                                           superITable, superITableSize, itableEqualsSuper, fieldsInfo);
 
   // TODO: it will probably never be requested, since such a class can't be instantiated in Kotlin.
-  result->writableInfo_->objCExport.objCClass = clazz;
+  setClassEnsureInitialized(result, clazz);
   return result;
 }
 
@@ -1022,26 +1066,29 @@ static Class createClass(const TypeInfo* typeInfo, Class superClass) {
 }
 
 static Class getOrCreateClass(const TypeInfo* typeInfo) {
-  Class result = typeInfo->writableInfo_->objCExport.objCClass;
+  Class result = getClassAcquireInitialization(typeInfo);
   if (result != nullptr) {
     return result;
   }
+  
+  // ObjC runtime calls +initialize under a global lock on the first access to an object.
+  // `setClassEnsureInitialized` below would ensure ahead of time initialization
+  // we only have to ensure that it happens in the native state
+  kotlin::NativeOrUnregisteredThreadGuard threadStateGuard(true);
 
   const ObjCTypeAdapter* typeAdapter = getTypeAdapter(typeInfo);
   if (typeAdapter != nullptr) {
     result = objc_getClass(typeAdapter->objCName);
-    RuntimeAssert(result != nullptr, "");
-    typeInfo->writableInfo_->objCExport.objCClass = result;
+    setClassEnsureInitialized(typeInfo, result);
   } else {
     Class superClass = getOrCreateClass(typeInfo->superType_);
 
     std::lock_guard lockGuard(classCreationMutex); // Note: non-recursive
 
-    result = typeInfo->writableInfo_->objCExport.objCClass; // double-checking.
+    result = getClassAcquireInitialization(typeInfo);
     if (result == nullptr) {
       result = createClass(typeInfo, superClass);
-      RuntimeAssert(result != nullptr, "");
-      typeInfo->writableInfo_->objCExport.objCClass = result;
+      setClassEnsureInitialized(typeInfo, result);
     }
   }
 
