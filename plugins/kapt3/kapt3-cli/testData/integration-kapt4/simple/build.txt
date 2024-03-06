@@ -9,6 +9,7 @@ output/sources
 -language-version 2.0
 -cp %KOTLIN_STDLIB%
 -d output/ap
+-J-Xmx512m
 ap/Processor.kt
 
 # copy
@@ -39,6 +40,7 @@ output/sources/generated/Test.java
 -language-version 2.0
 -d output/classes
 -cp output/ap:output/javaClasses:output/classes:%KOTLIN_STDLIB%
+-J-Xmx512m
 Test.kt
 
 # java

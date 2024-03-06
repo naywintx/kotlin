@@ -16,6 +16,7 @@ output/sources
 -language-version 2.0
 -cp %KOTLIN_STDLIB%
 -d output/ap
+-J-Xmx512m
 ap/Processor.kt
 
 # kapt
@@ -37,6 +38,7 @@ Test.kt
 -Xuse-kapt4
 -d output/classes
 -cp output/classes:output/ap:%KOTLIN_STDLIB%
+-J-Xmx512m
 Test.kt
 output/sources
 

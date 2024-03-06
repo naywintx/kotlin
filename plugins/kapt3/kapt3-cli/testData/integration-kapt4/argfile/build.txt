@@ -14,6 +14,7 @@ output/javaClasses
 output/sources
 
 # kotlinc
+-J-Xmx512m
 @apKotlincArgs.txt
 
 # kapt
@@ -25,6 +26,7 @@ output/sources
 # kotlinc
 -language-version 2.0
 -d output/classes
+-J-Xmx512m
 -cp output/ap:output/classes:output/javaClasses
 Test.kt
 
