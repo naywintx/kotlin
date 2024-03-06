@@ -239,7 +239,13 @@ class KotlinCompilationNpmResolver(
                 project.tasks
                     .withType(Zip::class.java)
                     .named(npmProject.target.artifactsTaskName) {
-                        it.from(packageJsonTask)
+                        it.from(
+                            compilationNpmResolution.zip(packageJsonTask) { resolution, task ->
+                                if (resolution.npmDeps.isNotEmpty()) {
+                                    task
+                                } else emptySet<Any>()
+                            }
+                        )
                     }
 
                 val publicPackageJsonConfiguration = createPublicPackageJsonConfiguration()
