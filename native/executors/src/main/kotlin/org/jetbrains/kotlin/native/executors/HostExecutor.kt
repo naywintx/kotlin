@@ -23,60 +23,60 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 import kotlin.time.measureTimedValue
 
-class ProcessStreams(
-    scope: CoroutineScope,
-    process: Process,
-    stdin: InputStream,
-    stdout: OutputStream,
-    stderr: OutputStream,
-) {
-    private val ignoreIOErrors = AtomicBoolean(false)
-    private val stdin = scope.launch {
-        stdin.apply {
-            copyStreams(this, process.outputStream)
-            close()
-        }
-        process.outputStream.close()
-    }
-    private val stdout = scope.launch {
-        stdout.apply {
-            copyStreams(process.inputStream, this)
-            close()
-        }
-        process.inputStream.close()
-    }
-    private val stderr = scope.launch {
-        stderr.apply {
-            copyStreams(process.errorStream, this)
-            close()
-        }
-        process.errorStream.close()
-    }
-
-    private fun copyStreams(from: InputStream, to: OutputStream) {
-        try {
-            from.copyTo(to)
-        } catch (e: IOException) {
-            if (ignoreIOErrors.get()) return
-            throw e
-        }
-    }
-
-    suspend fun drain() {
-        // First finish passing input into the process.
-        stdin.join()
-        // Now receive all the output in whatever order.
-        stdout.join()
-        stderr.join()
-    }
-
-    fun cancel() {
-        ignoreIOErrors.set(true)
-        stdout.cancel()
-        stderr.cancel()
-        stdin.cancel()
-    }
-}
+//class ProcessStreams(
+//    scope: CoroutineScope,
+//    process: Process,
+//    stdin: InputStream,
+//    stdout: OutputStream,
+//    stderr: OutputStream,
+//) {
+//    private val ignoreIOErrors = AtomicBoolean(false)
+//    private val stdin = scope.launch {
+//        stdin.apply {
+//            copyStreams(this, process.outputStream)
+//            close()
+//        }
+//        process.outputStream.close()
+//    }
+//    private val stdout = scope.launch {
+//        stdout.apply {
+//            copyStreams(process.inputStream, this)
+//            close()
+//        }
+//        process.inputStream.close()
+//    }
+//    private val stderr = scope.launch {
+//        stderr.apply {
+//            copyStreams(process.errorStream, this)
+//            close()
+//        }
+//        process.errorStream.close()
+//    }
+//
+//    private fun copyStreams(from: InputStream, to: OutputStream) {
+//        try {
+//            from.copyTo(to)
+//        } catch (e: IOException) {
+//            if (ignoreIOErrors.get()) return
+//            throw e
+//        }
+//    }
+//
+//    suspend fun drain() {
+//        // First finish passing input into the process.
+//        stdin.join()
+//        // Now receive all the output in whatever order.
+//        stdout.join()
+//        stderr.join()
+//    }
+//
+//    fun cancel() {
+//        ignoreIOErrors.set(true)
+//        stdout.cancel()
+//        stderr.cancel()
+//        stdin.cancel()
+//    }
+//}
 
 private object ProcessKiller {
     init {
@@ -98,16 +98,17 @@ private object ProcessKiller {
     fun deregister(process: Process) = processes.remove(process)
 }
 
-private fun <T> ProcessBuilder.scoped(block: suspend CoroutineScope.(Process) -> T): T {
+private fun <T> ProcessBuilder.scoped(block: /*suspend CoroutineScope.*/(Process) -> T): T {
     val process = start()
     // Make sure the process is killed even if the jvm process is being destroyed.
     // e.g. gradle --no-daemon task execution was cancelled by the user pressing ^C
     ProcessKiller.register(process)
     return try {
-        val result = runBlocking(Dispatchers.IO) {
-            block(process)
-        }
-        result
+//        val result = runBlocking(Dispatchers.IO) {
+//            block(process)
+//        }
+//        result
+        block(process)
     } finally {
         // Make sure the process is killed even if the current thread was interrupted.
         // e.g. gradle task execution was cancelled by the user pressing ^C
@@ -168,15 +169,17 @@ class HostExecutor : Executor {
         return ProcessBuilder(listOf(request.executableAbsolutePath) + request.args).apply {
             directory(workingDirectory)
             environment().putAll(request.environment)
+//            redirectInput(ProcessBuilder.Redirect.DISCARD)
+//            redirectError(ProcessBuilder.Redirect.DISCARD)
         }.scoped { process ->
-            val streams = ProcessStreams(this, process, request.stdin, request.stdout, request.stderr)
+            // val streams = ProcessStreams(this, process, request.stdin, request.stdout, request.stderr)
             val (isTimeout, duration) = measureTimedValue {
                 !process.waitFor(request.timeout)
             }
-            suspend fun cancel() {
-                streams.cancel()
+            /*suspend */fun cancel() {
+//                streams.cancel()
                 process.destroyForcibly()
-                streams.drain()
+//                streams.drain()
             }
             if (isTimeout) {
                 logger.warning("Timeout running $commandLine in $duration")
@@ -187,15 +190,15 @@ class HostExecutor : Executor {
                 logger.info("Finished executing $commandLine in $duration exit code $exitCode")
                 // KT-65113: Looks like read() from stdout/stderr of a child process may hang on Windows
                 // even when the child process is already terminated.
-                val waitStreamsDuration = if (HostManager.hostIsMingw) 10.seconds else Duration.INFINITE
-                try {
-                    withTimeout(waitStreamsDuration) {
-                        streams.drain()
-                    }
-                } catch (e: TimeoutCancellationException) {
-                    logger.warning("Failed to join the streams in $waitStreamsDuration.")
-                    cancel()
-                }
+//                val waitStreamsDuration = if (HostManager.hostIsMingw) 10.seconds else Duration.INFINITE
+//                try {
+//                    withTimeout(waitStreamsDuration) {
+//                        streams.drain()
+//                    }
+//                } catch (e: TimeoutCancellationException) {
+//                    logger.warning("Failed to join the streams in $waitStreamsDuration.")
+//                    cancel()
+//                }
                 ExecuteResponse(exitCode, duration)
             }
         }
