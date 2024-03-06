@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNpmResolutionManager
 import org.jetbrains.kotlin.gradle.targets.js.npm.*
 import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinPackageJsonTask
+import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinResolutionDependenciesTask
 import org.jetbrains.kotlin.gradle.tasks.registerTask
 import org.jetbrains.kotlin.gradle.utils.*
 import java.io.File
@@ -70,52 +71,6 @@ class KotlinCompilationNpmResolver(
     val externalNpmDependencies: DomainObjectSet<NpmDependency> = aggregatedConfiguration.allDependencies
         .withType(NpmDependency::class.java)
 
-    val publicPackageJsonTaskHolder: TaskProvider<PublicPackageJsonTask> = run {
-        val npmResolutionManager = project.kotlinNpmResolutionManager
-        val nodeJsTaskProviders = project.rootProject.kotlinNodeJsExtension
-        project.registerTask<PublicPackageJsonTask>(
-            npmProject.publicPackageJsonTaskName
-        ) {
-            it.dependsOn(packageJsonTaskHolder)
-
-            it.compilationDisambiguatedName.set(compilationDisambiguatedName)
-            it.packageJsonHandlers.set(compilation.packageJsonHandlers)
-
-            it.npmResolutionManager.value(npmResolutionManager)
-                .disallowChanges()
-
-            it.jsIrCompilation.set(true)
-            it.npmProjectName.set(npmProject.name)
-            it.npmProjectMain.set(npmProject.main)
-            it.extension.set(compilation.fileExtension)
-//            it.components.set(resolvedAggregatedConfiguration.first)
-//            it.map.set(resolvedAggregatedConfiguration.second)
-        }.also { packageJsonTask ->
-            project.dependencies.attributesSchema {
-                it.attribute(publicPackageJsonAttribute)
-            }
-
-            nodeJsTaskProviders.packageJsonUmbrellaTaskProvider.configure {
-                it.dependsOn(packageJsonTask)
-            }
-
-            if (compilation.isMain()) {
-                project.tasks
-                    .withType(Zip::class.java)
-                    .configureEach {
-                        if (it.name == npmProject.target.artifactsTaskName) {
-                            it.dependsOn(packageJsonTask)
-                        }
-                    }
-
-                val publicPackageJsonConfiguration = createPublicPackageJsonConfiguration()
-
-                target.project.artifacts.add(publicPackageJsonConfiguration.name, packageJsonTask.map { it.packageJsonFile }) {
-                    it.builtBy(packageJsonTask)
-                }
-            }
-        }
-    }
 
     override fun toString(): String = "KotlinCompilationNpmResolver(${npmProject.name})"
 
@@ -241,8 +196,60 @@ class KotlinCompilationNpmResolver(
 //            }
 //        }
 
+    val configuratorTaskHolder: TaskProvider<KotlinResolutionDependenciesTask> =
+        KotlinResolutionDependenciesTask.create(compilation, aggregatedConfiguration, compilationDisambiguatedName)
+
     val packageJsonTaskHolder: TaskProvider<KotlinPackageJsonTask> =
-        KotlinPackageJsonTask.create(compilation, aggregatedConfiguration, compilationDisambiguatedName, compilationNpmResolution)
+        KotlinPackageJsonTask.create(compilation, aggregatedConfiguration, compilationDisambiguatedName, compilationNpmResolution).apply {
+            this.configure {
+                it.dependsOn(configuratorTaskHolder)
+            }
+        }
+
+    val publicPackageJsonTaskHolder: TaskProvider<PublicPackageJsonTask> = run {
+        val npmResolutionManager = project.kotlinNpmResolutionManager
+        val nodeJsTaskProviders = project.rootProject.kotlinNodeJsExtension
+        project.registerTask<PublicPackageJsonTask>(
+            npmProject.publicPackageJsonTaskName
+        ) {
+            it.dependsOn(packageJsonTaskHolder)
+
+            it.compilationDisambiguatedName.set(compilationDisambiguatedName)
+            it.packageJsonHandlers.set(compilation.packageJsonHandlers)
+
+            it.npmResolutionManager.value(npmResolutionManager)
+                .disallowChanges()
+
+            it.jsIrCompilation.set(true)
+            it.npmProjectName.set(npmProject.name)
+            it.npmProjectMain.set(npmProject.main)
+            it.extension.set(compilation.fileExtension)
+//            it.components.set(resolvedAggregatedConfiguration.first)
+//            it.map.set(resolvedAggregatedConfiguration.second)
+        }.also { packageJsonTask ->
+            project.dependencies.attributesSchema {
+                it.attribute(publicPackageJsonAttribute)
+            }
+
+            nodeJsTaskProviders.packageJsonUmbrellaTaskProvider.configure {
+                it.dependsOn(packageJsonTask)
+            }
+
+            if (compilation.isMain()) {
+                project.tasks
+                    .withType(Zip::class.java)
+                    .named(npmProject.target.artifactsTaskName) {
+                        it.from(packageJsonTask)
+                    }
+
+                val publicPackageJsonConfiguration = createPublicPackageJsonConfiguration()
+
+                target.project.artifacts.add(publicPackageJsonConfiguration.name, packageJsonTask.map { it.packageJsonFile }) {
+                    it.builtBy(packageJsonTask)
+                }
+            }
+        }
+    }
 
     @Synchronized
     fun close(): KotlinCompilationNpmResolution? {

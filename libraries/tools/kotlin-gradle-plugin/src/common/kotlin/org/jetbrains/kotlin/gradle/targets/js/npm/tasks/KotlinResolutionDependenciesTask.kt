@@ -12,7 +12,6 @@ import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
-import org.gradle.api.provider.SetProperty
 import org.gradle.api.tasks.*
 import org.gradle.work.DisableCachingByDefault
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrCompilation
@@ -21,15 +20,11 @@ import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNodeJsExtension
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNpmResolutionManager
 import org.jetbrains.kotlin.gradle.targets.js.npm.*
-import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinCompilationNpmResolution
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinRootNpmResolver
 import org.jetbrains.kotlin.gradle.tasks.registerTask
-import org.jetbrains.kotlin.gradle.utils.mapToFile
-import org.jetbrains.kotlin.gradle.utils.setProperty
-import java.io.File
 
 @DisableCachingByDefault
-abstract class KotlinPackageJsonTask :
+abstract class KotlinResolutionDependenciesTask :
     DefaultTask(),
     UsesKotlinNpmResolutionManager,
     UsesGradleNodeModulesCache {
@@ -119,21 +114,17 @@ abstract class KotlinPackageJsonTask :
 //        compilationResolver.compilationNpmResolution.inputs
 //    }
 
-    @get:Input
-    internal val externalNpmDeps: SetProperty<NpmDependencyDeclaration> = project.objects.setProperty<NpmDependencyDeclaration>()
-
-    @get:OutputFile
-    abstract val packageJson: Property<File>
-
     @TaskAction
     fun resolve() {
 //        val resolvedConfiguration = components.get() to map.get().map { (key, value) -> key.componentIdentifier to value }.toMap()
 
         val resolution = npmResolutionManager.get().resolution.get()[projectPath][compilationDisambiguatedName.get()]
-        val preparedResolution = resolution
-            .resolution!!
-
-        resolution.createPackageJson(preparedResolution, packageJsonMain, packageJsonHandlers)
+        resolution
+            .prepareWithDependencies(
+                npmResolutionManager = npmResolutionManager.get(),
+                logger = logger,
+                resolvedConfiguration = components
+            )
     }
 
     companion object {
@@ -141,17 +132,17 @@ abstract class KotlinPackageJsonTask :
             compilation: KotlinJsIrCompilation,
             conf: Configuration,
             anotherConfName: String,
-            compilationResolution: Provider<KotlinCompilationNpmResolution>
+//            compilationResolution: Provider<KotlinCompilationNpmResolution>
 //            resolvedConfiguration: Pair<Provider<ResolvedComponentResult>, Provider<Map<ComponentArtifactIdentifier, File>>>
-        ): TaskProvider<KotlinPackageJsonTask> {
+        ): TaskProvider<KotlinResolutionDependenciesTask> {
             val target = compilation.target
             val project = target.project
             val npmProject = compilation.npmProject
             val nodeJsTaskProviders = project.rootProject.kotlinNodeJsExtension
 
             val npmCachesSetupTask = nodeJsTaskProviders.npmCachesSetupTaskProvider
-            val packageJsonTaskName = npmProject.packageJsonTaskName
-            val packageJsonUmbrella = nodeJsTaskProviders.packageJsonUmbrellaTaskProvider
+            val packageJsonTaskName = npmProject.configureResolutionTaskName
+//            val packageJsonUmbrella = nodeJsTaskProviders.packageJsonUmbrellaTaskProvider
 
 //            fun createAggregatedConfiguration(): Configuration {
 //                val all = project.configurations.create(compilation.disambiguateName("npm"))
@@ -184,14 +175,11 @@ abstract class KotlinPackageJsonTask :
 
             val npmResolutionManager = project.kotlinNpmResolutionManager
             val gradleNodeModules = GradleNodeModulesCache.registerIfAbsent(project, null, null)
-            val packageJsonTask = project.registerTask<KotlinPackageJsonTask>(packageJsonTaskName) { task ->
+            val packageJsonTask = project.registerTask<KotlinResolutionDependenciesTask>(packageJsonTaskName) { task ->
                 task.compilationDisambiguatedName.set(anotherConfName)
                 task.packageJsonHandlers.set(compilation.packageJsonHandlers)
                 task.description = "Create package.json file for $compilation"
                 task.group = NodeJsRootPlugin.TASKS_GROUP_NAME
-                task.externalNpmDeps.set(
-                    compilationResolution.map { it.npmDeps }
-                )
 
                 task.one.from(conf)
 
@@ -245,19 +233,13 @@ abstract class KotlinPackageJsonTask :
 
                 task.packageJsonMain.set(compilation.npmProject.main)
 
-                task.packageJson.set(compilation.npmProject.packageJsonFile.mapToFile())
-
                 task.onlyIf {
-                    it as KotlinPackageJsonTask
+                    it as KotlinResolutionDependenciesTask
                     it.npmResolutionManager.get().isConfiguringState()
                 }
 
 //                task.dependsOn(target.project.provider { task.findDependentTasks() })
                 task.dependsOn(npmCachesSetupTask)
-            }
-
-            packageJsonUmbrella.configure { task ->
-                task.inputs.file(packageJsonTask.map { it.packageJson })
             }
 
             nodeJsTaskProviders.rootPackageJsonTaskProvider.configure { it.mustRunAfter(packageJsonTask) }

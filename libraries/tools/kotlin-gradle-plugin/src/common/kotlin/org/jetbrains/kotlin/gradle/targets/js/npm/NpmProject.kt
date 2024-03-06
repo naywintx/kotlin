@@ -64,6 +64,9 @@ open class NpmProject(@Transient val compilation: KotlinJsIrCompilation) : Seria
     val packageJsonFile: Provider<RegularFile>
         get() = dir.map { it.file(PACKAGE_JSON) }
 
+    val configureResolutionTaskName: String
+        get() = compilation.disambiguateName("configureResolution")
+
     val packageJsonTaskName: String
         get() = compilation.disambiguateName("packageJson")
 
