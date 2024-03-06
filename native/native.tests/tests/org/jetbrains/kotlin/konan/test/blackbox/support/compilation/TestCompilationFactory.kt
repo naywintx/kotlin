@@ -254,6 +254,7 @@ internal class TestCompilationFactory {
                             }
                         }
                         CInteropCompilation(
+                            home = settings.get(),
                             classLoader = settings.get(),
                             targets = settings.get(),
                             freeCompilerArgs = freeCompilerArgs,

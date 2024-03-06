@@ -145,6 +145,7 @@ internal fun AbstractNativeSimpleTest.cinteropToLibrary(
 ): TestCompilationResult<out TestCompilationArtifact.KLIB> {
     val testCase: TestCase = generateCInteropTestCaseFromSingleDefFile(defFile, freeCompilerArgs)
     return CInteropCompilation(
+        home = testRunSettings.get(),
         classLoader = testRunSettings.get(),
         targets = targets,
         freeCompilerArgs = freeCompilerArgs,
