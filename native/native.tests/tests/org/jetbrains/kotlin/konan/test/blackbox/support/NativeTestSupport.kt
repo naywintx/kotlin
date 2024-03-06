@@ -127,8 +127,12 @@ internal object NativeTestSupport {
     private fun printThreads(logger: TestLogger) {
         val currentEmptyThreads = mutableSetOf<Long>()
         val defaultDispatcherThreads = mutableSetOf<Long>()
+        val defaultDispatcherBusyThreads = mutableSetOf<Long>()
+        val defaultDispatcherIOThreads = mutableSetOf<Long>()
+        val defaultDispatcherWaitThreads = mutableSetOf<Long>()
         val forkJoinPoolThreads = mutableSetOf<Long>()
         val processReaperThreads = mutableSetOf<Long>()
+        val processReaperBusyThreads = mutableSetOf<Long>()
         for ((thread, stackTrace) in Thread.getAllStackTraces()) {
             if (Thread.currentThread().id == thread.id) {
                 continue
@@ -139,16 +143,42 @@ internal object NativeTestSupport {
             }
             if (thread.name.startsWith("DefaultDispatcher")) {
                 defaultDispatcherThreads.add(thread.id)
+                if (thread.name.contains("@coroutine")) {
+                    if (stackTrace.first().toString().contains("java.io.FileInputStream.readBytes(Native Method)")) {
+                        defaultDispatcherIOThreads.add(thread.id)
+                        continue
+                    }
+                    if (stackTrace.first().toString().contains("java.lang.Object.wait(Native Method)")) {
+                        defaultDispatcherWaitThreads.add(thread.id)
+                        continue
+                    }
+                    defaultDispatcherBusyThreads.add(thread.id)
+                    continue
+                }
             }
             if (thread.name.startsWith("ForkJoinPool")) {
                 forkJoinPoolThreads.add(thread.id)
             }
             if (thread.name.startsWith("process reaper")) {
                 processReaperThreads.add(thread.id)
+                if (stackTrace.first().toString().startsWith("java.lang.UNIXProcess.waitForProcessExit(Native Method)")) {
+                    processReaperBusyThreads.add(thread.id)
+                    continue
+                }
             }
             logger.log("Thread ${thread.id} (${thread.name}): ${stackTrace.shortString()}")
         }
-        logger.log("Active thread count: ${Thread.activeCount()} (${defaultDispatcherThreads.count()} default dispatcher) (${forkJoinPoolThreads.count()} fork join pool) (${processReaperThreads.count()} process reaper) (${currentEmptyThreads.count()} with no stacktraces)")
+        logger.log(buildString {
+            append("Active thread count: ${Thread.activeCount()} ")
+            append("(${defaultDispatcherThreads.count()} default dispatcher ")
+            append("(${defaultDispatcherBusyThreads.count()} busy)")
+            append("(${defaultDispatcherIOThreads.count()} I/O)")
+            append("(${defaultDispatcherWaitThreads.count()} wait)")
+            append(") ")
+            append("(${forkJoinPoolThreads.count()} fork join pool) ")
+            append("(${processReaperThreads.count()} process reaper (${processReaperBusyThreads.count()} busy)) ")
+            append("(${currentEmptyThreads.count()} with no stacktraces)")
+        })
     }
 
     private fun ExtensionContext.setUpMemoryTracking() {
