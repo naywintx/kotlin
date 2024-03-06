@@ -2,33 +2,83 @@
  * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
-@file:Suppress("DEPRECATION_ERROR") // deprecated visitors API
-
 package kotlin.metadata.internal.extensions
 
 import kotlin.metadata.*
-import kotlin.metadata.internal.common.KmModuleFragmentExtensionVisitor
+import kotlin.reflect.KClass
 
-public interface KmExtension<V : KmExtensionVisitor> : KmExtensionVisitor {
-    public fun accept(visitor: V)
+// TODO: rewrite docs for extensions
+@RequiresOptIn("Internal!", level = RequiresOptIn.Level.ERROR)
+public annotation class InternalExtensionsApi
+
+/**
+ * A type of the extension visitor expected by the code that uses the visitor API.
+ *
+ * Each declaration which can have platform-specific extensions in the metadata has a method `getExtension`, e.g.:
+ *
+ *     fun KmFunction.getExtension(type: KmExtensionType): KmFunctionExtension
+ *
+ * The client code is supposed to return the extension visitor corresponding to the given type, or to return `null` if the type is
+ * of no interest to that code. Each platform-specific extension visitor has a [KmExtensionType] instance declared in the `TYPE` property
+ * its companion object. For example, to load JVM extensions on a function, one could do:
+ * ```
+ *     override fun visitExtensions(type: KmExtensionType): KmFunctionExtensionVisitor? {
+ *         if (type != JvmFunctionExtensionVisitor.TYPE) return null
+ *
+ *         return object : JvmFunctionExtensionVisitor() {
+ *             ...
+ *         }
+ *     }
+ * ```
+ * In case an extension visitor of an unrelated type is returned, the code using the visitor API must ignore that visitor.
+ */
+@InternalExtensionsApi
+public class KmExtensionType(private val klass: KClass<out KmExtension>) {
+    override fun equals(other: Any?): Boolean =
+        other is KmExtensionType && klass == other.klass
+
+    override fun hashCode(): Int =
+        klass.hashCode()
+
+    override fun toString(): String =
+        klass.java.name
 }
 
-public interface KmClassExtension : KmClassExtensionVisitor, KmExtension<KmClassExtensionVisitor>
+@InternalExtensionsApi
+public interface KmExtension {
 
-public interface KmPackageExtension : KmPackageExtensionVisitor, KmExtension<KmPackageExtensionVisitor>
+    /**
+     * Type of this extension visitor.
+     */
+    public val type: KmExtensionType
+}
 
-public interface KmModuleFragmentExtension : KmModuleFragmentExtensionVisitor, KmExtension<KmModuleFragmentExtensionVisitor>
+@InternalExtensionsApi
+public interface KmClassExtension : KmExtension
 
-public interface KmFunctionExtension : KmFunctionExtensionVisitor, KmExtension<KmFunctionExtensionVisitor>
+@InternalExtensionsApi
+public interface KmPackageExtension : KmExtension
 
-public interface KmPropertyExtension : KmPropertyExtensionVisitor, KmExtension<KmPropertyExtensionVisitor>
+@InternalExtensionsApi
+public interface KmModuleFragmentExtension : KmExtension
 
-public interface KmConstructorExtension : KmConstructorExtensionVisitor, KmExtension<KmConstructorExtensionVisitor>
+@InternalExtensionsApi
+public interface KmFunctionExtension : KmExtension
 
-public interface KmTypeParameterExtension : KmTypeParameterExtensionVisitor, KmExtension<KmTypeParameterExtensionVisitor>
+@InternalExtensionsApi
+public interface KmPropertyExtension : KmExtension
 
-public interface KmTypeExtension : KmTypeExtensionVisitor, KmExtension<KmTypeExtensionVisitor>
+@InternalExtensionsApi
+public interface KmConstructorExtension : KmExtension
 
-public interface KmTypeAliasExtension : KmTypeAliasExtensionVisitor, KmExtension<KmTypeAliasExtensionVisitor>
+@InternalExtensionsApi
+public interface KmTypeParameterExtension : KmExtension
 
-public interface KmValueParameterExtension : KmValueParameterExtensionVisitor, KmExtension<KmValueParameterExtensionVisitor>
+@InternalExtensionsApi
+public interface KmTypeExtension : KmExtension
+
+@InternalExtensionsApi
+public interface KmTypeAliasExtension : KmExtension
+
+@InternalExtensionsApi
+public interface KmValueParameterExtension : KmExtension

@@ -5,9 +5,9 @@
 @file:Suppress("DEPRECATION_ERROR") // KmExtensionType will be moved to an internal package
 package kotlin.metadata.internal.extensions
 
-import kotlin.metadata.KmExtensionType
 
-internal fun <N : KmExtension<*>> Collection<N>.singleOfType(type: KmExtensionType): N {
+@InternalExtensionsApi
+internal fun <N : KmExtension> Collection<N>.singleOfType(type: KmExtensionType): N {
     var result: N? = null
     for (node in this) {
         if (node.type != type) continue

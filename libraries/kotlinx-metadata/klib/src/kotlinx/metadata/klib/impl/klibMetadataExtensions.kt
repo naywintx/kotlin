@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.serialization.StringTableImpl
 
-@Suppress("DEPRECATION_ERROR")
+@OptIn(InternalExtensionsApi::class)
 internal class KlibMetadataExtensions : MetadataExtensions {
 
     private fun ReadContext.getSourceFile(index: Int) =
@@ -28,7 +28,7 @@ internal class KlibMetadataExtensions : MetadataExtensions {
         strings.getStringIndex(file.name)
 
     override fun readClassExtensions(kmClass: KmClass, proto: ProtoBuf.Class, c: ReadContext) {
-        val extension = kmClass.visitExtensions(KlibClassExtensionVisitor.TYPE) as? KlibClassExtensionVisitor ?: return
+        val extension = kmClass.getExtension(KlibClassExtensionVisitor.TYPE) as? KlibClassExtensionVisitor ?: return
 
         proto.getExtension(KlibMetadataProtoBuf.classAnnotation).forEach { annotation ->
             extension.visitAnnotation(annotation.readAnnotation(c.strings))
@@ -49,7 +49,7 @@ internal class KlibMetadataExtensions : MetadataExtensions {
     }
 
     override fun readPackageExtensions(kmPackage: KmPackage, proto: ProtoBuf.Package, c: ReadContext) {
-        val extension = kmPackage.visitExtensions(KlibPackageExtensionVisitor.TYPE) as? KlibPackageExtensionVisitor ?: return
+        val extension = kmPackage.getExtension(KlibPackageExtensionVisitor.TYPE) as? KlibPackageExtensionVisitor ?: return
 
         proto.getExtensionOrNull(KlibMetadataProtoBuf.packageFqName)?.let {
             val fqName = (c.strings as NameResolverImpl).getPackageFqName(it)
@@ -58,7 +58,7 @@ internal class KlibMetadataExtensions : MetadataExtensions {
     }
 
     override fun readModuleFragmentExtensions(kmModuleFragment: KmModuleFragment, proto: ProtoBuf.PackageFragment, c: ReadContext) {
-        val extension = kmModuleFragment.visitExtensions(KlibModuleFragmentExtensionVisitor.TYPE) as? KlibModuleFragmentExtensionVisitor ?: return
+        val extension = kmModuleFragment.getExtension(KlibModuleFragmentExtensionVisitor.TYPE) as? KlibModuleFragmentExtensionVisitor ?: return
 
         proto.getExtension(KlibMetadataProtoBuf.packageFragmentFiles)
             .map { c.getSourceFile(it) }
@@ -85,7 +85,7 @@ internal class KlibMetadataExtensions : MetadataExtensions {
     }
 
     override fun readPropertyExtensions(kmProperty: KmProperty, proto: ProtoBuf.Property, c: ReadContext) {
-        val extension = kmProperty.visitExtensions(KlibPropertyExtensionVisitor.TYPE) as? KlibPropertyExtensionVisitor ?: return
+        val extension = kmProperty.getExtension(KlibPropertyExtensionVisitor.TYPE) as? KlibPropertyExtensionVisitor ?: return
 
         proto.getExtension(KlibMetadataProtoBuf.propertyAnnotation).forEach { annotation ->
             extension.visitAnnotation(annotation.readAnnotation(c.strings))

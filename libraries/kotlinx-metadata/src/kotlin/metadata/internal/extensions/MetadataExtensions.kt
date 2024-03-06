@@ -11,6 +11,7 @@ import kotlin.metadata.internal.common.*
 import org.jetbrains.kotlin.metadata.ProtoBuf
 import java.util.*
 
+@OptIn(InternalExtensionsApi::class)
 public interface MetadataExtensions {
     public fun readClassExtensions(kmClass: KmClass, proto: ProtoBuf.Class, c: ReadContext)
 

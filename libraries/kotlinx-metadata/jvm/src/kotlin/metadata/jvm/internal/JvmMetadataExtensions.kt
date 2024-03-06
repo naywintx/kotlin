@@ -18,6 +18,7 @@ import kotlin.metadata.jvm.JvmMemberSignature
 import kotlin.metadata.jvm.JvmMethodSignature
 import kotlin.metadata.jvm.wrapAsPublic
 
+@OptIn(InternalExtensionsApi::class)
 internal class JvmMetadataExtensions : MetadataExtensions {
     override fun readClassExtensions(kmClass: KmClass, proto: ProtoBuf.Class, c: ReadContext) {
         val ext = kmClass.jvm
@@ -223,13 +224,9 @@ internal class JvmMetadataExtensions : MetadataExtensions {
 
     override fun createPackageExtension(): KmPackageExtension = JvmPackageExtension()
 
-    @Suppress("DEPRECATION_ERROR")
     override fun createModuleFragmentExtensions(): KmModuleFragmentExtension =
         object : KmModuleFragmentExtension {
             override val type: KmExtensionType = KmExtensionType(KmModuleFragmentExtension::class)
-
-            override fun accept(visitor: KmModuleFragmentExtensionVisitor) {
-            }
         }
 
     override fun createFunctionExtension(): KmFunctionExtension = JvmFunctionExtension()
