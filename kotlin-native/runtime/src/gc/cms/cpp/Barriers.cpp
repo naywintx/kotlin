@@ -193,7 +193,7 @@ ALWAYS_INLINE ObjHeader* gc::barriers::weakRefReadBarrier(std::atomic<ObjHeader*
             if (__builtin_expect(phase == BarriersPhase::kWeakProcessing, false)) {
                 // TODO reread the referee here under the barrier guard
                 //      if `disableBarriers` would be possible outside of STW
-                return weakRefReadInWeakSweepSlowPath(weakReferee);
+                return weakRefReadInWeakSweepSlowPath(weak);
             }
         }
         return weak;
