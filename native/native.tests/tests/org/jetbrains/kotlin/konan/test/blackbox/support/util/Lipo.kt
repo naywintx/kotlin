@@ -11,6 +11,9 @@ import org.jetbrains.kotlin.konan.test.blackbox.support.LoggedData
 import org.jetbrains.kotlin.konan.test.blackbox.support.compilation.TestCompilationArtifact
 import org.jetbrains.kotlin.konan.test.blackbox.support.compilation.TestCompilationResult
 import org.jetbrains.kotlin.konan.test.blackbox.support.settings.configurables
+import org.jetbrains.kotlin.konan.test.blackbox.support.settings.executor
+import org.jetbrains.kotlin.native.executors.HostExecutor
+import org.jetbrains.kotlin.native.executors.runProcess
 import java.io.File
 import java.io.FileInputStream
 import kotlin.time.measureTimedValue
@@ -19,40 +22,30 @@ internal fun AbstractNativeSimpleTest.lipoCreate(
     inputFiles: List<File>,
     outputFile: File,
 ): TestCompilationResult<out TestCompilationArtifact.BinaryLibrary> {
-    val processBuilder = ProcessBuilder(
-        "${testRunSettings.configurables.absoluteTargetToolchain}/bin/lipo",
+    val lipoPath = "${testRunSettings.configurables.absoluteTargetToolchain}/bin/lipo"
+    val arguments = arrayOf(
         "-create",
         *inputFiles.map { it.canonicalPath }.toTypedArray(),
         "-output",
         outputFile.canonicalPath,
     )
-    val process = processBuilder.start()
-    val (exitCode, duration) = measureTimedValue {
-        process.waitFor()
-    }
-    val stderr = process.errorStream.readBytes()
-    val stdout = process.inputStream.readBytes()
+    val result = testRunSettings.executor.runProcess(lipoPath, *arguments)
 
     val parameters = CommandParameters(
         commandName = "LIPO",
-        command = processBuilder.command()
+        command = listOf(lipoPath) + arguments.toList()
     )
 
     fun loggedData(output: String = "") = LoggedData.CompilationToolCall(
         toolName = "LIPO",
         parameters = parameters,
-        exitCode = if (exitCode == 0) ExitCode.OK else ExitCode.COMPILATION_ERROR,
-        toolOutput = stdout.decodeToString() + stderr.decodeToString() + output,
-        toolOutputHasErrors = stderr.isNotEmpty(),
-        duration = duration,
+        exitCode = ExitCode.OK,
+        toolOutput = result.output,
+        toolOutputHasErrors = result.stderr.isNotEmpty(),
+        duration = result.executionTime,
         input = null,
     )
 
-    if (exitCode != 0) {
-        return TestCompilationResult.CompilationToolFailure(
-            loggedData()
-        )
-    }
     if (!outputFile.exists()) {
         return TestCompilationResult.CompilationToolFailure(
             loggedData(
