@@ -54,6 +54,7 @@ public:
         return ScopeGuard{[&]{
             markData.markQueue().construct(parProc_);
         }, [&]{
+            markData.markQueue()->clear();
             markData.markQueue().destroy();
         }};
     }
