@@ -192,6 +192,7 @@ class KotlinWasmGradlePluginIT : KGPBaseTest() {
 
     @DisplayName("Check mix project with wasi only dependency works correctly")
     @GradleTest
+    @GradleTestVersions(minVersion = TestVersions.Gradle.G_7_4)
     fun jsAndWasiTargetsWithDependencyOnWasiOnlyProject(gradleVersion: GradleVersion) {
         project("wasm-wasi-js-with-wasi-only-dependency", gradleVersion) {
             buildGradleKts.modify(::transformBuildScriptWithPluginsDsl)
