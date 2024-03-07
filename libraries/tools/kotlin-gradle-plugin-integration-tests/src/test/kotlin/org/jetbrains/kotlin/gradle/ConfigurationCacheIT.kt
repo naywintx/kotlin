@@ -278,8 +278,15 @@ class ConfigurationCacheIT : AbstractConfigurationCacheIT() {
 }
 
 abstract class AbstractConfigurationCacheIT : KGPBaseTest() {
-    override val defaultBuildOptions =
-        super.defaultBuildOptions.copy(configurationCache = true)
+
+    @TempDir
+    lateinit var konanDataTempDir: Path
+
+    override val defaultBuildOptions
+        get() = super.defaultBuildOptions.copy(
+            configurationCache = true,
+            konanDataDir = konanDataTempDir
+        )
 
     protected fun TestProject.testConfigurationCacheOf(
         vararg taskNames: String,
