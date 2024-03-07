@@ -85,17 +85,19 @@ class KotlinCompilationNpmResolver(
         all.isVisible = false
         all.description = "NPM configuration for $compilation."
 
-        KotlinDependencyScope.values().forEach { scope ->
-            val compilationConfiguration = project.compilationDependencyConfigurationByScope(
-                compilation,
-                scope
-            )
-            all.extendsFrom(compilationConfiguration)
-            compilation.allKotlinSourceSets.forEach { sourceSet ->
-                val sourceSetConfiguration = project.configurations.sourceSetDependencyConfigurationByScope(sourceSet, scope)
-                all.extendsFrom(sourceSetConfiguration)
+        KotlinDependencyScope.values()
+            .filter { it != KotlinDependencyScope.RUNTIME_ONLY_SCOPE }
+            .forEach { scope ->
+                val compilationConfiguration = project.compilationDependencyConfigurationByScope(
+                    compilation,
+                    scope
+                )
+                all.extendsFrom(compilationConfiguration)
+                compilation.allKotlinSourceSets.forEach { sourceSet ->
+                    val sourceSetConfiguration = project.configurations.sourceSetDependencyConfigurationByScope(sourceSet, scope)
+                    all.extendsFrom(sourceSetConfiguration)
+                }
             }
-        }
 
         // We don't have `kotlin-js-test-runner` in NPM yet
         all.dependencies.add(rootResolver.versions.kotlinJsTestRunner.createDependency(project))
