@@ -567,10 +567,6 @@ class ExecutableCompilation(
     override fun applyDependencies(argsBuilder: ArgsBuilder): Unit = with(argsBuilder) {
         super.applyDependencies(argsBuilder)
         addFlattened(dependencies.libraries) { library -> listOf("-l", library.path) }
-        cacheMode.staticCacheForDistributionLibrariesRootDir
-            ?.takeIf { tryPassSystemCacheDirectory }
-            ?.let { cacheRootDir -> add("-Xcache-directory=$cacheRootDir") }
-        add(dependencies.uniqueCacheDirs) { libraryCacheDir -> "-Xcache-directory=${libraryCacheDir.path}" }
     }
 
     override fun postCompileCheck() {
