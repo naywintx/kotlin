@@ -170,6 +170,7 @@ class KotlinWasmGradlePluginIT : KGPBaseTest() {
 
     @DisplayName("Check js target with browser")
     @GradleTest
+    @GradleTestVersions(minVersion = TestVersions.Gradle.G_7_4)
     fun jsTargetWithBrowser(gradleVersion: GradleVersion) {
         project("new-mpp-wasm-js", gradleVersion) {
             buildGradleKts.modify(::transformBuildScriptWithPluginsDsl)
