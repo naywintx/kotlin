@@ -179,11 +179,11 @@ internal fun PsiToIrContext.psiToIr(
 
                 for (dependency in sortDependencies(dependencies).filter { it != moduleDescriptor }) {
                     val kotlinLibrary = (dependency.getCapability(KlibModuleOrigin.CAPABILITY) as? DeserializedKlibModuleOrigin)?.library
-                    if (kotlinLibrary?.isHeader == true)
-                        linker.deserializeHeadersWithInlineBodies(dependency, kotlinLibrary)
                     val isFullyCachedLibrary = kotlinLibrary != null &&
                             config.cachedLibraries.isLibraryCached(kotlinLibrary) && kotlinLibrary != config.libraryToCache?.klib
-                    if (isProducingLibrary || isFullyCachedLibrary)
+                    if (isFullyCachedLibrary && kotlinLibrary?.isHeader == true)
+                        linker.deserializeHeadersWithInlineBodies(dependency, kotlinLibrary)
+                    else if (isProducingLibrary || isFullyCachedLibrary)
                         linker.deserializeOnlyHeaderModule(dependency, kotlinLibrary)
                     else
                         linker.deserializeIrModuleHeader(dependency, kotlinLibrary, dependency.name.asString())
