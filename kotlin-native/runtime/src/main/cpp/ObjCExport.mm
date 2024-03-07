@@ -82,7 +82,7 @@ void setClassEnsureInitialized(const TypeInfo* typeInfo, Class cls) {
     RuntimeAssert(cls != nullptr, "");
 
     if (kotlin::mm::IsCurrentThreadRegistered()) {
-        AssertThreadState(ThreadState::kNative);
+        AssertThreadState(kotlin::ThreadState::kNative);
     }
 
     // Calls +initialize on cls if not yet initialized
@@ -282,7 +282,7 @@ extern "C" void Kotlin_ObjCExport_initializeClass(Class clazz) {
   if (kotlin::mm::IsCurrentThreadRegistered()) {
     // ObjC runtime might have taken a lock in Runnable context on the way here. Safe-points are unwelcome in the code below.
     // We can't make it all the way in a Runnable state as well, because some of the operations below might take a while.
-    AssertThreadState(ThreadState::kNative);
+    AssertThreadState(kotlin::ThreadState::kNative);
   }
 
   const ObjCTypeAdapter* typeAdapter = findClassAdapter(clazz);
