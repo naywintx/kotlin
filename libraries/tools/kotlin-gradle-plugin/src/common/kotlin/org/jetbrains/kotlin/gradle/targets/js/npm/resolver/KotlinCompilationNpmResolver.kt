@@ -17,6 +17,7 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.Zip
 import org.jetbrains.kotlin.gradle.plugin.categoryByName
+import org.jetbrains.kotlin.gradle.plugin.launch
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
 import org.jetbrains.kotlin.gradle.plugin.mpp.fileExtension
 import org.jetbrains.kotlin.gradle.plugin.mpp.isMain
@@ -236,23 +237,26 @@ class KotlinCompilationNpmResolver(
             }
 
             if (compilation.isMain()) {
-                project.tasks
-                    .withType(Zip::class.java)
-                    .named(npmProject.target.artifactsTaskName) {
-                        it.from(
-                            compilationNpmResolution.zip(packageJsonTask.map { it.packageJsonFile }) { resolution, file ->
-                                if (resolution.npmDeps.isNotEmpty()) {
-                                    file
-                                } else emptySet<Any>()
-                            }
-                        )
-                        it.dependsOn(packageJsonTask)
+                // wait for artifact task registering
+                project.launch {
+                    project.tasks
+                        .withType(Zip::class.java)
+                        .named(npmProject.target.artifactsTaskName) {
+                            it.from(
+                                compilationNpmResolution.zip(packageJsonTask.map { it.packageJsonFile }) { resolution, file ->
+                                    if (resolution.npmDeps.isNotEmpty()) {
+                                        file
+                                    } else emptySet<Any>()
+                                }
+                            )
+                            it.dependsOn(packageJsonTask)
+                        }
+
+                    val publicPackageJsonConfiguration = createPublicPackageJsonConfiguration()
+
+                    target.project.artifacts.add(publicPackageJsonConfiguration.name, packageJsonTask.map { it.packageJsonFile }) {
+                        it.builtBy(packageJsonTask)
                     }
-
-                val publicPackageJsonConfiguration = createPublicPackageJsonConfiguration()
-
-                target.project.artifacts.add(publicPackageJsonConfiguration.name, packageJsonTask.map { it.packageJsonFile }) {
-                    it.builtBy(packageJsonTask)
                 }
             }
         }
