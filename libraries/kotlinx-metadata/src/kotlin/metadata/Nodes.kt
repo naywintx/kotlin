@@ -119,13 +119,8 @@ public class KmClass : KmDeclarationContainer {
      */
     public val versionRequirements: MutableList<KmVersionRequirement> = ArrayList(0)
 
-    @InternalExtensionsApi
     internal val extensions: List<KmClassExtension> =
         MetadataExtensions.INSTANCES.map(MetadataExtensions::createClassExtension)
-
-    @InternalExtensionsApi
-    public fun getExtension(type: KmExtensionType): KmClassExtension =
-        extensions.singleOfType(type)
 }
 
 /**
@@ -149,13 +144,8 @@ public class KmPackage : KmDeclarationContainer {
      */
     override val typeAliases: MutableList<KmTypeAlias> = ArrayList(0)
 
-    @InternalExtensionsApi
     internal val extensions: List<KmPackageExtension> =
         MetadataExtensions.INSTANCES.map(MetadataExtensions::createPackageExtension)
-
-    @InternalExtensionsApi
-    public fun getExtension(type: KmExtensionType): KmPackageExtension =
-        extensions.singleOfType(type)
 }
 
 /**
@@ -187,13 +177,8 @@ public class KmConstructor internal constructor(internal var flags: Int) {
      */
     public val versionRequirements: MutableList<KmVersionRequirement> = ArrayList(0)
 
-    @InternalExtensionsApi
     internal val extensions: List<KmConstructorExtension> =
         MetadataExtensions.INSTANCES.map(MetadataExtensions::createConstructorExtension)
-
-    @InternalExtensionsApi
-    public fun getExtension(type: KmExtensionType): KmConstructorExtension =
-        extensions.singleOfType(type)
 }
 
 /**
@@ -245,13 +230,8 @@ public class KmFunction internal constructor(internal var flags: Int, public var
     @ExperimentalContracts
     public var contract: KmContract? = null
 
-    @InternalExtensionsApi
     internal val extensions: List<KmFunctionExtension> =
         MetadataExtensions.INSTANCES.map(MetadataExtensions::createFunctionExtension)
-
-    @InternalExtensionsApi
-    public fun getExtension(type: KmExtensionType): KmFunctionExtension =
-        extensions.singleOfType(type)
 }
 
 /**
@@ -347,13 +327,8 @@ public class KmProperty internal constructor(
      */
     public val versionRequirements: MutableList<KmVersionRequirement> = ArrayList(0)
 
-    @InternalExtensionsApi
     internal val extensions: List<KmPropertyExtension> =
         MetadataExtensions.INSTANCES.map(MetadataExtensions::createPropertyExtension)
-
-    @InternalExtensionsApi
-    public fun getExtension(type: KmExtensionType): KmPropertyExtension =
-        extensions.singleOfType(type)
 }
 
 /**
@@ -397,13 +372,8 @@ public class KmTypeAlias internal constructor(
      */
     public val versionRequirements: MutableList<KmVersionRequirement> = ArrayList(0)
 
-    @InternalExtensionsApi
     internal val extensions: List<KmTypeAliasExtension> =
         MetadataExtensions.INSTANCES.mapNotNull(MetadataExtensions::createTypeAliasExtension)
-
-    @InternalExtensionsApi
-    public fun getExtension(type: KmExtensionType): KmTypeAliasExtension =
-        extensions.singleOfType(type)
 }
 
 /**
@@ -432,13 +402,8 @@ public class KmValueParameter internal constructor(
      */
     public var varargElementType: KmType? = null
 
-    @InternalExtensionsApi
     internal val extensions: List<KmValueParameterExtension> =
         MetadataExtensions.INSTANCES.mapNotNull(MetadataExtensions::createValueParameterExtension)
-
-    @InternalExtensionsApi
-    public fun getExtension(type: KmExtensionType): KmValueParameterExtension =
-        extensions.singleOfType(type)
 }
 
 /**
@@ -466,13 +431,8 @@ public class KmTypeParameter internal constructor(
      */
     public val upperBounds: MutableList<KmType> = ArrayList(1)
 
-    @InternalExtensionsApi
     internal val extensions: List<KmTypeParameterExtension> =
         MetadataExtensions.INSTANCES.map(MetadataExtensions::createTypeParameterExtension)
-
-    @InternalExtensionsApi
-    public fun getExtension(type: KmExtensionType): KmTypeParameterExtension =
-        extensions.singleOfType(type)
 }
 
 /**
@@ -527,13 +487,8 @@ public class KmType internal constructor(
      */
     public var flexibleTypeUpperBound: KmFlexibleTypeUpperBound? = null
 
-    @InternalExtensionsApi
     internal val extensions: List<KmTypeExtension> =
         MetadataExtensions.INSTANCES.map(MetadataExtensions::createTypeExtension)
-
-    @InternalExtensionsApi
-    public fun getExtension(type: KmExtensionType): KmTypeExtension =
-        extensions.singleOfType(type)
 }
 
 /**
@@ -751,5 +706,3 @@ public data class KmVersion(val major: Int, val minor: Int, val patch: Int) {
  */
 @ExperimentalContracts
 public data class KmConstantValue(val value: Any?)
-
-private const val flagAccessPrefix = "Flag API is deprecated. Please use corresponding member extensions on"

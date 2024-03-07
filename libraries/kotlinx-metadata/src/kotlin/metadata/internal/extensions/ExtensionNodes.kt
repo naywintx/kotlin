@@ -5,22 +5,8 @@
 package kotlin.metadata.internal.extensions
 
 import kotlin.metadata.*
+import kotlin.metadata.internal.common.KmModuleFragment
 import kotlin.reflect.KClass
-
-/**
- * Marks functions and classes that are part of the internal mechanism to work with platform-specific metadata.
- *
- * Such API is used exclusively by platform-specific counterparts (like kotlin-metadata-jvm and kotlinx-metadata-klib) of the kotlin-metadata library.
- * It is not intended to be publicly used, nor are there any use cases for that.
- *
- * Platform-specific data is presented to users as corresponding extensions on Km nodes, like `KmProperty.getterSignature`, and there is no
- * publicly available mechanism to retrieve them another way.
- */
-@RequiresOptIn(
-    "This is an internal kotlin-metadata API for working with platform-specific metadata. There are no situations for it to be explicitly used.",
-    level = RequiresOptIn.Level.ERROR
-)
-public annotation class InternalExtensionsApi
 
 /**
  * A type of the extension expected by the code that uses the extensions API.
@@ -31,7 +17,6 @@ public annotation class InternalExtensionsApi
  * These functions are used by -jvm and -klib counterparts to retrieve platform-specific metadata
  * and should not be used in any other way.
  */
-@InternalExtensionsApi
 public class KmExtensionType(private val klass: KClass<out KmExtension>) {
     override fun equals(other: Any?): Boolean =
         other is KmExtensionType && klass == other.klass
@@ -46,7 +31,6 @@ public class KmExtensionType(private val klass: KClass<out KmExtension>) {
 /**
  * Base interface for all extensions to hold the extension type.
  */
-@InternalExtensionsApi
 public interface KmExtension {
 
     /**
@@ -55,32 +39,57 @@ public interface KmExtension {
     public val type: KmExtensionType
 }
 
-@InternalExtensionsApi
 public interface KmClassExtension : KmExtension
 
-@InternalExtensionsApi
+public fun KmClass.getExtension(type: KmExtensionType): KmClassExtension = extensions.singleOfType(type)
+
 public interface KmPackageExtension : KmExtension
 
-@InternalExtensionsApi
+public fun KmPackage.getExtension(type: KmExtensionType): KmPackageExtension = extensions.singleOfType(type)
+
 public interface KmModuleFragmentExtension : KmExtension
 
-@InternalExtensionsApi
+public fun KmModuleFragment.getExtension(type: KmExtensionType): KmModuleFragmentExtension = extensions.singleOfType(type)
+
 public interface KmFunctionExtension : KmExtension
 
-@InternalExtensionsApi
+public fun KmFunction.getExtension(type: KmExtensionType): KmFunctionExtension = extensions.singleOfType(type)
+
 public interface KmPropertyExtension : KmExtension
 
-@InternalExtensionsApi
+public fun KmProperty.getExtension(type: KmExtensionType): KmPropertyExtension = extensions.singleOfType(type)
+
 public interface KmConstructorExtension : KmExtension
 
-@InternalExtensionsApi
+public fun KmConstructor.getExtension(type: KmExtensionType): KmConstructorExtension = extensions.singleOfType(type)
+
 public interface KmTypeParameterExtension : KmExtension
 
-@InternalExtensionsApi
+public fun KmTypeParameter.getExtension(type: KmExtensionType): KmTypeParameterExtension = extensions.singleOfType(type)
+
 public interface KmTypeExtension : KmExtension
 
-@InternalExtensionsApi
+public fun KmType.getExtension(type: KmExtensionType): KmTypeExtension = extensions.singleOfType(type)
+
 public interface KmTypeAliasExtension : KmExtension
 
-@InternalExtensionsApi
+public fun KmTypeAlias.getExtension(type: KmExtensionType): KmTypeAliasExtension = extensions.singleOfType(type)
+
 public interface KmValueParameterExtension : KmExtension
+
+public fun KmValueParameter.getExtension(type: KmExtensionType): KmValueParameterExtension = extensions.singleOfType(type)
+
+private fun <N : KmExtension> Collection<N>.singleOfType(type: KmExtensionType): N {
+    var result: N? = null
+    for (node in this) {
+        if (node.type != type) continue
+        if (result != null) {
+            throw IllegalStateException("Multiple extensions handle the same extension type: $type")
+        }
+        result = node
+    }
+    if (result == null) {
+        throw IllegalStateException("No extensions handle the extension type: $type")
+    }
+    return result
+}

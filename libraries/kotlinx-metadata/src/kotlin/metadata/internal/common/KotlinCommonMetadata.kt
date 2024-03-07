@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.metadata.builtins.readBuiltinsPackageFragment
 import org.jetbrains.kotlin.metadata.deserialization.NameResolverImpl
 import java.io.ByteArrayInputStream
 import kotlin.metadata.internal.extensions.*
-import kotlin.metadata.internal.extensions.singleOfType
 
 /**
  * Reads metadata that is not from annotation nor from `.kotlin_module` file.
@@ -70,11 +69,6 @@ public class KmModuleFragment {
      */
     public val classes: MutableList<KmClass> = ArrayList()
 
-    @InternalExtensionsApi
     internal val extensions: List<KmModuleFragmentExtension> =
         MetadataExtensions.INSTANCES.map(MetadataExtensions::createModuleFragmentExtensions)
-
-    @InternalExtensionsApi
-    public fun getExtension(type: KmExtensionType): KmModuleFragmentExtension =
-        extensions.singleOfType(type)
 }
