@@ -2,11 +2,10 @@
  * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
-@file:OptIn(InternalExtensionsApi::class) // inheritance of deprecated visitors will be removed with visitors
+@file:OptIn(InternalExtensionsApi::class)
 
 package kotlin.metadata.jvm.internal
 
-import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import kotlin.metadata.*
 import kotlin.metadata.internal.extensions.*
 import kotlin.metadata.jvm.*
@@ -18,19 +17,19 @@ internal val KmPackage.jvm: JvmPackageExtension
     get() = getExtension(JvmPackageExtension.TYPE) as JvmPackageExtension
 
 internal val KmFunction.jvm: JvmFunctionExtension
-    get() = visitExtensions(JvmFunctionExtension.TYPE) as JvmFunctionExtension
+    get() = getExtension(JvmFunctionExtension.TYPE) as JvmFunctionExtension
 
 internal val KmProperty.jvm: JvmPropertyExtension
     get() = getExtension(JvmPropertyExtension.TYPE) as JvmPropertyExtension
 
 internal val KmConstructor.jvm: JvmConstructorExtension
-    get() = visitExtensions(JvmConstructorExtension.TYPE) as JvmConstructorExtension
+    get() = getExtension(JvmConstructorExtension.TYPE) as JvmConstructorExtension
 
 internal val KmTypeParameter.jvm: JvmTypeParameterExtension
-    get() = visitExtensions(JvmTypeParameterExtension.TYPE) as JvmTypeParameterExtension
+    get() = getExtension(JvmTypeParameterExtension.TYPE) as JvmTypeParameterExtension
 
 internal val KmType.jvm: JvmTypeExtension
-    get() = visitExtensions(JvmTypeExtension.TYPE) as JvmTypeExtension
+    get() = getExtension(JvmTypeExtension.TYPE) as JvmTypeExtension
 
 
 internal class JvmClassExtension : KmClassExtension {
@@ -55,11 +54,6 @@ internal class JvmPackageExtension : KmPackageExtension {
         get() = TYPE
 
     companion object {
-        /**
-         * The type of this extension visitor.
-         *
-         * @see KmExtensionType
-         */
         @JvmField
         val TYPE: KmExtensionType = KmExtensionType(JvmPackageExtension::class)
     }
@@ -73,11 +67,6 @@ internal class JvmFunctionExtension : KmFunctionExtension {
         get() = TYPE
 
     companion object {
-        /**
-         * The type of this extension visitor.
-         *
-         * @see KmExtensionType
-         */
         @JvmField
         val TYPE: KmExtensionType = KmExtensionType(JvmFunctionExtension::class)
     }
@@ -95,11 +84,6 @@ internal class JvmPropertyExtension : KmPropertyExtension {
         get() = TYPE
 
     companion object {
-        /**
-         * The type of this extension visitor.
-         *
-         * @see KmExtensionType
-         */
         @JvmField
         val TYPE: KmExtensionType = KmExtensionType(JvmPropertyExtension::class)
     }
@@ -112,11 +96,6 @@ internal class JvmConstructorExtension : KmConstructorExtension {
         get() = TYPE
 
     companion object {
-        /**
-         * The type of this extension visitor.
-         *
-         * @see KmExtensionType
-         */
         @JvmField
         val TYPE: KmExtensionType = KmExtensionType(JvmConstructorExtension::class)
     }
@@ -129,11 +108,6 @@ internal class JvmTypeParameterExtension : KmTypeParameterExtension {
         get() = TYPE
 
     companion object {
-        /**
-         * The type of this extension visitor.
-         *
-         * @see KmExtensionType
-         */
         @JvmField
         val TYPE: KmExtensionType = KmExtensionType(JvmTypeParameterExtension::class)
     }
@@ -147,11 +121,6 @@ internal class JvmTypeExtension : KmTypeExtension {
         get() = TYPE
 
     companion object {
-        /**
-         * The type of this extension visitor.
-         *
-         * @see KmExtensionType
-         */
         @JvmField
         val TYPE: KmExtensionType = KmExtensionType(JvmTypeExtension::class)
     }

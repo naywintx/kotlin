@@ -2,7 +2,7 @@
  * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
-@file:OptIn(InternalExtensionsApi::class) // Extension visitors
+@file:OptIn(InternalExtensionsApi::class)
 
 package kotlinx.metadata.klib.impl
 
@@ -12,22 +12,22 @@ import kotlin.metadata.internal.common.KmModuleFragment
 import kotlin.metadata.internal.extensions.*
 
 internal val KmFunction.klibExtensions: KlibFunctionExtension
-    get() = visitExtensions(KlibFunctionExtensionVisitor.TYPE) as KlibFunctionExtension
+    get() = getExtension(KlibFunctionExtensionVisitor.TYPE) as KlibFunctionExtension
 
 internal val KmClass.klibExtensions: KlibClassExtension
     get() = getExtension(KlibClassExtensionVisitor.TYPE) as KlibClassExtension
 
 internal val KmType.klibExtensions: KlibTypeExtension
-    get() = visitExtensions(KlibTypeExtensionVisitor.TYPE) as KlibTypeExtension
+    get() = getExtension(KlibTypeExtensionVisitor.TYPE) as KlibTypeExtension
 
 internal val KmProperty.klibExtensions: KlibPropertyExtension
     get() = getExtension(KlibPropertyExtensionVisitor.TYPE) as KlibPropertyExtension
 
 internal val KmConstructor.klibExtensions: KlibConstructorExtension
-    get() = visitExtensions(KlibConstructorExtensionVisitor.TYPE) as KlibConstructorExtension
+    get() = getExtension(KlibConstructorExtensionVisitor.TYPE) as KlibConstructorExtension
 
 internal val KmTypeParameter.klibExtensions: KlibTypeParameterExtension
-    get() = visitExtensions(KlibTypeParameterExtensionVisitor.TYPE) as KlibTypeParameterExtension
+    get() = getExtension(KlibTypeParameterExtensionVisitor.TYPE) as KlibTypeParameterExtension
 
 internal val KmPackage.klibExtensions: KlibPackageExtension
     get() = getExtension(KlibPackageExtensionVisitor.TYPE) as KlibPackageExtension
@@ -36,10 +36,10 @@ internal val KmModuleFragment.klibExtensions: KlibModuleFragmentExtension
     get() = getExtension(KlibModuleFragmentExtensionVisitor.TYPE) as KlibModuleFragmentExtension
 
 internal val KmTypeAlias.klibExtensions: KlibTypeAliasExtension
-    get() = visitExtensions(KlibTypeAliasExtensionVisitor.TYPE) as KlibTypeAliasExtension
+    get() = getExtension(KlibTypeAliasExtensionVisitor.TYPE) as KlibTypeAliasExtension
 
 internal val KmValueParameter.klibExtensions: KlibValueParameterExtension
-    get() = visitExtensions(KlibValueParameterExtensionVisitor.TYPE) as KlibValueParameterExtension
+    get() = getExtension(KlibValueParameterExtensionVisitor.TYPE) as KlibValueParameterExtension
 
 internal class KlibFunctionExtension : KlibFunctionExtensionVisitor(), KmFunctionExtension {
 

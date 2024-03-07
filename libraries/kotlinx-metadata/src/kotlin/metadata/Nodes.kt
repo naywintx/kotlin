@@ -12,7 +12,6 @@ import kotlin.metadata.internal.extensions.*
 import kotlin.metadata.internal.propertyBooleanFlag
 import org.jetbrains.kotlin.metadata.deserialization.Flags
 import kotlin.contracts.ExperimentalContracts
-import kotlin.reflect.KClass
 
 /**
  * Represents a Kotlin declaration container, such as a class or a package fragment.
@@ -193,7 +192,7 @@ public class KmConstructor internal constructor(internal var flags: Int) {
         MetadataExtensions.INSTANCES.map(MetadataExtensions::createConstructorExtension)
 
     @InternalExtensionsApi
-    public fun visitExtensions(type: KmExtensionType): KmConstructorExtension =
+    public fun getExtension(type: KmExtensionType): KmConstructorExtension =
         extensions.singleOfType(type)
 }
 
@@ -251,7 +250,7 @@ public class KmFunction internal constructor(internal var flags: Int, public var
         MetadataExtensions.INSTANCES.map(MetadataExtensions::createFunctionExtension)
 
     @InternalExtensionsApi
-    public fun visitExtensions(type: KmExtensionType): KmFunctionExtension =
+    public fun getExtension(type: KmExtensionType): KmFunctionExtension =
         extensions.singleOfType(type)
 }
 
@@ -307,29 +306,6 @@ public class KmProperty internal constructor(
         set(new) {
             this._hasSetter = new != null
             field = new
-        }
-
-    /**
-     * A legacy accessor to setter attributes.
-     *
-     * Property accessor flags, consisting of [Flag.HAS_ANNOTATIONS], visibility flag, modality flag
-     * and [Flag.PropertyAccessor] flags.
-     *
-     * Note that, for compatibility reasons, flags are present even the property is `val` and `setter` is null.
-     * In that case, flags for hasAnnotation, visibility and modality are copied from properties' flag, which may lead
-     * to incorrect results. For example, when property is annotated, [setterFlags] will also return true for [Flag.Common.HAS_ANNOTATIONS],
-     * even though there is no setter nor annotations on it.
-     *
-     * Setting this property when setter is absent changes the value, but does not create new [setter].
-     * This behavior is for compatibility only and will be removed in future versions.
-     */
-    // TODO delet zis
-    @Deprecated("$flagAccessPrefix KmProperty.setter, such as KmProperty.setter.isNotDefault", level = DeprecationLevel.ERROR)
-    public var setterFlags: Int = setterFlags // It's either the correct flags from deserializer, or always 0 in the case of hand-created property
-        get() = setter?.flags ?: field
-        set(value) {
-            setter?.flags = value
-            field = value
         }
 
     /**
@@ -426,7 +402,7 @@ public class KmTypeAlias internal constructor(
         MetadataExtensions.INSTANCES.mapNotNull(MetadataExtensions::createTypeAliasExtension)
 
     @InternalExtensionsApi
-    public fun visitExtensions(type: KmExtensionType): KmTypeAliasExtension =
+    public fun getExtension(type: KmExtensionType): KmTypeAliasExtension =
         extensions.singleOfType(type)
 }
 
@@ -461,7 +437,7 @@ public class KmValueParameter internal constructor(
         MetadataExtensions.INSTANCES.mapNotNull(MetadataExtensions::createValueParameterExtension)
 
     @InternalExtensionsApi
-    public fun visitExtensions(type: KmExtensionType): KmValueParameterExtension =
+    public fun getExtension(type: KmExtensionType): KmValueParameterExtension =
         extensions.singleOfType(type)
 }
 
@@ -495,7 +471,7 @@ public class KmTypeParameter internal constructor(
         MetadataExtensions.INSTANCES.map(MetadataExtensions::createTypeParameterExtension)
 
     @InternalExtensionsApi
-    public fun visitExtensions(type: KmExtensionType): KmTypeParameterExtension =
+    public fun getExtension(type: KmExtensionType): KmTypeParameterExtension =
         extensions.singleOfType(type)
 }
 
@@ -556,7 +532,7 @@ public class KmType internal constructor(
         MetadataExtensions.INSTANCES.map(MetadataExtensions::createTypeExtension)
 
     @InternalExtensionsApi
-    public fun visitExtensions(type: KmExtensionType): KmTypeExtension =
+    public fun getExtension(type: KmExtensionType): KmTypeExtension =
         extensions.singleOfType(type)
 }
 

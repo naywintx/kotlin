@@ -7,30 +7,29 @@ package kotlin.metadata.internal.extensions
 import kotlin.metadata.*
 import kotlin.reflect.KClass
 
-// TODO: rewrite docs for extensions
-@RequiresOptIn("Internal!", level = RequiresOptIn.Level.ERROR)
+/**
+ * Marks functions and classes that are part of the internal mechanism to work with platform-specific metadata.
+ *
+ * Such API is used exclusively by platform-specific counterparts (like kotlin-metadata-jvm and kotlinx-metadata-klib) of the kotlin-metadata library.
+ * It is not intended to be publicly used, nor are there any use cases for that.
+ *
+ * Platform-specific data is presented to users as corresponding extensions on Km nodes, like `KmProperty.getterSignature`, and there is no
+ * publicly available mechanism to retrieve them another way.
+ */
+@RequiresOptIn(
+    "This is an internal kotlin-metadata API for working with platform-specific metadata. There are no situations for it to be explicitly used.",
+    level = RequiresOptIn.Level.ERROR
+)
 public annotation class InternalExtensionsApi
 
 /**
- * A type of the extension visitor expected by the code that uses the visitor API.
+ * A type of the extension expected by the code that uses the extensions API.
  *
- * Each declaration which can have platform-specific extensions in the metadata has a method `getExtension`, e.g.:
+ * Each declaration that can have platform-specific extensions in the metadata has a method `getExtension`, e.g.:
+ * `fun KmFunction.getExtension(type: KmExtensionType): KmFunctionExtension`.
  *
- *     fun KmFunction.getExtension(type: KmExtensionType): KmFunctionExtension
- *
- * The client code is supposed to return the extension visitor corresponding to the given type, or to return `null` if the type is
- * of no interest to that code. Each platform-specific extension visitor has a [KmExtensionType] instance declared in the `TYPE` property
- * its companion object. For example, to load JVM extensions on a function, one could do:
- * ```
- *     override fun visitExtensions(type: KmExtensionType): KmFunctionExtensionVisitor? {
- *         if (type != JvmFunctionExtensionVisitor.TYPE) return null
- *
- *         return object : JvmFunctionExtensionVisitor() {
- *             ...
- *         }
- *     }
- * ```
- * In case an extension visitor of an unrelated type is returned, the code using the visitor API must ignore that visitor.
+ * These functions are used by -jvm and -klib counterparts to retrieve platform-specific metadata
+ * and should not be used in any other way.
  */
 @InternalExtensionsApi
 public class KmExtensionType(private val klass: KClass<out KmExtension>) {
@@ -44,11 +43,14 @@ public class KmExtensionType(private val klass: KClass<out KmExtension>) {
         klass.java.name
 }
 
+/**
+ * Base interface for all extensions to hold the extension type.
+ */
 @InternalExtensionsApi
 public interface KmExtension {
 
     /**
-     * Type of this extension visitor.
+     * Type of this extension.
      */
     public val type: KmExtensionType
 }

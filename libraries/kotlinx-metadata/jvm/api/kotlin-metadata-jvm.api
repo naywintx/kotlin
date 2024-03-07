@@ -427,9 +427,9 @@ public final class kotlin/metadata/KmConstantValue {
 
 public final class kotlin/metadata/KmConstructor {
 	public fun <init> ()V
+	public final fun getExtension (Lkotlin/metadata/internal/extensions/KmExtensionType;)Lkotlin/metadata/internal/extensions/KmConstructorExtension;
 	public final fun getValueParameters ()Ljava/util/List;
 	public final fun getVersionRequirements ()Ljava/util/List;
-	public final fun visitExtensions (Lkotlin/metadata/internal/extensions/KmExtensionType;)Lkotlin/metadata/internal/extensions/KmConstructorExtension;
 }
 
 public final class kotlin/metadata/KmContract {
@@ -508,6 +508,7 @@ public final class kotlin/metadata/KmFunction {
 	public fun <init> (Ljava/lang/String;)V
 	public final fun getContextReceiverTypes ()Ljava/util/List;
 	public final fun getContract ()Lkotlin/metadata/KmContract;
+	public final fun getExtension (Lkotlin/metadata/internal/extensions/KmExtensionType;)Lkotlin/metadata/internal/extensions/KmFunctionExtension;
 	public final fun getName ()Ljava/lang/String;
 	public final fun getReceiverParameterType ()Lkotlin/metadata/KmType;
 	public final fun getReturnType ()Lkotlin/metadata/KmType;
@@ -518,7 +519,6 @@ public final class kotlin/metadata/KmFunction {
 	public final fun setName (Ljava/lang/String;)V
 	public final fun setReceiverParameterType (Lkotlin/metadata/KmType;)V
 	public final fun setReturnType (Lkotlin/metadata/KmType;)V
-	public final fun visitExtensions (Lkotlin/metadata/internal/extensions/KmExtensionType;)Lkotlin/metadata/internal/extensions/KmFunctionExtension;
 }
 
 public final class kotlin/metadata/KmLambda {
@@ -546,7 +546,6 @@ public final class kotlin/metadata/KmProperty {
 	public final fun getReceiverParameterType ()Lkotlin/metadata/KmType;
 	public final fun getReturnType ()Lkotlin/metadata/KmType;
 	public final fun getSetter ()Lkotlin/metadata/KmPropertyAccessorAttributes;
-	public final fun getSetterFlags ()I
 	public final fun getSetterParameter ()Lkotlin/metadata/KmValueParameter;
 	public final fun getTypeParameters ()Ljava/util/List;
 	public final fun getVersionRequirements ()Ljava/util/List;
@@ -554,7 +553,6 @@ public final class kotlin/metadata/KmProperty {
 	public final fun setReceiverParameterType (Lkotlin/metadata/KmType;)V
 	public final fun setReturnType (Lkotlin/metadata/KmType;)V
 	public final fun setSetter (Lkotlin/metadata/KmPropertyAccessorAttributes;)V
-	public final fun setSetterFlags (I)V
 	public final fun setSetterParameter (Lkotlin/metadata/KmValueParameter;)V
 }
 
@@ -568,13 +566,13 @@ public final class kotlin/metadata/KmType {
 	public final fun getAbbreviatedType ()Lkotlin/metadata/KmType;
 	public final fun getArguments ()Ljava/util/List;
 	public final fun getClassifier ()Lkotlin/metadata/KmClassifier;
+	public final fun getExtension (Lkotlin/metadata/internal/extensions/KmExtensionType;)Lkotlin/metadata/internal/extensions/KmTypeExtension;
 	public final fun getFlexibleTypeUpperBound ()Lkotlin/metadata/KmFlexibleTypeUpperBound;
 	public final fun getOuterType ()Lkotlin/metadata/KmType;
 	public final fun setAbbreviatedType (Lkotlin/metadata/KmType;)V
 	public final fun setClassifier (Lkotlin/metadata/KmClassifier;)V
 	public final fun setFlexibleTypeUpperBound (Lkotlin/metadata/KmFlexibleTypeUpperBound;)V
 	public final fun setOuterType (Lkotlin/metadata/KmType;)V
-	public final fun visitExtensions (Lkotlin/metadata/internal/extensions/KmExtensionType;)Lkotlin/metadata/internal/extensions/KmTypeExtension;
 }
 
 public final class kotlin/metadata/KmTypeAlias {
@@ -583,6 +581,7 @@ public final class kotlin/metadata/KmTypeAlias {
 	public fun <init> (Ljava/lang/String;)V
 	public final fun getAnnotations ()Ljava/util/List;
 	public final fun getExpandedType ()Lkotlin/metadata/KmType;
+	public final fun getExtension (Lkotlin/metadata/internal/extensions/KmExtensionType;)Lkotlin/metadata/internal/extensions/KmTypeAliasExtension;
 	public final fun getName ()Ljava/lang/String;
 	public final fun getTypeParameters ()Ljava/util/List;
 	public final fun getUnderlyingType ()Lkotlin/metadata/KmType;
@@ -590,11 +589,11 @@ public final class kotlin/metadata/KmTypeAlias {
 	public final fun setExpandedType (Lkotlin/metadata/KmType;)V
 	public final fun setName (Ljava/lang/String;)V
 	public final fun setUnderlyingType (Lkotlin/metadata/KmType;)V
-	public final fun visitExtensions (Lkotlin/metadata/internal/extensions/KmExtensionType;)Lkotlin/metadata/internal/extensions/KmTypeAliasExtension;
 }
 
 public final class kotlin/metadata/KmTypeParameter {
 	public fun <init> (Ljava/lang/String;ILkotlin/metadata/KmVariance;)V
+	public final fun getExtension (Lkotlin/metadata/internal/extensions/KmExtensionType;)Lkotlin/metadata/internal/extensions/KmTypeParameterExtension;
 	public final fun getId ()I
 	public final fun getName ()Ljava/lang/String;
 	public final fun getUpperBounds ()Ljava/util/List;
@@ -602,7 +601,6 @@ public final class kotlin/metadata/KmTypeParameter {
 	public final fun setId (I)V
 	public final fun setName (Ljava/lang/String;)V
 	public final fun setVariance (Lkotlin/metadata/KmVariance;)V
-	public final fun visitExtensions (Lkotlin/metadata/internal/extensions/KmExtensionType;)Lkotlin/metadata/internal/extensions/KmTypeParameterExtension;
 }
 
 public final class kotlin/metadata/KmTypeProjection {
@@ -628,13 +626,13 @@ public final class kotlin/metadata/KmTypeProjection$Companion {
 public final class kotlin/metadata/KmValueParameter {
 	public field type Lkotlin/metadata/KmType;
 	public fun <init> (Ljava/lang/String;)V
+	public final fun getExtension (Lkotlin/metadata/internal/extensions/KmExtensionType;)Lkotlin/metadata/internal/extensions/KmValueParameterExtension;
 	public final fun getName ()Ljava/lang/String;
 	public final fun getType ()Lkotlin/metadata/KmType;
 	public final fun getVarargElementType ()Lkotlin/metadata/KmType;
 	public final fun setName (Ljava/lang/String;)V
 	public final fun setType (Lkotlin/metadata/KmType;)V
 	public final fun setVarargElementType (Lkotlin/metadata/KmType;)V
-	public final fun visitExtensions (Lkotlin/metadata/internal/extensions/KmExtensionType;)Lkotlin/metadata/internal/extensions/KmValueParameterExtension;
 }
 
 public final class kotlin/metadata/KmVariance : java/lang/Enum {
