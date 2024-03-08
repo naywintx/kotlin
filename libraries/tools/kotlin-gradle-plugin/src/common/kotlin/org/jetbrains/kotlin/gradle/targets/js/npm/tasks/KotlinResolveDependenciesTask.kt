@@ -6,6 +6,8 @@
 package org.jetbrains.kotlin.gradle.targets.js.npm.tasks
 
 import org.gradle.api.DefaultTask
+import org.gradle.api.artifacts.Configuration
+import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.*
 import org.gradle.work.DisableCachingByDefault
@@ -39,6 +41,11 @@ abstract class KotlinResolveDependenciesTask :
     @get:Internal
     abstract val compilationDisambiguatedName: Property<String>
 
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    val dependencyConfiguration: ConfigurableFileCollection = project.objects
+        .fileCollection()
+
     @get:Internal
     internal val components by lazy {
         rootResolver.allResolvedConfigurations
@@ -58,6 +65,7 @@ abstract class KotlinResolveDependenciesTask :
     companion object {
         fun create(
             compilation: KotlinJsIrCompilation,
+            dependencyConfiguration: Configuration,
             disambiguatedName: String,
         ): TaskProvider<KotlinResolveDependenciesTask> {
             val project = compilation.target.project
@@ -73,6 +81,8 @@ abstract class KotlinResolveDependenciesTask :
                 task.compilationDisambiguatedName.set(disambiguatedName)
                 task.description = "Resolve dependencies for further package.json gneration in $compilation"
                 task.group = NodeJsRootPlugin.TASKS_GROUP_NAME
+
+                task.dependencyConfiguration.from(dependencyConfiguration)
 
                 task.npmResolutionManager.value(npmResolutionManager)
                     .disallowChanges()

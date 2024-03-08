@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.gradle.targets.js.npm.tasks
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.Configuration
-import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
@@ -73,16 +72,6 @@ abstract class KotlinPackageJsonTask :
             .sorted()
     }
 
-    @get:Internal
-    internal val components by lazy {
-        rootResolver.allResolvedConfigurations
-    }
-
-    @get:InputFiles
-    @get:PathSensitive(PathSensitivity.RELATIVE)
-    val dependencyConfiguration: ConfigurableFileCollection = project.objects
-        .fileCollection()
-
     @get:Input
     internal val externalNpmDependencies: SetProperty<NpmDependencyDeclaration> = project.objects.setProperty<NpmDependencyDeclaration>()
 
@@ -101,7 +90,6 @@ abstract class KotlinPackageJsonTask :
     companion object {
         fun create(
             compilation: KotlinJsIrCompilation,
-            dependencyConfiguration: Configuration,
             disambiguatedName: String,
             compilationResolution: Provider<KotlinCompilationNpmResolution>
         ): TaskProvider<KotlinPackageJsonTask> {
@@ -123,8 +111,6 @@ abstract class KotlinPackageJsonTask :
                 task.externalNpmDependencies.set(
                     compilationResolution.map { it.npmDependencies }
                 )
-
-                task.dependencyConfiguration.from(dependencyConfiguration)
 
                 task.npmResolutionManager.value(npmResolutionManager)
                     .disallowChanges()

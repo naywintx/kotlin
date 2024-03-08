@@ -134,10 +134,10 @@ class KotlinCompilationNpmResolver(
     }
 
     val resolveDependenciesTask: TaskProvider<KotlinResolveDependenciesTask> =
-        KotlinResolveDependenciesTask.create(compilation, compilationDisambiguatedName)
+        KotlinResolveDependenciesTask.create(compilation, aggregatedConfiguration, compilationDisambiguatedName)
 
     val packageJsonTaskHolder: TaskProvider<KotlinPackageJsonTask> =
-        KotlinPackageJsonTask.create(compilation, aggregatedConfiguration, compilationDisambiguatedName, compilationNpmResolution).apply {
+        KotlinPackageJsonTask.create(compilation, compilationDisambiguatedName, compilationNpmResolution).apply {
             this.configure {
                 it.dependsOn(resolveDependenciesTask)
             }
