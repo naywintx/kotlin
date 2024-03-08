@@ -77,7 +77,6 @@ abstract class KotlinNpmInstallTask :
                 .flatMap { it.compilationResolvers }
                 .map { it.npmProject.name }
                 .map { name ->
-//                val name = resolution.npmProjectName
                     packagesDir.map { dir -> dir.dir(name).file(NpmProject.PACKAGE_JSON) }.get()
                 }
         }
@@ -106,7 +105,7 @@ abstract class KotlinNpmInstallTask :
 
     @get:Internal
     internal val components by lazy {
-        rootResolver.allConfigurations
+        rootResolver.allResolvedConfigurations
     }
 
     // node_modules as OutputDirectory is performance problematic

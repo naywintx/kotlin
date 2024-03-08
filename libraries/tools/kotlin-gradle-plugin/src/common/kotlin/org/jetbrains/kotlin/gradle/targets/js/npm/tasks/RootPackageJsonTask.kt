@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.gradle.targets.js.npm.tasks
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.Directory
-import org.gradle.api.file.FileCollection
 import org.gradle.api.file.RegularFile
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Provider
@@ -69,7 +68,7 @@ abstract class RootPackageJsonTask :
 
     @get:Internal
     internal val components by lazy {
-        rootResolver.allConfigurations
+        rootResolver.allResolvedConfigurations
     }
 
     @get:PathSensitive(PathSensitivity.RELATIVE)
@@ -82,7 +81,6 @@ abstract class RootPackageJsonTask :
                 .flatMap { it.compilationResolvers }
                 .map { it.npmProject.name }
                 .map { name ->
-//                val name = resolution.npmProjectName
                     packagesDir.map { dir -> dir.dir(name).file(NpmProject.PACKAGE_JSON) }.get()
                 }
         }

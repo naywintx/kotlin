@@ -34,7 +34,7 @@ class KotlinRootNpmResolver internal constructor(
 
     val projectResolvers: MutableMap<String, KotlinProjectNpmResolver> = mutableMapOf()
 
-    val allConfigurations: Map<String, Map<String, Pair<Provider<ResolvedComponentResult>, Provider<Map<ComponentArtifactIdentifier, File>>>>> by lazy {
+    val allResolvedConfigurations: Map<String, Map<String, Pair<Provider<ResolvedComponentResult>, Provider<Map<ComponentArtifactIdentifier, File>>>>> by lazy {
         projectResolvers.map {
             it.key to it.value.compilationResolvers.map {
                 it.compilationDisambiguatedName to it.resolvedAggregatedConfiguration

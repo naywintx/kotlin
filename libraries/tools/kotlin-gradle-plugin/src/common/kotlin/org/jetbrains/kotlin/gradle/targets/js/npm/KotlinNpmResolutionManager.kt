@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.gradle.targets.js.npm
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.component.ComponentArtifactIdentifier
-import org.gradle.api.artifacts.component.ComponentIdentifier
 import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
@@ -28,8 +27,6 @@ import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinRootNpmResolver
 import org.jetbrains.kotlin.gradle.tasks.withType
 import org.jetbrains.kotlin.gradle.utils.SingleActionPerProject
 import java.io.File
-import kotlin.contracts.ExperimentalContracts
-import kotlin.contracts.contract
 
 internal interface UsesKotlinNpmResolutionManager : Task {
     @get:Internal
@@ -91,8 +88,8 @@ abstract class KotlinNpmResolutionManager : BuildService<KotlinNpmResolutionMana
         logger: Logger,
         nodeJsEnvironment: NodeJsEnvironment,
         environment: PackageManagerEnvironment,
-        resolvedConfiguration: Map<String, Map<String, Pair<Provider<ResolvedComponentResult>, Provider<Map<ComponentArtifactIdentifier, File>>>>>,
-    ) = prepareIfNeeded(logger = logger, nodeJsEnvironment, environment, resolvedConfiguration)
+        resolvedConfigurations: Map<String, Map<String, Pair<Provider<ResolvedComponentResult>, Provider<Map<ComponentArtifactIdentifier, File>>>>>,
+    ) = prepareIfNeeded(logger = logger, nodeJsEnvironment, environment, resolvedConfigurations)
 
     internal fun installIfNeeded(
         args: List<String> = emptyList(),
@@ -100,7 +97,7 @@ abstract class KotlinNpmResolutionManager : BuildService<KotlinNpmResolutionMana
         logger: Logger,
         nodeJsEnvironment: NodeJsEnvironment,
         packageManagerEnvironment: PackageManagerEnvironment,
-        resolvedConfiguration: Map<String, Map<String, Pair<Provider<ResolvedComponentResult>, Provider<Map<ComponentArtifactIdentifier, File>>>>>,
+        resolvedConfigurations: Map<String, Map<String, Pair<Provider<ResolvedComponentResult>, Provider<Map<ComponentArtifactIdentifier, File>>>>>,
     ): Unit? {
         synchronized(this) {
             if (state is ResolutionState.Installed) {
@@ -112,7 +109,7 @@ abstract class KotlinNpmResolutionManager : BuildService<KotlinNpmResolutionMana
             }
 
             return try {
-                val installation: Installation = prepareIfNeeded(logger = logger, nodeJsEnvironment, packageManagerEnvironment, resolvedConfiguration)
+                val installation: Installation = prepareIfNeeded(logger = logger, nodeJsEnvironment, packageManagerEnvironment, resolvedConfigurations)
                 installation.install(args, services, logger, nodeJsEnvironment, packageManagerEnvironment)
                 state = ResolutionState.Installed()
             } catch (e: Exception) {
@@ -126,7 +123,7 @@ abstract class KotlinNpmResolutionManager : BuildService<KotlinNpmResolutionMana
         logger: Logger,
         nodeJsEnvironment: NodeJsEnvironment,
         packageManagerEnvironment: PackageManagerEnvironment,
-        resolvedConfiguration: Map<String, Map<String, Pair<Provider<ResolvedComponentResult>, Provider<Map<ComponentArtifactIdentifier, File>>>>>,
+        resolvedConfigurations: Map<String, Map<String, Pair<Provider<ResolvedComponentResult>, Provider<Map<ComponentArtifactIdentifier, File>>>>>,
     ): Installation {
         val state0 = this.state
         return when (state0) {
@@ -145,7 +142,7 @@ abstract class KotlinNpmResolutionManager : BuildService<KotlinNpmResolutionMana
                                 nodeJsEnvironment,
                                 packageManagerEnvironment,
                                 this,
-                                resolvedConfiguration
+                                resolvedConfigurations
                             ).also {
                                 this.state = ResolutionState.Prepared(it)
                             }
