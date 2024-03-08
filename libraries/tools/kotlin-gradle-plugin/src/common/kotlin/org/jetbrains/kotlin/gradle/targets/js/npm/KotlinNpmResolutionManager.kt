@@ -65,11 +65,11 @@ abstract class KotlinNpmResolutionManager : BuildService<KotlinNpmResolutionMana
         get() = parameters.packagesDir
 
     @Volatile
-    internal var state: ResolutionState = ResolutionState.Configuring(resolution.get())
+    var state: ResolutionState = ResolutionState.Configuring(resolution.get())
 
-    internal sealed class ResolutionState {
+    sealed class ResolutionState {
 
-        class Configuring(val resolution: KotlinRootNpmResolution) : ResolutionState()
+        internal class Configuring(val resolution: KotlinRootNpmResolution) : ResolutionState()
 
         open class Prepared(val preparedInstallation: Installation) : ResolutionState()
 
