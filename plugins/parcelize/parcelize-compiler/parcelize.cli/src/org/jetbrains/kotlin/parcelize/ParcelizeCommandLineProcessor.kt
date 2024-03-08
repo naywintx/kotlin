@@ -20,7 +20,8 @@ class ParcelizeCommandLineProcessor : CommandLineProcessor {
                 "additionalAnnotation",
                 "<fully qualified name>",
                 "Additional annotation to trigger parcelize processing.",
-                false
+                required = false,
+                allowMultipleOccurrences = true
             )
     }
 
@@ -32,7 +33,7 @@ class ParcelizeCommandLineProcessor : CommandLineProcessor {
 
     override fun processOption(option: AbstractCliOption, value: String, configuration: CompilerConfiguration) {
         when (option) {
-            ADDITIONAL_ANNOTATION_OPTION -> configuration.put(ParcelizeConfigurationKeys.ADDITIONAL_ANNOTATION, value)
+            ADDITIONAL_ANNOTATION_OPTION -> configuration.appendList(ParcelizeConfigurationKeys.ADDITIONAL_ANNOTATION, value)
             else -> throw CliOptionProcessingException("Unknown option: ${option.optionName}")
         }
     }

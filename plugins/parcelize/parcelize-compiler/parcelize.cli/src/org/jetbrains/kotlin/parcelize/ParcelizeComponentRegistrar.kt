@@ -24,11 +24,11 @@ class ParcelizeComponentRegistrar : CompilerPluginRegistrar() {
     companion object {
         fun registerParcelizeComponents(
             extensionStorage: ExtensionStorage,
-            additionalAnnotation: String?,
+            additionalAnnotation: List<String>,
             useFir: Boolean
         ) = with(extensionStorage) {
             val parcelizeAnnotations = ParcelizeNames.PARCELIZE_CLASS_FQ_NAMES.toMutableList()
-            if (additionalAnnotation != null) parcelizeAnnotations.add(FqName(additionalAnnotation))
+            additionalAnnotation.mapTo(parcelizeAnnotations) { FqName(it) }
             if (useFir) {
                 IrGenerationExtension.registerExtension(ParcelizeFirIrGeneratorExtension(parcelizeAnnotations))
             } else {
@@ -41,7 +41,7 @@ class ParcelizeComponentRegistrar : CompilerPluginRegistrar() {
     }
 
     override fun ExtensionStorage.registerExtensions(configuration: CompilerConfiguration) {
-        val additionalAnnotation = configuration.get(ParcelizeConfigurationKeys.ADDITIONAL_ANNOTATION)
+        val additionalAnnotation = configuration.get(ParcelizeConfigurationKeys.ADDITIONAL_ANNOTATION) ?: emptyList()
         registerParcelizeComponents(this, additionalAnnotation, configuration.getBoolean(CommonConfigurationKeys.USE_FIR))
     }
 

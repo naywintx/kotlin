@@ -17,12 +17,6 @@ class FirParcelizeCheckersExtension(
     session: FirSession,
     val parcelizeAnnotations: List<ClassId>
 ) : FirAdditionalCheckersExtension(session) {
-    companion object {
-        fun getFactory(parcelizeAnnotations: List<ClassId>): Factory {
-            return Factory { session -> FirParcelizeCheckersExtension(session, parcelizeAnnotations) }
-        }
-    }
-
     override val expressionCheckers: ExpressionCheckers = object : ExpressionCheckers() {
         override val annotationCallCheckers: Set<FirAnnotationCallChecker>
             get() = setOf(FirParcelizeAnnotationChecker(parcelizeAnnotations))

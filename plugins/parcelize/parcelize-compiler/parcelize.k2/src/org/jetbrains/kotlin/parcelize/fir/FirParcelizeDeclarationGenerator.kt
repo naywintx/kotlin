@@ -38,10 +38,6 @@ class FirParcelizeDeclarationGenerator(
     private val annotations: List<FqName>
 ) : FirDeclarationGenerationExtension(session) {
     companion object {
-        fun getFactory(parcelizeAnnotationFqNames: List<FqName>): Factory {
-            return Factory { session -> FirParcelizeDeclarationGenerator(session, parcelizeAnnotationFqNames) }
-        }
-
         private val parcelizeMethodsNames = setOf(DESCRIBE_CONTENTS_NAME, WRITE_TO_PARCEL_NAME)
     }
 
