@@ -6,8 +6,6 @@
 package org.jetbrains.kotlin.gradle.targets.js.npm.resolver
 
 import org.gradle.api.Project
-import org.gradle.api.artifacts.component.ComponentArtifactIdentifier
-import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.file.Directory
 import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
@@ -17,6 +15,7 @@ import org.jetbrains.kotlin.gradle.targets.js.NpmVersions
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrCompilation
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.TasksRequirements
+import org.jetbrains.kotlin.gradle.targets.js.npm.ProjectResolvedConfiguration
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinRootNpmResolution
 import java.io.File
 import java.io.Serializable
@@ -32,13 +31,13 @@ class KotlinRootNpmResolver internal constructor(
 
     internal var resolution: KotlinRootNpmResolution? = null
 
-    val projectResolvers: MutableMap<String, KotlinProjectNpmResolver> = mutableMapOf()
+    internal val projectResolvers: MutableMap<String, KotlinProjectNpmResolver> = mutableMapOf()
 
-    val allResolvedConfigurations: Map<String, Map<String, Pair<Provider<ResolvedComponentResult>, Provider<Map<ComponentArtifactIdentifier, File>>>>> by lazy {
-        projectResolvers.map {
-            it.key to it.value.compilationResolvers.map {
-                it.compilationDisambiguatedName to it.resolvedAggregatedConfiguration
-            }.toMap()
+    internal val allResolvedConfigurations: Map<String, ProjectResolvedConfiguration> by lazy {
+        projectResolvers.map { projectResolver ->
+            projectResolver.key to projectResolver.value.compilationResolvers.associate { compilationResolver ->
+                compilationResolver.compilationDisambiguatedName to compilationResolver.resolvedAggregatedConfiguration
+            }
         }.toMap()
     }
 

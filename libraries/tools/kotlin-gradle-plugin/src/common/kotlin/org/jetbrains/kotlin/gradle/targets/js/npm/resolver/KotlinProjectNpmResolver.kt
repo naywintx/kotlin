@@ -24,7 +24,7 @@ import kotlin.reflect.KClass
 /**
  * See [KotlinNpmResolutionManager] for details about resolution process.
  */
-class KotlinProjectNpmResolver(
+internal class KotlinProjectNpmResolver(
     project: Project,
     var resolver: KotlinRootNpmResolver,
 ) : Serializable {

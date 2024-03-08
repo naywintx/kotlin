@@ -6,11 +6,8 @@
 package org.jetbrains.kotlin.gradle.targets.js.npm.resolver
 
 import org.gradle.api.Action
-import org.gradle.api.artifacts.component.ComponentArtifactIdentifier
-import org.gradle.api.artifacts.component.ComponentIdentifier
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
-import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import org.gradle.api.artifacts.result.ResolvedVariantResult
 import org.gradle.api.logging.Logger
@@ -20,13 +17,14 @@ import org.jetbrains.kotlin.gradle.targets.js.nodejs.TasksRequirements
 import org.jetbrains.kotlin.gradle.targets.js.npm.*
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinRootNpmResolution
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.PreparedKotlinCompilationNpmResolution
+import org.jetbrains.kotlin.gradle.utils.LazyResolvedConfiguration
 import org.jetbrains.kotlin.gradle.utils.buildOrNull
 import org.jetbrains.kotlin.gradle.utils.buildPathCompat
 import org.jetbrains.kotlin.gradle.utils.getFile
 import java.io.File
 import java.io.Serializable
 
-class KotlinCompilationNpmResolution(
+internal class KotlinCompilationNpmResolution(
     val buildPath: String,
     val npmDependencies: Set<NpmDependencyDeclaration>,
     val fileDependencies: Set<FileCollectionExternalGradleDependency>,
@@ -45,7 +43,7 @@ class KotlinCompilationNpmResolution(
     fun prepareWithDependencies(
         npmResolutionManager: KotlinNpmResolutionManager,
         logger: Logger,
-        resolvedConfigurations: Map<String, Map<String, Pair<Provider<ResolvedComponentResult>, Provider<Map<ComponentArtifactIdentifier, File>>>>>,
+        resolvedConfigurations: Map<String, ProjectResolvedConfiguration>,
     ): PreparedKotlinCompilationNpmResolution {
         check(resolution == null) { "$this already resolved" }
 
@@ -62,7 +60,7 @@ class KotlinCompilationNpmResolution(
     fun getResolutionOrPrepare(
         npmResolutionManager: KotlinNpmResolutionManager,
         logger: Logger,
-        resolvedConfigurations: Map<String, Map<String, Pair<Provider<ResolvedComponentResult>, Provider<Map<ComponentArtifactIdentifier, File>>>>>,
+        resolvedConfigurations: Map<String, ProjectResolvedConfiguration>,
     ): PreparedKotlinCompilationNpmResolution {
 
         return resolution ?: prepareWithDependencies(
@@ -76,7 +74,7 @@ class KotlinCompilationNpmResolution(
     fun close(
         npmResolutionManager: KotlinNpmResolutionManager,
         logger: Logger,
-        resolvedConfigurations: Map<String, Map<String, Pair<Provider<ResolvedComponentResult>, Provider<Map<ComponentArtifactIdentifier, File>>>>>,
+        resolvedConfigurations: Map<String, ProjectResolvedConfiguration>,
     ): PreparedKotlinCompilationNpmResolution {
         check(!closed) { "$this already closed" }
         closed = true
@@ -86,14 +84,13 @@ class KotlinCompilationNpmResolution(
     private fun createPreparedResolution(
         npmResolutionManager: KotlinNpmResolutionManager,
         logger: Logger,
-        resolvedConfigurations: Map<String, Map<String, Pair<Provider<ResolvedComponentResult>, Provider<Map<ComponentArtifactIdentifier, File>>>>>,
+        resolvedConfigurations: Map<String, ProjectResolvedConfiguration>,
     ): PreparedKotlinCompilationNpmResolution {
         val rootResolver = npmResolutionManager.parameters.resolution.get()
 
         val visitor = ConfigurationVisitor(rootResolver)
         val configuration = resolvedConfigurations.getValue(projectPath).getValue(publicPackageJsonConf)
-        visitor.visit(configuration.first.get() to configuration.second.get().map { (key, value) -> key.componentIdentifier to value }
-            .toMap())
+        visitor.visit(configuration)
 
         val internalNpmDependencies = visitor.internalDependencies
             .map {
@@ -189,15 +186,15 @@ class KotlinCompilationNpmResolution(
 
         private val visitedDependencies = mutableSetOf<ResolvedVariantResult>()
 
-        fun visit(configuration: Pair<ResolvedComponentResult, Map<ComponentIdentifier, File>>) {
-            configuration.first.dependencies.forEach { result ->
-                if (result is ResolvedDependencyResult) {
-                    val variant = result.resolvedVariant.externalVariant.orElse(result.resolvedVariant)
-                    configuration.second[variant.owner]?.let { artifactFile ->
-                        visitDependency(variant, artifactFile)
+        fun visit(configuration: LazyResolvedConfiguration) {
+            configuration.root.dependencies.forEach { dependencyResult ->
+                if (dependencyResult is ResolvedDependencyResult) {
+                    val variant = dependencyResult.resolvedVariant.externalVariant.orElse(dependencyResult.resolvedVariant)
+                    configuration.getArtifacts(dependencyResult).forEach { artifactResult ->
+                        visitDependency(variant, artifactResult.file)
                     }
                 } else {
-                    println("WTF ${result}")
+                    println("WTF ${dependencyResult}")
                 }
             }
         }

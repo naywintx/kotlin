@@ -5,18 +5,15 @@
 
 package org.jetbrains.kotlin.gradle.targets.js.npm.resolved
 
-import org.gradle.api.artifacts.component.ComponentArtifactIdentifier
-import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.logging.Logger
-import org.gradle.api.provider.Provider
 import org.gradle.internal.service.ServiceRegistry
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.PackageManagerEnvironment
 import org.jetbrains.kotlin.gradle.targets.js.npm.KotlinNpmResolutionManager
 import org.jetbrains.kotlin.gradle.targets.js.npm.NodeJsEnvironment
-import java.io.File
+import org.jetbrains.kotlin.gradle.targets.js.npm.ProjectResolvedConfiguration
 import java.io.Serializable
 
-class KotlinRootNpmResolution(
+internal class KotlinRootNpmResolution(
     val projects: Map<String, KotlinProjectNpmResolution>,
     val rootProjectName: String,
     val rootProjectVersion: String,
@@ -31,7 +28,7 @@ class KotlinRootNpmResolution(
         nodeJsEnvironment: NodeJsEnvironment,
         packageManagerEnvironment: PackageManagerEnvironment,
         npmResolutionManager: KotlinNpmResolutionManager,
-        resolvedConfigurations: Map<String, Map<String, Pair<Provider<ResolvedComponentResult>, Provider<Map<ComponentArtifactIdentifier, File>>>>>,
+        resolvedConfigurations: Map<String, ProjectResolvedConfiguration>,
     ): Installation {
         synchronized(projects) {
             npmResolutionManager.parameters.gradleNodeModulesProvider.get().close()

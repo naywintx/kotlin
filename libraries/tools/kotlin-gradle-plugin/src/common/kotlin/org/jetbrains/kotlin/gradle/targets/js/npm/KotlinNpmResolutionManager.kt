@@ -7,8 +7,6 @@ package org.jetbrains.kotlin.gradle.targets.js.npm
 
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.artifacts.component.ComponentArtifactIdentifier
-import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.logging.Logger
@@ -26,7 +24,6 @@ import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinProjectNpmResol
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinRootNpmResolver
 import org.jetbrains.kotlin.gradle.tasks.withType
 import org.jetbrains.kotlin.gradle.utils.SingleActionPerProject
-import java.io.File
 
 internal interface UsesKotlinNpmResolutionManager : Task {
     @get:Internal
@@ -53,7 +50,7 @@ internal interface UsesKotlinNpmResolutionManager : Task {
  */
 abstract class KotlinNpmResolutionManager : BuildService<KotlinNpmResolutionManager.Parameters> {
 
-    interface Parameters : BuildServiceParameters {
+    internal interface Parameters : BuildServiceParameters {
         val resolution: Property<KotlinRootNpmResolution>
 
         val gradleNodeModulesProvider: Property<GradleNodeModulesCache>
@@ -61,16 +58,16 @@ abstract class KotlinNpmResolutionManager : BuildService<KotlinNpmResolutionMana
         val packagesDir: DirectoryProperty
     }
 
-    val resolution
+    internal val resolution
         get() = parameters.resolution
 
     val packagesDir
         get() = parameters.packagesDir
 
     @Volatile
-    var state: ResolutionState = ResolutionState.Configuring(resolution.get())
+    internal var state: ResolutionState = ResolutionState.Configuring(resolution.get())
 
-    sealed class ResolutionState {
+    internal sealed class ResolutionState {
 
         class Configuring(val resolution: KotlinRootNpmResolution) : ResolutionState()
 
@@ -88,7 +85,7 @@ abstract class KotlinNpmResolutionManager : BuildService<KotlinNpmResolutionMana
         logger: Logger,
         nodeJsEnvironment: NodeJsEnvironment,
         environment: PackageManagerEnvironment,
-        resolvedConfigurations: Map<String, Map<String, Pair<Provider<ResolvedComponentResult>, Provider<Map<ComponentArtifactIdentifier, File>>>>>,
+        resolvedConfigurations: Map<String, ProjectResolvedConfiguration>,
     ) = prepareIfNeeded(logger = logger, nodeJsEnvironment, environment, resolvedConfigurations)
 
     internal fun installIfNeeded(
@@ -97,7 +94,7 @@ abstract class KotlinNpmResolutionManager : BuildService<KotlinNpmResolutionMana
         logger: Logger,
         nodeJsEnvironment: NodeJsEnvironment,
         packageManagerEnvironment: PackageManagerEnvironment,
-        resolvedConfigurations: Map<String, Map<String, Pair<Provider<ResolvedComponentResult>, Provider<Map<ComponentArtifactIdentifier, File>>>>>,
+        resolvedConfigurations: Map<String, ProjectResolvedConfiguration>,
     ): Unit? {
         synchronized(this) {
             if (state is ResolutionState.Installed) {
@@ -123,7 +120,7 @@ abstract class KotlinNpmResolutionManager : BuildService<KotlinNpmResolutionMana
         logger: Logger,
         nodeJsEnvironment: NodeJsEnvironment,
         packageManagerEnvironment: PackageManagerEnvironment,
-        resolvedConfigurations: Map<String, Map<String, Pair<Provider<ResolvedComponentResult>, Provider<Map<ComponentArtifactIdentifier, File>>>>>,
+        resolvedConfigurations: Map<String, ProjectResolvedConfiguration>,
     ): Installation {
         val state0 = this.state
         return when (state0) {
@@ -190,7 +187,7 @@ abstract class KotlinNpmResolutionManager : BuildService<KotlinNpmResolutionMana
             }
         }
 
-        fun registerIfAbsent(
+        internal fun registerIfAbsent(
             project: Project,
             resolution: Provider<KotlinRootNpmResolution>?,
             gradleNodeModulesProvider: Provider<GradleNodeModulesCache>?,

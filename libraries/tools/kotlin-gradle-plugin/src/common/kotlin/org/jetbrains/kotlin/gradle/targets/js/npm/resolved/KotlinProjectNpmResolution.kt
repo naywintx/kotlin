@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.gradle.targets.js.npm.resolved
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinCompilationNpmResolution
 import java.io.Serializable
 
-class KotlinProjectNpmResolution(
+internal class KotlinProjectNpmResolution(
     val byCompilation: Map<String, KotlinCompilationNpmResolution>,
 ) : Serializable {
     val npmProjects: Collection<KotlinCompilationNpmResolution>

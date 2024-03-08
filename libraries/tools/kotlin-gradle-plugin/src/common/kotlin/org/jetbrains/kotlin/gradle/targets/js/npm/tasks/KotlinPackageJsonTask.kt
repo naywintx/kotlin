@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.gradle.targets.js.npm.tasks
 
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
-import org.gradle.api.artifacts.Configuration
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
@@ -88,7 +87,7 @@ abstract class KotlinPackageJsonTask :
     }
 
     companion object {
-        fun create(
+        internal fun create(
             compilation: KotlinJsIrCompilation,
             disambiguatedName: String,
             compilationResolution: Provider<KotlinCompilationNpmResolution>

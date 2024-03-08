@@ -8,8 +8,6 @@ package org.jetbrains.kotlin.gradle.targets.js.npm.resolver
 import org.gradle.api.DomainObjectSet
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.FileCollectionDependency
-import org.gradle.api.artifacts.component.ComponentArtifactIdentifier
-import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.attributes.Attribute
 import org.gradle.api.attributes.Category
 import org.gradle.api.attributes.Usage
@@ -33,13 +31,12 @@ import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinPackageJsonTask
 import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinResolveDependenciesTask
 import org.jetbrains.kotlin.gradle.tasks.registerTask
 import org.jetbrains.kotlin.gradle.utils.*
-import java.io.File
 import java.io.Serializable
 
 /**
  * See [KotlinNpmResolutionManager] for details about resolution process.
  */
-class KotlinCompilationNpmResolver(
+internal class KotlinCompilationNpmResolver(
     projectResolver: KotlinProjectNpmResolver,
     val compilation: KotlinJsIrCompilation,
 ) : Serializable {
@@ -64,10 +61,8 @@ class KotlinCompilationNpmResolver(
         createAggregatedConfiguration()
     }
 
-    val resolvedAggregatedConfiguration: Pair<Provider<ResolvedComponentResult>, Provider<Map<ComponentArtifactIdentifier, File>>> =
-        aggregatedConfiguration.incoming.resolutionResult.rootComponent to aggregatedConfiguration.incoming.artifacts.resolvedArtifacts.map {
-            it.map { it.id to it.file }.toMap()
-        }
+    internal val resolvedAggregatedConfiguration: LazyResolvedConfiguration =
+        LazyResolvedConfiguration(aggregatedConfiguration)
 
     val externalNpmDependencies: DomainObjectSet<NpmDependency> = aggregatedConfiguration.allDependencies
         .withType(NpmDependency::class.java)
