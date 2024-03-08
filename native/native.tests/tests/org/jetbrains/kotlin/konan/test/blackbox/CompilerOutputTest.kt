@@ -22,6 +22,8 @@ import org.jetbrains.kotlin.konan.test.blackbox.support.group.FirPipeline
 import org.jetbrains.kotlin.konan.test.blackbox.support.settings.PipelineType
 import org.jetbrains.kotlin.konan.test.blackbox.support.settings.Settings
 import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.test.services.configuration.hostArch
+import org.junit.Assume
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -124,44 +126,6 @@ abstract class CompilerOutputTestBase : AbstractNativeSimpleTest() {
             expectedArtifact
         ).result
     }
-
-    internal fun compileLibrary(
-        settings: Settings,
-        source: File,
-        freeCompilerArgs: List<String> = emptyList(),
-        dependencies: List<TestCompilationArtifact.KLIB> = emptyList(),
-    ): TestCompilationResult<out TestCompilationArtifact.KLIB> {
-        val testCase = generateTestCaseWithSingleModule(source, TestCompilerArgs(freeCompilerArgs))
-        val compilation = LibraryCompilation(
-            settings = settings,
-            freeCompilerArgs = testCase.freeCompilerArgs,
-            sourceModules = testCase.modules,
-            dependencies = dependencies.map { it.asLibraryDependency() },
-            expectedArtifact = getLibraryArtifact(testCase, buildDir)
-        )
-        return compilation.result
-    }
-
-    internal fun TestCompilationResult<*>.toOutput(): String {
-        check(this is TestCompilationResult.ImmediateResult<*>) { this }
-        val loggedData = this.loggedData
-
-        // Debug output for KT-64822 investigation
-        println("Compiler logged data:\n$loggedData")
-
-        check(loggedData is LoggedData.CompilationToolCall) { loggedData::class }
-        return normalizeOutput(loggedData.toolOutput, loggedData.exitCode)
-    }
-
-    private fun normalizeOutput(output: String, exitCode: ExitCode): String {
-        val dir = "compiler/testData/compileKotlinAgainstCustomBinaries/"
-        return AbstractCliTest.getNormalizedCompilerOutput(
-            output,
-            exitCode,
-            dir,
-            dir
-        )
-    }
 }
 
 @TestDataPath("\$PROJECT_ROOT")
@@ -185,4 +149,42 @@ class FirCompilerOutputTest : CompilerOutputTestBase() {
 
         KotlinTestUtils.assertEqualsToFile(goldenData, compilationResult.toOutput())
     }
+}
+
+internal fun TestCompilationResult<*>.toOutput(): String {
+    check(this is TestCompilationResult.ImmediateResult<*>) { this }
+    val loggedData = this.loggedData
+
+    // Debug output for KT-64822 investigation
+    println("Compiler logged data:\n$loggedData")
+
+    check(loggedData is LoggedData.CompilationToolCall) { loggedData::class }
+    return normalizeOutput(loggedData.toolOutput, loggedData.exitCode)
+}
+
+private fun normalizeOutput(output: String, exitCode: ExitCode): String {
+    val dir = "compiler/testData/compileKotlinAgainstCustomBinaries/"
+    return AbstractCliTest.getNormalizedCompilerOutput(
+        output,
+        exitCode,
+        dir,
+        dir
+    )
+}
+
+internal fun AbstractNativeSimpleTest.compileLibrary(
+    settings: Settings,
+    source: File,
+    freeCompilerArgs: List<String> = emptyList(),
+    dependencies: List<TestCompilationArtifact.KLIB> = emptyList(),
+): TestCompilationResult<out TestCompilationArtifact.KLIB> {
+    val testCase = generateTestCaseWithSingleModule(source, TestCompilerArgs(freeCompilerArgs))
+    val compilation = LibraryCompilation(
+        settings = settings,
+        freeCompilerArgs = testCase.freeCompilerArgs,
+        sourceModules = testCase.modules,
+        dependencies = dependencies.map { it.asLibraryDependency() },
+        expectedArtifact = getLibraryArtifact(testCase, buildDir)
+    )
+    return compilation.result
 }
