@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.ir.linkage.IrProvider
 import org.jetbrains.kotlin.ir.overrides.IrFakeOverrideBuilder
 import org.jetbrains.kotlin.ir.util.KotlinMangler
 import org.jetbrains.kotlin.ir.util.SymbolTable
+import org.jetbrains.kotlin.psi.KtFile
 
 interface Fir2IrComponents {
     val session: FirSession
@@ -61,6 +62,8 @@ interface Fir2IrComponents {
     val configuration: Fir2IrConfiguration
 
     val annotationsFromPluginRegistrar: Fir2IrIrGeneratedDeclarationsRegistrar
+
+    val targetFiles: Set<KtFile>
 
     interface Manglers {
         val irMangler: KotlinMangler.IrMangler

@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.ir.linkage.IrProvider
 import org.jetbrains.kotlin.ir.overrides.IrFakeOverrideBuilder
 import org.jetbrains.kotlin.ir.util.KotlinMangler
 import org.jetbrains.kotlin.ir.util.SymbolTable
+import org.jetbrains.kotlin.psi.KtFile
 
 class Fir2IrComponentsStorage(
     override val session: FirSession,
@@ -25,6 +26,7 @@ class Fir2IrComponentsStorage(
     override val extensions: Fir2IrExtensions,
     override val configuration: Fir2IrConfiguration,
     override val visibilityConverter: Fir2IrVisibilityConverter,
+    override val targetFiles: Set<KtFile>,
     irFakeOverrideBuilderProvider: (IrBuiltIns) -> IrFakeOverrideBuilder,
     moduleDescriptor: FirModuleDescriptor,
     commonMemberStorage: Fir2IrCommonMemberStorage,

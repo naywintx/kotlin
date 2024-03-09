@@ -965,6 +965,9 @@ class Fir2IrCallableDeclarationsGenerator(val components: Fir2IrComponents) : Fi
     ) {
         if ((firAnnotationContainer as? FirDeclaration)?.let { it.isFromLibrary || it.isPrecompiled } == true
             || origin == IrDeclarationOrigin.FAKE_OVERRIDE
+            // When `firAnnotationContainer` is not in a compile target file, we will not fill contents for
+            // this annotation container later. Therefore, we have to set its annotations here.
+            || firAnnotationContainer.psi?.let { it.containingFile in targetFiles } != true
         ) {
             annotationGenerator.generate(this, firAnnotationContainer)
         }

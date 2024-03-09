@@ -5,8 +5,17 @@
 
 package org.jetbrains.kotlin.fir.plugin.services
 
+import org.jetbrains.kotlin.backend.jvm.ir.parentClassId
 import org.jetbrains.kotlin.cli.jvm.config.addJvmClasspathRoot
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.ir.IrElement
+import org.jetbrains.kotlin.ir.declarations.IrAnnotationContainer
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationWithName
+import org.jetbrains.kotlin.ir.expressions.IrCall
+import org.jetbrains.kotlin.ir.expressions.IrFieldAccessExpression
+import org.jetbrains.kotlin.ir.plugin.MyComposableClassId
+import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
+import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.js.config.JSConfigurationKeys
 import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -45,6 +54,32 @@ class PluginRuntimeAnnotationsProvider(testServices: TestServices) : RuntimeClas
     }
 }
 
+/**
+ * This class recursively visits all calls of functions and getters, and if the function or the getter used for a call has
+ * `MyComposable` annotation, it runs [handleComposable] for the function or the getter.
+ */
+class ComposableCallVisitor(private val handleComposable: (declaration: IrDeclarationWithName) -> Unit) : IrElementVisitorVoid {
+    override fun visitElement(element: IrElement) {
+        element.acceptChildrenVoid(this)
+    }
+
+    override fun visitCall(expression: IrCall) {
+        val function = expression.symbol.owner
+        if (expression.symbol.owner.containsComposableAnnotation()) {
+            handleComposable(function)
+        }
+    }
+
+    override fun visitFieldAccess(expression: IrFieldAccessExpression) {
+        val field = expression.symbol.owner
+        if (expression.symbol.owner.containsComposableAnnotation()) {
+            handleComposable(field)
+        }
+    }
+
+    private fun IrAnnotationContainer.containsComposableAnnotation() =
+        annotations.any { it.symbol.owner.parentClassId == MyComposableClassId }
+}
 
 private const val ANNOTATIONS_JAR_DIR = "plugins/fir-plugin-prototype/plugin-annotations/build/libs/"
 private val JVM_ANNOTATIONS_JAR_FILTER = createFilter("plugin-annotations-jvm", ".jar")

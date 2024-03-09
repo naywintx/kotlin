@@ -30,6 +30,8 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
+val MyComposableClassId = ClassId(FqName("org.jetbrains.kotlin.fir.plugin"), FqName("MyComposable"), false)
+
 class ComposableFunctionsTransformer(val pluginContext: IrPluginContext) : IrElementVisitorVoid {
     companion object {
         private val INVOKE = Name.identifier("invoke")
@@ -98,12 +100,10 @@ class ComposableFunctionsTransformer(val pluginContext: IrPluginContext) : IrEle
                     it.packageFqName?.asString() == "some"
         } ?: false
 
-    private val composableClassId = ClassId(FqName("org.jetbrains.kotlin.fir.plugin"), FqName("MyComposable"), false)
-
-    private val composableSymbol = pluginContext.referenceClass(composableClassId)!!
+    private val composableSymbol = pluginContext.referenceClass(MyComposableClassId)!!
 
     private fun IrFunction.mark() {
-        if (!hasAnnotation(composableClassId)) {
+        if (!hasAnnotation(MyComposableClassId)) {
             annotations = annotations + IrConstructorCallImpl.fromSymbolOwner(
                 composableSymbol.owner.defaultType,
                 composableSymbol.constructors.single(),

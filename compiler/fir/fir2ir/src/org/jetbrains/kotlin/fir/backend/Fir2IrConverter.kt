@@ -725,6 +725,7 @@ class Fir2IrConverter(
             val moduleDescriptor = FirModuleDescriptor.createSourceModuleDescriptor(session, kotlinBuiltIns)
             val components = Fir2IrComponentsStorage(
                 session, scopeSession, irFactory, fir2IrExtensions, fir2IrConfiguration, visibilityConverter,
+                firFiles.mapNotNull { it.psi as? KtFile }.toSet(),
                 { irBuiltins ->
                     IrFakeOverrideBuilder(
                         typeContextProvider(irBuiltins),
