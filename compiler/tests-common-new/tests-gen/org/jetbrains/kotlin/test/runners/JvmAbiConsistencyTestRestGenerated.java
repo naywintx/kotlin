@@ -13339,6 +13339,12 @@ public class JvmAbiConsistencyTestRestGenerated extends AbstractJvmAbiConsistenc
     }
 
     @Test
+    @TestMetadata("kt62570.kt")
+    public void testKt62570() {
+      runTest("compiler/testData/codegen/bytecodeListing/kt62570.kt");
+    }
+
+    @Test
     @TestMetadata("noCollectionStubMethodsInInterface.kt")
     public void testNoCollectionStubMethodsInInterface() {
       runTest("compiler/testData/codegen/bytecodeListing/noCollectionStubMethodsInInterface.kt");

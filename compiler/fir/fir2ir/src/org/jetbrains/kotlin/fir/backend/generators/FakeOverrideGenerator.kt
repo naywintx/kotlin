@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.backend.*
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.*
+import org.jetbrains.kotlin.fir.java.symbols.FirJavaOverriddenSyntheticPropertySymbol
 import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.scopes.*
 import org.jetbrains.kotlin.fir.scopes.impl.FirFakeOverrideGenerator
@@ -318,6 +319,14 @@ class FakeOverrideGenerator(
                     overriddenPerSupertype.put(superType.lookupTag, symbol)
                 }
             }
+        }
+
+        // FirJavaOverriddenSyntheticPropertySymbol is a special case
+        // It's override may be declared in non-supertype
+        // See kt62570.kt for example
+        if (originalSymbol is FirJavaOverriddenSyntheticPropertySymbol && originalSymbol.overriddenKotlinProperty != null) {
+            val originalKotlinProperty = originalSymbol.overriddenKotlinProperty!!
+            overriddenPerSupertype.put(originalKotlinProperty.containingClassLookupTag()!!, originalKotlinProperty as S)
         }
 
         val result = overriddenPerSupertype.map { (superType, overridden) ->

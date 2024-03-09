@@ -27,7 +27,10 @@ import org.jetbrains.kotlin.fir.expressions.FirLiteralExpression
 import org.jetbrains.kotlin.fir.expressions.unexpandedClassId
 import org.jetbrains.kotlin.fir.java.FirJavaTypeConversionMode
 import org.jetbrains.kotlin.fir.java.JavaTypeParameterStack
-import org.jetbrains.kotlin.fir.java.declarations.*
+import org.jetbrains.kotlin.fir.java.declarations.FirJavaClass
+import org.jetbrains.kotlin.fir.java.declarations.FirJavaExternalAnnotation
+import org.jetbrains.kotlin.fir.java.declarations.FirJavaField
+import org.jetbrains.kotlin.fir.java.declarations.buildJavaField
 import org.jetbrains.kotlin.fir.java.resolveIfJavaType
 import org.jetbrains.kotlin.fir.java.symbols.FirJavaOverriddenSyntheticPropertySymbol
 import org.jetbrains.kotlin.fir.java.toConeKotlinTypeProbablyFlexible
@@ -62,7 +65,7 @@ import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 class FirSignatureEnhancement(
     private val owner: FirRegularClass,
     private val session: FirSession,
-    private val overridden: FirSimpleFunction.() -> List<FirCallableDeclaration>
+    private val overridden: FirSimpleFunction.() -> List<FirCallableDeclaration>,
 ) {
     /*
      * FirSignatureEnhancement may be created with library session which doesn't have single module data,
@@ -172,7 +175,11 @@ class FirSignatureEnhancement(
                 return buildSyntheticProperty {
                     moduleData = this@FirSignatureEnhancement.moduleData
                     this.name = name
-                    symbol = FirJavaOverriddenSyntheticPropertySymbol(accessorSymbol.callableId, accessorSymbol.getterId)
+                    symbol = FirJavaOverriddenSyntheticPropertySymbol(
+                        accessorSymbol.callableId,
+                        accessorSymbol.getterId,
+                        (accessorSymbol as? FirJavaOverriddenSyntheticPropertySymbol)?.overriddenKotlinProperty
+                    )
                     delegateGetter = enhancedGetterSymbol?.fir as FirSimpleFunction? ?: getterDelegate
                     delegateSetter = enhancedSetterSymbol?.fir as FirSimpleFunction? ?: setterDelegate
                     status = firElement.status
