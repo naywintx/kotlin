@@ -1,0 +1,18 @@
+// DISABLE_NATIVE: gcType=NOOP
+
+import kotlin.test.*
+import kotlin.native.ref.*
+
+@OptIn(kotlin.native.runtime.NativeRuntimeApi::class)
+@Test fun runTest() {
+    val weakRefToTrashCycle = createLoop()
+    kotlin.native.runtime.GC.collect()
+    assertNull(weakRefToTrashCycle.get())
+}
+
+private fun createLoop(): WeakReference<Any> {
+    val loop = Array<Any?>(1, { null })
+    loop[0] = loop
+
+    return WeakReference(loop)
+}

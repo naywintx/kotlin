@@ -30,8 +30,20 @@ public class FirNativeStressTestGenerated extends AbstractNativeBlackBoxTest {
   }
 
   @Test
+  @TestMetadata("array_out_of_memory.kt")
+  public void testArray_out_of_memory() {
+    runTest("native/native.tests/stress/testData/array_out_of_memory.kt");
+  }
+
+  @Test
   @TestMetadata("kt63423_dispose_on_main_stress.kt")
   public void testKt63423_dispose_on_main_stress() {
     runTest("native/native.tests/stress/testData/kt63423_dispose_on_main_stress.kt");
+  }
+
+  @Test
+  @TestMetadata("stress_gc_allocations.kt")
+  public void testStress_gc_allocations() {
+    runTest("native/native.tests/stress/testData/stress_gc_allocations.kt");
   }
 }

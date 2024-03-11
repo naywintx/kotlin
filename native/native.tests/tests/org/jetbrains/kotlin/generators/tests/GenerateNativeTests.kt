@@ -546,6 +546,28 @@ fun main() {
                 model("")
             }
         }
+        // GC tests
+        testGroup("native/native.tests/tests-gen", "native/native.tests/testData") {
+            testClass<AbstractNativeBlackBoxTest>(
+                suiteTestClassName = "NativeGCTestGenerated",
+                annotations = listOf(
+                    *gc(),
+                    provider<UseStandardTestCaseGroupProvider>(),
+                )
+            ) {
+                model("gc")
+            }
+            testClass<AbstractNativeBlackBoxTest>(
+                suiteTestClassName = "FirNativeGCTestGenerated",
+                annotations = listOf(
+                    *gc(),
+                    provider<UseStandardTestCaseGroupProvider>(),
+                    *frontendFir(),
+                )
+            ) {
+                model("gc")
+            }
+        }
     }
 }
 
@@ -607,4 +629,7 @@ private fun cinterfaceMode(mode: String = "V1") = annotation(
     EnforcedProperty::class.java,
     "property" to ClassLevelProperty.C_INTERFACE_MODE,
     "propertyValue" to mode
+)
+private fun gc() = arrayOf(
+    annotation(Tag::class.java, "gc"),
 )
