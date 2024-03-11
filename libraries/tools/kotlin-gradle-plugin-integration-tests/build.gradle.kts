@@ -184,6 +184,31 @@ tasks.register<Copy>("prepareNativeBundleForGradleIT") {
     }
 }
 
+tasks.register<Task>("createProvisionedOkFiles") {
+
+    description = "This task creates `provisioned.ok` file for each preconfigured k/n native bundle."
+
+    val konanDataDirTree = File(konanDataDir).walkTopDown().maxDepth(1)
+
+    doLast {
+        konanDataDirTree
+            .filter { file -> file != File(konanDataDir) }
+            .forEach {
+                if (it.isDirectory) {
+                    println("I'M SUBDIRRECTORY $it")
+                    File(it, "provisioned.ok").createNewFile()
+                }
+            }
+    }
+
+}.configure {
+    val prepareNativeBundleTaskName = ":kotlin-gradle-plugin-integration-tests:prepareNativeBundleForGradleIT"
+    val taskExists = project.tasks.findByPath(prepareNativeBundleTaskName) != null
+    if (taskExists) {
+        mustRunAfter(prepareNativeBundleTaskName)
+    }
+}
+
 fun Test.includeMppAndAndroid(include: Boolean) = includeTestsWithPattern(include) {
     addAll(listOf("*Multiplatform*", "*Mpp*", "*Android*"))
 }
@@ -193,7 +218,9 @@ fun Test.includeNative(include: Boolean) = includeTestsWithPattern(include) {
 }
 
 fun Test.applyKotlinNativeFromCurrentBranchIfNeeded() {
-    val kotlinNativeFromMasterEnabled = project.kotlinBuildProperties.isKotlinNativeEnabled && project.kotlinBuildProperties.useKotlinNativeLocalDistributionForTests
+
+    val kotlinNativeFromMasterEnabled =
+        project.kotlinBuildProperties.isKotlinNativeEnabled && project.kotlinBuildProperties.useKotlinNativeLocalDistributionForTests
     if (kotlinNativeFromMasterEnabled && !project.kotlinBuildProperties.isTeamcityBuild) {
         dependsOn(":kotlin-gradle-plugin-integration-tests:prepareNativeBundleForGradleIT")
     }
@@ -212,6 +239,7 @@ fun Test.applyKotlinNativeFromCurrentBranchIfNeeded() {
         }
         systemProperty("konanDataDirForIntegrationTests", konanDataDir)
     }
+    dependsOn(":kotlin-gradle-plugin-integration-tests:createProvisionedOkFiles")
 }
 
 fun Test.includeTestsWithPattern(include: Boolean, patterns: (MutableSet<String>).() -> Unit) {
