@@ -3,5 +3,5 @@ fun test(foo: Foo) {
 }
 
 class Foo {
-    fun bar() {}
+    fun bar(): String {}
 }

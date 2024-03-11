@@ -148,13 +148,17 @@ internal class KtFirDataFlowInfoProvider(override val analysisSession: KtFirAnal
         @Suppress("USELESS_IS_CHECK") // K2 warning suppression, TODO: KT-62472
         require(firDefaultStatement is FirExpression)
 
-        val defaultExpression = firDefaultStatement.psi as? KtExpression ?: return null
-        if (statements.none { PsiTreeUtil.isAncestor(it, defaultExpression, false) }) {
+        val defaultExpressionFromPsi = statements.last()
+        val defaultExpressionFromFir = firDefaultStatement.psi as? KtExpression ?: return null
+
+        if (!PsiTreeUtil.isAncestor(defaultExpressionFromFir, defaultExpressionFromPsi, false)) {
+            // In certain cases, expressions might be different in PSI and FIR sources.
+            // E.g., in 'foo.<expr>bar()</expr>', there is no FIR expression that corresponds to the 'bar()' KtCallExpression.
             return null
         }
 
         val defaultType = firDefaultStatement.resolvedType.toKtType()
-        return KtDataFlowExitPointSnapshot.DefaultExpressionInfo(defaultExpression, defaultType)
+        return KtDataFlowExitPointSnapshot.DefaultExpressionInfo(defaultExpressionFromPsi, defaultType)
     }
 
     private fun computeReturnType(firReturnExpressions: List<FirReturnExpression>): KtType? {
