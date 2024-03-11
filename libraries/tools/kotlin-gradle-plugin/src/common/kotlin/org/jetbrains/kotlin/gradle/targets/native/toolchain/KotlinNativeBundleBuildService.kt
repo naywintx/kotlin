@@ -221,19 +221,19 @@ internal abstract class KotlinNativeBundleBuildService : BuildService<BuildServi
             val permissions: MutableSet<PosixFilePermission> = mutableSetOf()
 
             // adding owner permissions
-            permissions.addPermission(mode, 256, PosixFilePermission.OWNER_READ)
-            permissions.addPermission(mode, 128, PosixFilePermission.OWNER_WRITE)
-            permissions.addPermission(mode, 64, PosixFilePermission.OWNER_EXECUTE)
+            permissions.addPermission(mode, 0b100_000_000, PosixFilePermission.OWNER_READ)
+            permissions.addPermission(mode, 0b010_000_000, PosixFilePermission.OWNER_WRITE)
+            permissions.addPermission(mode, 0b001_000_000, PosixFilePermission.OWNER_EXECUTE)
 
             // adding group permissions
-            permissions.addPermission(mode, 32, PosixFilePermission.GROUP_READ)
-            permissions.addPermission(mode, 16, PosixFilePermission.GROUP_WRITE)
-            permissions.addPermission(mode, 8, PosixFilePermission.GROUP_EXECUTE)
+            permissions.addPermission(mode, 0b000_100_000, PosixFilePermission.GROUP_READ)
+            permissions.addPermission(mode, 0b000_010_000, PosixFilePermission.GROUP_WRITE)
+            permissions.addPermission(mode, 0b000_001_000, PosixFilePermission.GROUP_EXECUTE)
 
             // adding other permissions
-            permissions.addPermission(mode, 4, PosixFilePermission.OTHERS_READ)
-            permissions.addPermission(mode, 2, PosixFilePermission.OTHERS_WRITE)
-            permissions.addPermission(mode, 1, PosixFilePermission.OTHERS_EXECUTE)
+            permissions.addPermission(mode, 0b000_000_100, PosixFilePermission.OTHERS_READ)
+            permissions.addPermission(mode, 0b000_000_010, PosixFilePermission.OTHERS_WRITE)
+            permissions.addPermission(mode, 0b000_000_001, PosixFilePermission.OTHERS_EXECUTE)
 
             return permissions
         }
