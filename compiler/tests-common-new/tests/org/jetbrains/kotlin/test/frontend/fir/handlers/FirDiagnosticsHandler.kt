@@ -631,6 +631,21 @@ typealias DiagnosticsMap = Multimap<FirFile, DiagnosticWithKmpCompilationMode, L
 
 data class DiagnosticWithKmpCompilationMode(val diagnostic: KtDiagnostic, val kmpCompilationMode: KmpCompilationMode)
 
+/**
+ * There are two types of checkers (represented by [MppCheckerKind]):
+ * 1. Common checker. When a common checker analyzes a code, the checker doesn't see what are the actualizations for the `expect` declarations.
+ * 2. Platform checker. When a platform checker analyzes a code, the checker sees what are the actualizations for the `expect` declarations
+ *    instead of the `expect` declarations themselves.
+ *
+ * KMP is compiled in two different modes (represented by [KmpCompilationMode]):
+ * 1. Metadata compilation. Metadata compilation compiles only non-platform fragments,
+ *    and it runs platform checkers on those non-platform fragments.
+ * 2. Platform compilation. Platform compilation compiles all the fragments (non-platform and platform),
+ *    and it runs common checkers on non-platform fragments,
+ *    and it runs platform checkers on platform fragments
+ *
+ * Please don't confuse "platform checker" and "platform compilation"
+ */
 enum class KmpCompilationMode {
     METADATA, PLATFORM, LOW_LEVEL_API
 }
