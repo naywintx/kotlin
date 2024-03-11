@@ -13171,6 +13171,12 @@ public class JvmAbiConsistencyTestRestGenerated extends AbstractJvmAbiConsistenc
     }
 
     @Test
+    @TestMetadata("bridgeForJavaSyntheticProperty.kt")
+    public void testBridgeForJavaSyntheticProperty() {
+      runTest("compiler/testData/codegen/bytecodeListing/bridgeForJavaSyntheticProperty.kt");
+    }
+
+    @Test
     @TestMetadata("callableNameIntrinsic.kt")
     public void testCallableNameIntrinsic() {
       runTest("compiler/testData/codegen/bytecodeListing/callableNameIntrinsic.kt");
@@ -13336,12 +13342,6 @@ public class JvmAbiConsistencyTestRestGenerated extends AbstractJvmAbiConsistenc
     @TestMetadata("kt55769.kt")
     public void testKt55769() {
       runTest("compiler/testData/codegen/bytecodeListing/kt55769.kt");
-    }
-
-    @Test
-    @TestMetadata("kt62570.kt")
-    public void testKt62570() {
-      runTest("compiler/testData/codegen/bytecodeListing/kt62570.kt");
     }
 
     @Test

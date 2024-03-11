@@ -323,7 +323,7 @@ class FakeOverrideGenerator(
 
         // FirJavaOverriddenSyntheticPropertySymbol is a special case
         // It's override may be declared in non-supertype
-        // See kt62570.kt for example
+        // See bridgeForJavaSyntheticProperty.kt for example
         if (originalSymbol is FirJavaOverriddenSyntheticPropertySymbol && originalSymbol.overriddenKotlinProperty != null) {
             val originalKotlinProperty = originalSymbol.overriddenKotlinProperty!!
             overriddenPerSupertype.put(originalKotlinProperty.containingClassLookupTag()!!, originalKotlinProperty as S)

@@ -2,6 +2,7 @@
 
 // TARGET_BACKEND: JVM_IR
 // WITH_STDLIB
+// ISSUE: KT-62570
 
 // FILE: A.java
 

@@ -44,7 +44,7 @@ class JavaAnnotationSyntheticPropertiesScope(
             val function = functionSymbol.fir
             val symbol = syntheticPropertiesCache.getOrPut(functionSymbol) {
                 val callableId = CallableId(classId, name)
-                FirJavaOverriddenSyntheticPropertySymbol(callableId, callableId, null).also {
+                FirJavaOverriddenSyntheticPropertySymbol(callableId, callableId, overriddenKotlinProperty = null).also {
                     buildSyntheticProperty {
                         moduleData = session.nullableModuleData ?: function.moduleData
                         this.name = name
