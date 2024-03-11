@@ -533,92 +533,6 @@ public class KmVersionRequirement {
 }
 
 /**
- * Represents a contract of a Kotlin function.
- *
- * Contracts are an internal feature of the standard Kotlin library, and their behavior and/or binary format
- * may change in a subsequent release.
- */
-@ExperimentalContracts
-public class KmContract {
-    /**
-     * Effects of this contract.
-     */
-    public val effects: MutableList<KmEffect> = ArrayList(1)
-}
-
-/**
- * Represents an effect (a part of the contract of a Kotlin function).
- *
- * Contracts are an internal feature of the standard Kotlin library, and their behavior and/or binary format
- * may change in a subsequent release.
- *
- * @property type type of the effect
- * @property invocationKind optional number of invocations of the lambda parameter of this function,
- *   specified further in the effect expression
- */
-@ExperimentalContracts
-public class KmEffect(
-    public var type: KmEffectType,
-    public var invocationKind: KmEffectInvocationKind?,
-) {
-    /**
-     * Arguments of the effect constructor, i.e. the constant value for the [KmEffectType.RETURNS_CONSTANT] effect,
-     * or the parameter reference for the [KmEffectType.CALLS] effect.
-     */
-    public val constructorArguments: MutableList<KmEffectExpression> = ArrayList(1)
-
-    /**
-     * Conclusion of the effect. If this value is set, the effect represents an implication with this value as the right-hand side.
-     */
-    public var conclusion: KmEffectExpression? = null
-}
-
-/**
- * Represents an effect expression, the contents of an effect (a part of the contract of a Kotlin function).
- *
- * Contracts are an internal feature of the standard Kotlin library, and their behavior and/or binary format
- * may change in a subsequent release.
- *
- * Various effect expression attributes can be read and manipulated via extension properties,
- * such as [KmEffectExpression.isNegated].
- */
-@ExperimentalContracts
-public class KmEffectExpression {
-    /**
-     * Effect expression flags, consisting of [Flag.EffectExpression] flags.
-     */
-    internal var flags: Int = 0
-
-    /**
-     * Optional 1-based index of the value parameter of the function, for effects which assert something about
-     * the function parameters. Index 0 means the extension receiver parameter.
-     */
-    public var parameterIndex: Int? = null
-
-    /**
-     * Constant value used in the effect expression.
-     */
-    public var constantValue: KmConstantValue? = null
-
-    /**
-     * Type used as the target of an `is`-expression in the effect expression.
-     */
-    public var isInstanceType: KmType? = null
-
-    /**
-     * Arguments of an `&&`-expression. If this list is non-empty, the resulting effect expression is a conjunction of this expression
-     * and elements of the list.
-     */
-    public val andArguments: MutableList<KmEffectExpression> = ArrayList(0)
-
-    /**
-     * Arguments of an `||`-expression. If this list is non-empty, the resulting effect expression is a disjunction of this expression
-     * and elements of the list.
-     */
-    public val orArguments: MutableList<KmEffectExpression> = ArrayList(0)
-}
-
-/**
  * Represents a classifier of a Kotlin type. A classifier is a class, type parameter, or type alias.
  * For example, in `MutableMap<in String?, *>`, `MutableMap` is the classifier.
  */
@@ -682,6 +596,27 @@ public data class KmFlexibleTypeUpperBound(var type: KmType, var typeFlexibility
 }
 
 /**
+ * Variance applied to a type parameter on the declaration site (*declaration-site variance*),
+ * or to a type in a projection (*use-site variance*).
+ */
+public enum class KmVariance {
+    /**
+     * The affected type parameter or type is *invariant*, which means it has no variance applied to it.
+     */
+    INVARIANT,
+
+    /**
+     * The affected type parameter or type is *contravariant*. Denoted by the `in` modifier in the source code.
+     */
+    IN,
+
+    /**
+     * The affected type parameter or type is *covariant*. Denoted by the `out` modifier in the source code.
+     */
+    OUT,
+}
+
+/**
  * Represents a version used in a version requirement.
  *
  * @property major the major component of the version (e.g. "1" in "1.2.3")
@@ -697,12 +632,57 @@ public data class KmVersion(val major: Int, val minor: Int, val patch: Int) {
 }
 
 /**
- * Represents a constant value used in an effect expression.
- *
- * Contracts are an internal feature of the standard Kotlin library, and their behavior and/or binary format
- * may change in a subsequent release.
- *
- * @property value the constant value. May be `true`, `false` or `null`
+ * Severity of the diagnostic reported by the compiler when a version requirement is not satisfied.
  */
-@ExperimentalContracts
-public data class KmConstantValue(val value: Any?)
+public enum class KmVersionRequirementLevel {
+    /**
+     * Represents a diagnostic with 'WARNING' severity.
+     */
+    WARNING,
+
+    /**
+     * Represents a diagnostic with 'ERROR' severity.
+     */
+    ERROR,
+
+    /**
+     * Excludes the declaration from the resolution process completely when the version requirement is not satisfied.
+     */
+    HIDDEN,
+}
+
+/**
+ * The kind of the version that is required by a version requirement.
+ */
+public enum class KmVersionRequirementVersionKind {
+    /**
+     * Indicates that certain language version is required.
+     */
+    LANGUAGE_VERSION,
+
+    /**
+     * Indicates that certain compiler version is required.
+     */
+    COMPILER_VERSION,
+
+    /**
+     * Indicates that certain API version is required.
+     */
+    API_VERSION,
+
+    /**
+     * Represents a version requirement not successfully parsed from the metadata.
+     *
+     * The old metadata format (from Kotlin 1.3 and earlier) did not have enough information for correct parsing of version requirements in some cases,
+     * so a stub of this kind is inserted instead.
+     *
+     * [KmVersionRequirement] with this kind always has [KmVersionRequirementLevel.HIDDEN] level, `256.256.256` [KmVersionRequirement.version],
+     * and `null` [KmVersionRequirement.errorCode] and [KmVersionRequirement.message].
+     *
+     * Version requirements of this kind are being ignored by writers (i.e., are not written back).
+     *
+     * See the following issues for details: [KT-60870](https://youtrack.jetbrains.com/issue/KT-60870), [KT-25120](https://youtrack.jetbrains.com/issue/KT-25120)
+     */
+    UNKNOWN
+    ;
+}
