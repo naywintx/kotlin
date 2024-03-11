@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.fir.declarations.FirAnonymousFunction
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.FirControlFlowGraphOwner
 import org.jetbrains.kotlin.fir.declarations.FirErrorFunction
+import org.jetbrains.kotlin.fir.declarations.FirErrorPrimaryConstructor
 import org.jetbrains.kotlin.fir.declarations.FirFunction
 import org.jetbrains.kotlin.fir.declarations.FirPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
@@ -297,6 +298,7 @@ internal class KtFirDataFlowInfoProvider(override val analysisSession: KtFirAnal
         override fun visitSimpleFunction(simpleFunction: FirSimpleFunction) = visitFunction(simpleFunction)
         override fun visitErrorFunction(errorFunction: FirErrorFunction) = visitFunction(errorFunction)
         override fun visitConstructor(constructor: FirConstructor) = visitFunction(constructor)
+        override fun visitErrorPrimaryConstructor(constructor: FirErrorPrimaryConstructor) = visitFunction(constructor)
 
         override fun visitFunction(function: FirFunction) {
             firFunctionDeclarations.add(function)
