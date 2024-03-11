@@ -1,1 +1,2 @@
 /OneSealedChild
+class OneSealedChild : MySealedInterface
