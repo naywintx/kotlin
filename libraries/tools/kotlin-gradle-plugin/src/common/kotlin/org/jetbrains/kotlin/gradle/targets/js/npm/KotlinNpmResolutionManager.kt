@@ -58,7 +58,7 @@ abstract class KotlinNpmResolutionManager : BuildService<KotlinNpmResolutionMana
         val packagesDir: DirectoryProperty
     }
 
-    internal val resolution
+    val resolution
         get() = parameters.resolution
 
     val packagesDir

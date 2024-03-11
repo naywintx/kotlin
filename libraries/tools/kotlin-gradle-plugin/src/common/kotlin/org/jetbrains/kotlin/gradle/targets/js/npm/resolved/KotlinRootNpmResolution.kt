@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.gradle.targets.js.npm.NodeJsEnvironment
 import org.jetbrains.kotlin.gradle.targets.js.npm.ProjectResolvedConfiguration
 import java.io.Serializable
 
-internal class KotlinRootNpmResolution(
+class KotlinRootNpmResolution(
     val projects: Map<String, KotlinProjectNpmResolution>,
     val rootProjectName: String,
     val rootProjectVersion: String,

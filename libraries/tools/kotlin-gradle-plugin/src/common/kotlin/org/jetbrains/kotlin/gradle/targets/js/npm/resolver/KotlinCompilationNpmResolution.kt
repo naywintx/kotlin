@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.gradle.utils.getFile
 import java.io.File
 import java.io.Serializable
 
-internal class KotlinCompilationNpmResolution(
+class KotlinCompilationNpmResolution(
     val buildPath: String,
     val npmDependencies: Set<NpmDependencyDeclaration>,
     val fileDependencies: Set<FileCollectionExternalGradleDependency>,
@@ -40,7 +40,7 @@ internal class KotlinCompilationNpmResolution(
     internal var resolution: PreparedKotlinCompilationNpmResolution? = null
 
     @Synchronized
-    fun prepareWithDependencies(
+    internal fun prepareWithDependencies(
         npmResolutionManager: KotlinNpmResolutionManager,
         logger: Logger,
         resolvedConfigurations: Map<String, ProjectResolvedConfiguration>,
@@ -57,7 +57,7 @@ internal class KotlinCompilationNpmResolution(
     }
 
     @Synchronized
-    fun getResolutionOrPrepare(
+    internal fun getResolutionOrPrepare(
         npmResolutionManager: KotlinNpmResolutionManager,
         logger: Logger,
         resolvedConfigurations: Map<String, ProjectResolvedConfiguration>,
@@ -71,7 +71,7 @@ internal class KotlinCompilationNpmResolution(
     }
 
     @Synchronized
-    fun close(
+    internal fun close(
         npmResolutionManager: KotlinNpmResolutionManager,
         logger: Logger,
         resolvedConfigurations: Map<String, ProjectResolvedConfiguration>,
@@ -180,7 +180,7 @@ internal class KotlinCompilationNpmResolution(
         return direct + unique
     }
 
-    inner class ConfigurationVisitor(val rootResolution: KotlinRootNpmResolution) {
+    inner internal class ConfigurationVisitor(val rootResolution: KotlinRootNpmResolution) {
         val internalDependencies = mutableSetOf<InternalDependency>()
         val externalGradleDependencies = mutableSetOf<ExternalGradleDependency>()
 
