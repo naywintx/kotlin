@@ -26,6 +26,8 @@ fun foo() {}
 
 fun bar() {}
 
+fun <E> materialize(): E = TODO()
+
 typealias MyUnit = Unit
 
 fun myUnit(): MyUnit = Unit
@@ -51,6 +53,11 @@ val lambdaInt: () -> Any = { 42 }
 
 val lambdaNothing: () -> Any? = { null as Nothing? }
 
+val lambdaTypeVariableConstructor: () -> Any? = l@ {
+    if ("0".hashCode() == 42) return@l materialize()
+    Unit
+}
+
 fun box(): String {
     // Test ContextDependent & LambdaResolution resolution mode
     assertEquals("kotlin.jvm.functions.Function0<kotlin.Unit>", getSuperInterface {})
@@ -60,6 +67,13 @@ fun box(): String {
         getSuperInterface {
             if ("0".hashCode() == 42) return@getSuperInterface Unit
             ""
+        }
+    )
+    assertEquals(
+        "kotlin.jvm.functions.Function0<java.lang.Object>",
+        getSuperInterface {
+            if ("0".hashCode() == 42) return@getSuperInterface materialize()
+            Unit
         }
     )
     assertEquals("kotlin.jvm.functions.Function0<kotlin.Unit>", getSuperInterface { return@getSuperInterface Unit })
@@ -75,6 +89,7 @@ fun box(): String {
     assertEquals("kotlin.jvm.functions.Function0<kotlin.Unit>", renderSuperInterface(lambdaUnit))
     assertEquals("kotlin.jvm.functions.Function0<kotlin.Unit>", renderSuperInterface(lambdaMyUnit))
     assertEquals("kotlin.jvm.functions.Function0<kotlin.Unit>", renderSuperInterface(lambdaExplicitUnit))
+    assertEquals("kotlin.jvm.functions.Function0<java.lang.Object>", renderSuperInterface(lambdaTypeVariableConstructor))
     assertEquals("kotlin.jvm.functions.Function0<java.lang.Object>", renderSuperInterface(lambdaExplicitUnitOrString))
     assertEquals("kotlin.jvm.functions.Function0<java.lang.String>", renderSuperInterface(lambdaString))
     assertEquals("kotlin.jvm.functions.Function0<java.lang.Integer>", renderSuperInterface(lambdaInt))
