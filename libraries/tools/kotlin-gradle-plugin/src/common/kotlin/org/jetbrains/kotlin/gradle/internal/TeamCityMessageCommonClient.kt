@@ -13,7 +13,7 @@ import org.gradle.internal.logging.progress.ProgressLogger
 import org.jetbrains.kotlin.gradle.utils.clearAnsiColor
 import java.text.ParseException
 
-class TeamCityMessageCommonClient(
+open class TeamCityMessageCommonClient(
     internal val clientType: LogType,
     internal val log: Logger
 ) : ServiceMessageParserCallback {
@@ -52,7 +52,7 @@ class TeamCityMessageCommonClient(
             null
     }
 
-    private fun printMessage(text: String, type: LogType?) {
+    internal open fun printMessage(text: String, type: LogType?) {
         val value = text.trimEnd()
         progressLogger?.progress(value)
 
@@ -78,7 +78,7 @@ class TeamCityMessageCommonClient(
     }
 
     override fun regularText(text: String) {
-        if (clientType == LogType.ERROR || clientType == LogType.WARN) {
+        if (clientType.isErrorLike()) {
             printMessage(text, clientType)
         } else {
             printMessage(text, LogType.DEBUG)
