@@ -371,11 +371,11 @@ private fun AnalysisApiTestGroup.generateAnalysisApiComponentsTests() {
     }
 
     component("inheritorsProvider", filter = analysisSessionModeIs(AnalysisSessionMode.Normal) and frontendIs(FrontendKind.Fir)) {
-        test(AbstractSealedInheritorsTest::class) {
+        test<AbstractSealedInheritorsTest> {
             model(it, "sealedInheritors")
         }
 
-        test(AbstractDanglingFileSealedInheritorsTest::class) {
+        test<AbstractDanglingFileSealedInheritorsTest> {
             model(it, "sealedInheritors")
         }
     }
