@@ -342,6 +342,7 @@ public final annotation class JsQualifier : kotlin.Annotation {
 @kotlin.annotation.Retention(value = AnnotationRetention.BINARY)
 @kotlin.annotation.Target(allowedTargets = {AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER})
 @kotlin.annotation.MustBeDocumented
+@kotlin.SinceKotlin(version = "2.0")
 public final annotation class JsStatic : kotlin.Annotation {
     public constructor JsStatic()
 }

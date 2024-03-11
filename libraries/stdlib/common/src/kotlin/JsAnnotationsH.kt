@@ -171,4 +171,5 @@ public annotation class ExperimentalJsCollectionsApi
 @Target(FUNCTION, PROPERTY, PROPERTY_GETTER, PROPERTY_SETTER)
 @MustBeDocumented
 @OptionalExpectation
+@SinceKotlin("2.0")
 public expect annotation class JsStatic

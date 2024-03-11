@@ -309,4 +309,5 @@ public annotation class JsExternalArgument
 @Retention(AnnotationRetention.BINARY)
 @Target(FUNCTION, PROPERTY, PROPERTY_GETTER, PROPERTY_SETTER)
 @MustBeDocumented
+@SinceKotlin("2.0")
 public actual annotation class JsStatic()
