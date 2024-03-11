@@ -1,5 +1,7 @@
 // WITH_REFLECT
 // FIR_DUMP
+// MUTE_LL_FIR: KT-65218
+
 import kotlin.reflect.*
 
 interface Foo<T : Any> {
