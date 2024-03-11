@@ -12,6 +12,16 @@ import kotlin.internal.getProgressionLastElement
 import kotlin.reflect.KClass
 import kotlin.concurrent.AtomicReference
 import kotlinx.cinterop.*
+import kotlinx.cinterop.NativePtr
+
+@OptIn(ExperimentalForeignApi::class)
+public fun CreateStableRef(obj: Any?): Long = obj?.let { createStablePointer(it).toLong() } ?: 0
+
+@OptIn(ExperimentalForeignApi::class)
+public fun DisposeStableRef(ptr: Long): Unit = interpretCPointer<CPointed>(NativePtr.NULL.plus(ptr))?.let { disposeStablePointer(it) } ?: Unit
+
+@OptIn(ExperimentalForeignApi::class)
+public fun DereferenceStableRef(ptr: Long): Any? = interpretCPointer<CPointed>(NativePtr.NULL.plus(ptr))?.let { derefStablePointer(it) }
 
 @ExportForCppRuntime
 @PublishedApi
