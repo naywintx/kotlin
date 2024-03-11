@@ -639,7 +639,9 @@ data class DiagnosticWithKmpCompilationMode(val diagnostic: KtDiagnostic, val km
  *
  * KMP is compiled in two different modes (represented by [KmpCompilationMode]):
  * 1. Metadata compilation. Metadata compilation compiles only non-platform fragments,
- *    and it runs platform checkers on those non-platform fragments.
+ *    and it runs both common and platform checkers on those non-platform fragments.
+ *    But in testData, we only check diagnostics from platform checkers in non-platform fragments.
+ *    Common checkers in non-platform targets are tested by "platform compilation" anyway
  * 2. Platform compilation. Platform compilation compiles all the fragments (non-platform and platform),
  *    and it runs common checkers on non-platform fragments,
  *    and it runs platform checkers on platform fragments
