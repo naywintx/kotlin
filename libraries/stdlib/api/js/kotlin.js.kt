@@ -238,7 +238,7 @@ public final annotation class ExperimentalJsReflectionCreateInstance : kotlin.An
 @kotlin.RequiresOptIn(level = Level.WARNING)
 @kotlin.annotation.MustBeDocumented
 @kotlin.annotation.Retention(value = AnnotationRetention.BINARY)
-@kotlin.SinceKotlin(version = "1.9")
+@kotlin.SinceKotlin(version = "2.0")
 public final annotation class ExperimentalJsStatic : kotlin.Annotation {
     public constructor ExperimentalJsStatic()
 }

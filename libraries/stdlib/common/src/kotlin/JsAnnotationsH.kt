@@ -69,7 +69,7 @@ public annotation class ExperimentalJsExport
 @RequiresOptIn(level = RequiresOptIn.Level.WARNING)
 @MustBeDocumented
 @Retention(AnnotationRetention.BINARY)
-@SinceKotlin("1.9")
+@SinceKotlin("2.0")
 public annotation class ExperimentalJsStatic
 
 /**
