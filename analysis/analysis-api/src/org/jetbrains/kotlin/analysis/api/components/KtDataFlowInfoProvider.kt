@@ -17,7 +17,7 @@ public abstract class KtDataFlowInfoProvider : KtAnalysisSessionComponent() {
     public abstract fun getExitPointSnapshot(statements: List<KtExpression>): KtDataFlowExitPointSnapshot
 }
 
-@OptIn(KtAnalysisNonPublicApi::class)
+@KtAnalysisNonPublicApi
 public interface KtDataFlowInfoProviderMixin : KtAnalysisSessionMixIn {
     public fun getExitPointSnapshot(statements: List<KtExpression>): KtDataFlowExitPointSnapshot = withValidityAssertion {
         return analysisSession.dataFlowInfoProvider.getExitPointSnapshot(statements)
