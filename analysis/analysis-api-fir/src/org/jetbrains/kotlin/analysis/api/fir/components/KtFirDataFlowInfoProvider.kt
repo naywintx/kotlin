@@ -62,6 +62,7 @@ import org.jetbrains.kotlin.fir.resolve.dfa.controlFlowGraph
 import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.commonSuperTypeOrNull
+import org.jetbrains.kotlin.fir.types.isNothing
 import org.jetbrains.kotlin.fir.types.isUnit
 import org.jetbrains.kotlin.fir.types.resolvedType
 import org.jetbrains.kotlin.fir.types.typeContext
@@ -157,7 +158,12 @@ internal class KtFirDataFlowInfoProvider(override val analysisSession: KtFirAnal
             return null
         }
 
-        val defaultType = firDefaultStatement.resolvedType.toKtType()
+        val defaultConeType = firDefaultStatement.resolvedType
+        if (defaultConeType.isNothing) {
+            return null
+        }
+
+        val defaultType = defaultConeType.toKtType()
         return KtDataFlowExitPointSnapshot.DefaultExpressionInfo(defaultExpressionFromPsi, defaultType)
     }
 

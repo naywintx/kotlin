@@ -1,9 +1,5 @@
 KtDataFlowExitPointSnapshot:
-  defaultExpressionInfo = DefaultExpressionInfo:
-    expression = if (a + b > 0) return 1
-        else if (a - b < 0) return 2
-        else return b
-    type = kotlin.Nothing
+  defaultExpressionInfo = null
   hasEscapingJumps = false
   hasJumps = true
   hasMultipleJumpKinds = false
