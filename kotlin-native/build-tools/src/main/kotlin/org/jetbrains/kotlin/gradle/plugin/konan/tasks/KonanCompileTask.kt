@@ -21,9 +21,6 @@ import javax.inject.Inject
  */
 abstract class KonanCompileTask @Inject constructor(private val layout: ProjectLayout):  KonanBuildingTask(), KonanCompileSpec {
 
-    @get:Internal
-    override val toolRunner = KonanCliCompilerRunner(project, KonanCliRunnerIsolatedClassLoadersService.attachingToTask(this), project.konanExtension.jvmArgs)
-
     abstract val produce: CompilerOutputKind
         @Internal get
 
@@ -336,6 +333,7 @@ abstract class KonanCompileTask @Inject constructor(private val layout: ProjectL
         if (dumpParameters) {
             dumpProperties(this)
         }
+        val toolRunner = KonanCliCompilerRunner(project, KonanCliRunnerIsolatedClassLoadersService.attachingToTask(this), project.konanExtension.jvmArgs)
         if (enableTwoStageCompilation) {
             logger.info("Start two-stage compilation")
             val intermediateDir = konanBuildRoot
