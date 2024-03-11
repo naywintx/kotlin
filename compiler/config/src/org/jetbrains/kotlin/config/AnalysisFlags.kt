@@ -20,7 +20,7 @@ object AnalysisFlags {
      * E.g. `ABSTRACT_NOT_IMPLEMENTED` (KT-66205)
      *
      * This flag is true in two case:
-     * 1. Metadata compilation (`:compileCommonMainKotlinMetadata` Gradle task)
+     * 1. Metadata compilation (`:compile*KotlinMetadata` Gradle task)
      * 2. IDE analysis
      *
      * Known metadata compilation problems: KT-66382
