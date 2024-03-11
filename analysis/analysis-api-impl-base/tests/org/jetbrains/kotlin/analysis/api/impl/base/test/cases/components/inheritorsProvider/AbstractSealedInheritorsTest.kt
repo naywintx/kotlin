@@ -20,7 +20,9 @@ abstract class AbstractSealedInheritorsTest : AbstractAnalysisApiBasedTest() {
                 val classSymbol = toSymbols(mainFile).singleOrNull() as? KtNamedClassOrObjectSymbol
                     ?: error("Expected a single named class to be specified.")
 
-                classSymbol.getSealedClassInheritors().joinToString("\n") { it.classIdIfNonLocal!!.toString() }
+                classSymbol.getSealedClassInheritors().joinToString("\n\n") { inheritor ->
+                    "${inheritor.classIdIfNonLocal!!}\n${inheritor.render()}"
+                }
             }
 
             testServices.assertions.assertEqualsToTestDataFileSibling(actualText)
