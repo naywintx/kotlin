@@ -56,8 +56,7 @@ public class KtDataFlowExitPointSnapshot(
     public val hasJumps: Boolean,
 
     /**
-     * `true` if jumps can affect natural instruction order
-     * (next-executed instructions for the potential default expression and jump expressions are different).
+     * `true` if next-executed instructions for the potential default expression and jump expressions are different.
      */
     public val hasEscapingJumps: Boolean,
 
