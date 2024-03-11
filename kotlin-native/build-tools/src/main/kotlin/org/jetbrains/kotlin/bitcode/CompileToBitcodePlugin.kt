@@ -214,6 +214,7 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) :
          */
         val compileTask = project.tasks.register<ClangFrontend>("clangFrontend${module.name.capitalized}${name.capitalized}${_target.toString().capitalized}").apply {
             configure {
+                notCompatibleWithConfigurationCache("Boom")
                 this.description = "Compiles '${module.name}' (${this@SourceSet.name} sources) to bitcode for $_target"
                 this.outputDirectory.set(this@SourceSet.outputDirectory)
                 this.targetName.set(target.name)
