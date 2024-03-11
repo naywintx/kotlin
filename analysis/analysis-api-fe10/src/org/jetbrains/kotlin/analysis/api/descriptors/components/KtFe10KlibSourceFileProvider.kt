@@ -13,5 +13,7 @@ import org.jetbrains.kotlin.descriptors.SourceFile
 internal class KtFe10KlibSourceFileProvider(
     override val analysisSession: KtAnalysisSession,
 ) : KtKlibSourceFileProvider() {
-    override fun getKlibSourceFile(declaration: KtDeclarationSymbol): SourceFile? = null
+    override fun getKlibSourceFile(declaration: KtDeclarationSymbol): SourceFile? {
+        throw NotImplementedError("Method is not implemented for FE 1.0")
+    }
 }
