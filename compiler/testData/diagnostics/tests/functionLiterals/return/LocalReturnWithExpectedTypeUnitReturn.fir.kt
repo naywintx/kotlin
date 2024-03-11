@@ -34,9 +34,9 @@ val expectedUnitExplicitReturnMyUnitAndString: () -> Unit = l@ {
     ""
 }
 
-val expectedMyUnitExplicitReturnString: () -> MyUnit = <!INITIALIZER_TYPE_MISMATCH!>l@ {
-    return@l ""
-}<!>
+val expectedMyUnitExplicitReturnString: () -> MyUnit = l@ {
+    return@l <!RETURN_TYPE_MISMATCH!>""<!>
+}
 
 val expectedAnyImplicitReturnUnitOnly: () -> Any = l@ {
     if ("0".hashCode() == 42) <!RETURN_TYPE_MISMATCH!>return@l<!>

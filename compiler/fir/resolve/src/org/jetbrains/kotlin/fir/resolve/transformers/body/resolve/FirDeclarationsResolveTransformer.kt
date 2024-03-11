@@ -1118,7 +1118,7 @@ open class FirDeclarationsResolveTransformer(
     }
 
     private fun FirAnonymousFunction.computeReturnTypeRef(expected: FirResolvedTypeRef?): FirResolvedTypeRef {
-        if (isLambda && expected?.type?.isUnit == true) {
+        if (isLambda && expected?.type?.fullyExpandedType(session)?.isUnit == true) {
             // If the expected type is Unit, always infer the lambda's type to Unit.
             // If a return statement in a lambda has a different type, RETURN_TYPE_MISMATCH will be reported for that return statement.
             return expected
