@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.analysis.api.klib.reader
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
-import org.jetbrains.kotlin.library.metadata.DeserializedSourceFile
 
 /**
  * Note: A single [KlibDeclarationAddress] can be shared by multiple symbols.
@@ -84,16 +83,11 @@ public fun KlibPropertyAddress.getPropertySymbols(): Sequence<KtPropertySymbol> 
 
 context(KtAnalysisSession)
 private operator fun KlibDeclarationAddress.contains(symbol: KtDeclarationSymbol): Boolean {
-    val symbolKlibSourceFile = symbol.getKlibSourceFile() as? DeserializedSourceFile
+    val symbolKlibSourceFile = symbol.getKlibSourceFileName()
     val symbolLibraryModule = symbol.getContainingModule() as? KtLibraryModule ?: return false
 
-    /* check if symbol comes from the same klib library: symbolKlibSourceFile known */
-    if (symbolKlibSourceFile != null && symbolKlibSourceFile.library.libraryFile.path != this.libraryPath.toString()) {
-        return false
-    }
-
     /* check if symbol comes from the same klib library: symbolKlibSourceFile not known -> checking library module */
-    if (symbolKlibSourceFile == null && libraryPath !in symbolLibraryModule.getBinaryRoots()) {
+    if (libraryPath !in symbolLibraryModule.getBinaryRoots()) {
         return false
     }
 

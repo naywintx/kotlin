@@ -6,14 +6,14 @@
 package org.jetbrains.kotlin.analysis.api.descriptors.components
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.components.KtKlibSourceFileProvider
+import org.jetbrains.kotlin.analysis.api.components.KtKlibSourceFileNameProvider
+import org.jetbrains.kotlin.analysis.api.file.KtSourceFileName
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
-import org.jetbrains.kotlin.descriptors.SourceFile
 
-internal class KtFe10KlibSourceFileProvider(
+internal class KtFe10KlibSourceFileNameProvider(
     override val analysisSession: KtAnalysisSession,
-) : KtKlibSourceFileProvider() {
-    override fun getKlibSourceFile(declaration: KtDeclarationSymbol): SourceFile? {
+) : KtKlibSourceFileNameProvider() {
+    override fun getKlibSourceFileName(declaration: KtDeclarationSymbol): KtSourceFileName? {
         throw NotImplementedError("Method is not implemented for FE 1.0")
     }
 }

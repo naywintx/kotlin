@@ -216,8 +216,8 @@ public abstract class KtAnalysisSession(final override val token: KtLifetimeToke
     internal val substitutorProvider: KtSubstitutorProvider get() = substitutorProviderImpl
     protected abstract val substitutorProviderImpl: KtSubstitutorProvider
 
-    internal val klibSourceFileProvider: KtKlibSourceFileProvider get() = klibSourceFileProviderImpl
-    protected abstract val klibSourceFileProviderImpl: KtKlibSourceFileProvider
+    internal val klibSourceFileProvider: KtKlibSourceFileNameProvider get() = klibSourceFileProviderImpl
+    protected abstract val klibSourceFileProviderImpl: KtKlibSourceFileNameProvider
 }
 
 public fun KtAnalysisSession.getModule(element: PsiElement): KtModule {
