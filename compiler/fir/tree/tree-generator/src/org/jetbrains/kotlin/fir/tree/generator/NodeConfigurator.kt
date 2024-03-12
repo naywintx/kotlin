@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.fir.tree.generator.context.AbstractFieldConfigurator
 import org.jetbrains.kotlin.fir.tree.generator.context.AbstractFirTreeBuilder.Companion.baseFirElement
 import org.jetbrains.kotlin.fir.tree.generator.context.type
 import org.jetbrains.kotlin.fir.tree.generator.model.*
+import org.jetbrains.kotlin.generators.tree.AbstractField
 import org.jetbrains.kotlin.generators.tree.StandardTypes
 import org.jetbrains.kotlin.generators.tree.TypeRef
 import org.jetbrains.kotlin.generators.tree.withArgs
@@ -82,7 +83,8 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
         elementWithResolveState.configure {
             +field("resolvePhase", resolvePhaseType).apply { isParameter = true; }
             +field("resolveState", resolveStateType).apply {
-                isMutable = true; isVolatile = true; isFinal = true; isLateinit = true
+                isMutable = true; isVolatile = true; isFinal = true;
+                implementationDefaultStrategy = AbstractField.ImplementationDefaultStrategy.Lateinit
                 customInitializationCall = "resolvePhase.asResolveState()"
                 arbitraryImportables += phaseAsResolveStateExtentionImport
                 optInAnnotation = resolveStateAccessAnnotation
