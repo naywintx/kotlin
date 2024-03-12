@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
-import org.jetbrains.kotlin.fir.visitors.FirTransformer
 import org.jetbrains.kotlin.fir.visitors.FirVisitor
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -37,26 +36,6 @@ import org.jetbrains.kotlin.resolve.constants.evaluate.evalBinaryOp
 import org.jetbrains.kotlin.resolve.constants.evaluate.evalUnaryOp
 import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.util.OperatorNameConventions
-
-@RequiresOptIn(message = "This evaluation mode is experimental and is not tested properly. Please refrain from using it.")
-annotation class UnstableEvaluationMode
-
-enum class FirEvaluationMode {
-    /**
-     * In this mode, evaluator will try to analyze and evaluate all expressions.
-     */
-    @UnstableEvaluationMode
-    FULL,
-
-    /**
-     * In this mode, evaluator will try to analyze and evaluate only the necessary expressions.
-     * This includes:
-     * 1. initializer of const property;
-     * 2. arguments of annotations;
-     * 3. default value for parameters of annotation's constructor.
-     */
-    ONLY_NECESSARY
-}
 
 private sealed class EvaluationResult
 private class Evaluated(val result: FirElement) : EvaluationResult()
@@ -76,137 +55,74 @@ private inline fun <reified T> EvaluationResult.unwrapOr(action: (CompileTimeExc
     return null
 }
 
-val FirSession.compileTimeEvaluator: FirCompileTimeConstantEvaluator by FirSession.sessionComponentAccessor()
+private fun FirExpression?.canBeEvaluated(session: FirSession, expectedType: ConeKotlinType? = null): Boolean {
+    val intrinsicConstEvaluation = session.languageVersionSettings.supportsFeature(LanguageFeature.IntrinsicConstEvaluation)
+    if (this == null || intrinsicConstEvaluation || this is FirLazyExpression || !isResolved) return false
 
-class FirCompileTimeConstantEvaluator(
-    private val session: FirSession,
-) : FirTransformer<FirEvaluationMode>(), FirSessionComponent {
-    private val evaluator = FirExpressionEvaluator(session)
-    private val intrinsicConstEvaluation = session.languageVersionSettings.supportsFeature(LanguageFeature.IntrinsicConstEvaluation)
+    if (expectedType != null && !resolvedType.isSubtypeOf(expectedType, session)) return false
 
-    override fun <E : FirElement> transformElement(element: E, data: FirEvaluationMode): E {
-        @Suppress("UNCHECKED_CAST")
-        return element.transformChildren(this, data) as E
-    }
+    return canBeEvaluatedAtCompileTime(this, session, allowErrors = false)
+}
 
-    private fun FirExpression?.canBeEvaluated(expectedType: ConeKotlinType? = null): Boolean {
-        if (this == null || intrinsicConstEvaluation || this is FirLazyExpression || !isResolved) return false
-
-        if (expectedType != null && !resolvedType.isSubtypeOf(expectedType, session)) return false
-
-        return canBeEvaluatedAtCompileTime(this, session, allowErrors = false)
-    }
-
-    private fun tryToEvaluateExpression(expression: FirExpression): FirExpression {
-        return when (val result = evaluator.evaluate(expression)) {
-            is Evaluated -> result.result as FirExpression
-            is CompileTimeException -> expression
-            is NotEvaluated -> error("Couldn't evaluate FIR expression: ${expression.render()}")
-            else -> error("Unexpected evaluation result of type ${result::class.java}")
-        }
-    }
-
-    // Null result means that the evaluator encountered an error during evaluation.
-    // Later on, the compiler should report proper diagnostic.
-    fun transformJavaFieldAndGetResultAsString(firProperty: FirProperty, data: FirEvaluationMode): String? {
-        fun FirLiteralExpression<*>.asString(): String {
-            return when (val constVal = value) {
-                is Char -> constVal.code.toString()
-                is String -> "\"$constVal\""
-                else -> constVal.toString()
-            }
-        }
-
-        val evaluatedProperty = transformProperty(firProperty, data) as FirProperty
-        return evaluatedProperty.evaluatedInitializer?.asString()
-    }
-
-    override fun transformProperty(property: FirProperty, data: FirEvaluationMode): FirStatement {
-        if (!property.isConst) {
-            return super.transformProperty(property, data)
-        }
-
-        val type = property.returnTypeRef.coneTypeOrNull?.fullyExpandedType(session)
-        if (type == null || type is ConeErrorType || !type.canBeUsedForConstVal()) {
-            return super.transformProperty(property, data)
-        }
-
-        val initializer = property.initializer
-        if (initializer == null || !initializer.canBeEvaluated(type)) {
-            return super.transformProperty(property, data)
-        }
-
-        (tryToEvaluateExpression(initializer) as? FirLiteralExpression<*>)?.let {
-            property.evaluatedInitializer = it
-        }
-        return super.transformProperty(property, data)
-    }
-
-    override fun transformAnnotationCall(annotationCall: FirAnnotationCall, data: FirEvaluationMode): FirStatement {
-        if (annotationCall.annotationTypeRef is FirErrorTypeRef) {
-            return super.transformAnnotationCall(annotationCall, data)
-        }
-
-        val argumentList = annotationCall.argumentList as? FirResolvedArgumentList
-            ?: return super.transformAnnotationCall(annotationCall, data)
-
-        if (argumentList.mapping.any { (expression, parameter) -> !expression.canBeEvaluated(parameter.returnTypeRef.coneTypeOrNull) }) {
-            return super.transformAnnotationCall(annotationCall, data)
-        }
-
-        val evaluatedMapping = buildAnnotationArgumentMapping {
-            source = annotationCall.argumentMapping.source
-            mapping.putAll(
-                argumentList.mapping.map { (expression, parameter) -> parameter.name to tryToEvaluateExpression(expression).unwrapArgument() }
-            )
-        }
-        annotationCall.replaceArgumentMapping(evaluatedMapping)
-
-        return super.transformAnnotationCall(annotationCall, data)
-    }
-
-    override fun transformConstructor(constructor: FirConstructor, data: FirEvaluationMode): FirStatement {
-        // We should evaluate default arguments for primary constructor of an annotation
-        if (!constructor.symbol.isAnnotationConstructor(session)) return super.transformConstructor(constructor, data)
-
-        constructor.getParametersWithDefaultValueToBeEvaluated().forEach { parameter ->
-            val defaultValueToEvaluate = parameter.defaultValue ?: return@forEach
-            parameter.evaluatedDefaultValue = tryToEvaluateExpression(defaultValueToEvaluate)
-        }
-
-        return super.transformConstructor(constructor, data)
-    }
-
-    override fun transformResolvedTypeRef(resolvedTypeRef: FirResolvedTypeRef, data: FirEvaluationMode): FirTypeRef {
-        // Visit annotations on type arguments
-        resolvedTypeRef.delegatedTypeRef?.transform<FirTypeRef, FirEvaluationMode>(this, data)
-        return super.transformResolvedTypeRef(resolvedTypeRef, data)
-    }
-
-    @OptIn(UnstableEvaluationMode::class)
-    override fun transformExpression(expression: FirExpression, data: FirEvaluationMode): FirStatement {
-        if (data == FirEvaluationMode.FULL && expression.canBeEvaluated()) {
-            return super.transformExpression(tryToEvaluateExpression(expression), data)
-        }
-
-        return super.transformExpression(expression, data)
-    }
-
-    private fun FirConstructor.getParametersWithDefaultValueToBeEvaluated(): List<FirValueParameter> {
-        if (intrinsicConstEvaluation || !isPrimary) {
-            return emptyList()
-        }
-
-        return buildList {
-            for (parameter in valueParameters) {
-                val defaultValue = parameter.defaultValue
-                if (defaultValue != null && defaultValue.canBeEvaluated(parameter.returnTypeRef.coneTypeOrNull)) {
-                    add(parameter)
-                }
-            }
-        }
+private fun FirExpression.tryToEvaluate(session: FirSession): FirExpression {
+    return when (val result = FirExpressionEvaluator(session).evaluate(this)) {
+        is Evaluated -> result.result as FirExpression
+        is CompileTimeException -> this
+        is NotEvaluated -> error("Couldn't evaluate FIR expression: ${render()}")
+        else -> error("Unexpected evaluation result of type ${result::class.java}")
     }
 }
+
+fun evaluatePropertyInitializer(property: FirProperty, session: FirSession) {
+    if (!property.isConst) {
+        return
+    }
+
+    val type = property.returnTypeRef.coneTypeOrNull?.fullyExpandedType(session)
+    if (type == null || type is ConeErrorType || !type.canBeUsedForConstVal()) {
+        return
+    }
+
+    val initializer = property.initializer
+    if (initializer == null || !initializer.canBeEvaluated(session, type)) {
+        return
+    }
+
+    (initializer.tryToEvaluate(session) as? FirLiteralExpression<*>)?.let {
+        property.evaluatedInitializer = it
+    }
+}
+
+fun evaluateAnnotationArguments(annotationCall: FirAnnotationCall, session: FirSession): FirAnnotationArgumentMapping? {
+    if (annotationCall.annotationTypeRef is FirErrorTypeRef) {
+        return null
+    }
+
+    val argumentList = annotationCall.argumentList as? FirResolvedArgumentList ?: return null
+
+    if (argumentList.mapping.any { (expr, parameter) -> !expr.canBeEvaluated(session, parameter.returnTypeRef.coneTypeOrNull) }) {
+        return null
+    }
+
+    return buildAnnotationArgumentMapping {
+        source = annotationCall.argumentMapping.source
+        mapping.putAll(
+            argumentList.mapping.map { (expression, parameter) -> parameter.name to expression.tryToEvaluate(session).unwrapArgument() }
+        )
+    }
+}
+
+fun evaluateDefault(valueParameter: FirValueParameter, session: FirSession) {
+    // We should evaluate default arguments for the primary constructor of an annotation
+    if (!valueParameter.containingFunctionSymbol.isAnnotationConstructor(session)) return
+
+    val defaultValueToEvaluate = valueParameter.defaultValue ?: return
+    if (!defaultValueToEvaluate.canBeEvaluated(session, valueParameter.returnTypeRef.coneTypeOrNull)) {
+        return
+    }
+    valueParameter.evaluatedDefaultValue = defaultValueToEvaluate.tryToEvaluate(session)
+}
+
 
 private class FirExpressionEvaluator(private val session: FirSession) : FirVisitor<EvaluationResult, Nothing?>() {
     private val propertyStack = mutableSetOf<FirCallableSymbol<*>>()

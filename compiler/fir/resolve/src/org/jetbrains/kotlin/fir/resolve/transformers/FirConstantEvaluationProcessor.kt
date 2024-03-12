@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.visitors.FirTransformer
-import org.jetbrains.kotlin.fir.visitors.transformSingle
 import org.jetbrains.kotlin.fir.withFileAnalysisExceptionWrapping
 
 @OptIn(AdapterForResolveProcessor::class)
@@ -55,6 +54,7 @@ class FirConstantEvaluationBodyResolveTransformer(private val session: FirSessio
     }
 
     override fun transformProperty(property: FirProperty, data: Nothing?): FirStatement {
-        return property.transformSingle(session.compileTimeEvaluator, FirEvaluationMode.ONLY_NECESSARY)
+        evaluatePropertyInitializer(property, session)
+        return property
     }
 }

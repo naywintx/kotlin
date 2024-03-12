@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.fir.resolve.substitution.ChainedSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.transformers.FirStatusResolver
 import org.jetbrains.kotlin.fir.resolve.transformers.contracts.runContractResolveForFunction
+import org.jetbrains.kotlin.fir.resolve.transformers.evaluateDefault
 import org.jetbrains.kotlin.fir.resolve.transformers.transformVarargTypeToArrayType
 import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
 import org.jetbrains.kotlin.fir.types.*
@@ -983,6 +984,8 @@ open class FirDeclarationsResolveTransformer(
                 withExpectedType(valueParameter.returnTypeRef)
             ) as FirValueParameter
         }
+
+        evaluateDefault(valueParameter, session)
 
         dataFlowAnalyzer.exitValueParameter(result)?.let { graph ->
             result.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(graph))

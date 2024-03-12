@@ -219,10 +219,25 @@ class FirJavaElementFinder(
         val psiField = object : StubBase<PsiField>(classStub, JavaStubElementTypes.FIELD), PsiFieldStub, NotEvaluatedConstAware {
             private val lazyInitializerText by lazy {
                 if (propertyEvaluator == null) {
-                    session.compileTimeEvaluator.transformJavaFieldAndGetResultAsString(firProperty, FirEvaluationMode.ONLY_NECESSARY)
+                    transformJavaFieldAndGetResultAsString(firProperty)
                 } else {
                     propertyEvaluator?.invoke(firProperty)
                 }
+            }
+
+            // Null result means that the evaluator encountered an error during evaluation.
+            // Later on, the compiler should report proper diagnostic.
+            fun transformJavaFieldAndGetResultAsString(firProperty: FirProperty): String? {
+                fun FirLiteralExpression<*>.asString(): String {
+                    return when (val constVal = value) {
+                        is Char -> constVal.code.toString()
+                        is String -> "\"$constVal\""
+                        else -> constVal.toString()
+                    }
+                }
+
+                evaluatePropertyInitializer(firProperty, session)
+                return firProperty.evaluatedInitializer?.asString()
             }
 
             override fun getName(): String = firProperty.name.identifier

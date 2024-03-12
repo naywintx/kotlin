@@ -23,8 +23,7 @@ import org.jetbrains.kotlin.fir.declarations.utils.evaluatedInitializer
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirLiteralExpression
 import org.jetbrains.kotlin.fir.languageVersionSettings
-import org.jetbrains.kotlin.fir.resolve.transformers.FirEvaluationMode
-import org.jetbrains.kotlin.fir.resolve.transformers.compileTimeEvaluator
+import org.jetbrains.kotlin.fir.resolve.transformers.evaluateAnnotationArguments
 import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
 import org.jetbrains.kotlin.fir.visitors.FirVisitor
 import org.jetbrains.kotlin.ir.declarations.IrFile
@@ -183,8 +182,7 @@ interface FirEvaluatorDumpHandler : EvaluatorHandler {
                 visitedElements.add(annotationCall)
 
                 super.visitAnnotationCall(annotationCall, data)
-                session.compileTimeEvaluator.transformAnnotationCall(annotationCall, FirEvaluationMode.ONLY_NECESSARY)
-                annotationCall.argumentMapping.mapping.values.forEach { evaluated ->
+                evaluateAnnotationArguments(annotationCall, session)?.mapping?.values?.forEach { evaluated ->
                     evaluated.accept(this, data.copy(renderLiterals = true))
                 }
             }
