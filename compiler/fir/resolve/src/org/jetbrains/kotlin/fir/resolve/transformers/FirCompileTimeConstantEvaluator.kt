@@ -65,7 +65,9 @@ class FirCompileTimeConstantEvaluator(
         return result ?: error("Couldn't evaluate FIR expression: ${expression.render()}")
     }
 
-    fun transformJavaFieldAndGetResultAsString(firProperty: FirProperty): String {
+    // Null result means that the evaluator encountered an error during evaluation.
+    // Later on, the compiler should report proper diagnostic.
+    fun transformJavaFieldAndGetResultAsString(firProperty: FirProperty): String? {
         fun FirLiteralExpression<*>.asString(): String {
             return when (val constVal = value) {
                 is Char -> constVal.code.toString()
@@ -75,7 +77,7 @@ class FirCompileTimeConstantEvaluator(
         }
 
         val evaluatedProperty = transformProperty(firProperty, null) as FirProperty
-        return evaluatedProperty.evaluatedInitializer?.asString().toString()
+        return evaluatedProperty.evaluatedInitializer?.asString()
     }
 
     override fun transformProperty(property: FirProperty, data: Nothing?): FirStatement {
