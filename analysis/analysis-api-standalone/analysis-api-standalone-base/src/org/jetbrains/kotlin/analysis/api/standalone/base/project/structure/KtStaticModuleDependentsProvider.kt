@@ -26,12 +26,12 @@ class KtStaticModuleDependentsProvider(private val modules: List<KtModule>) : Ko
         buildDependentsMap(modules) { it.transitiveDependsOnDependencies.asSequence() }
     }
 
-    override fun getDirectDependents(module: KtModule): Set<KtModule> = directDependentsByKtModule[module] ?: emptySet()
+    override fun getDirectDependents(module: KtModule): Set<KtModule> = directDependentsByKtModule[module].orEmpty()
 
     override fun getTransitiveDependents(module: KtModule): Set<KtModule> =
         transitiveDependentsByKtModule.computeIfAbsent(module) { computeTransitiveDependents(it) }
 
-    override fun getRefinementDependents(module: KtModule): Set<KtModule> = refinementDependentsByKtModule[module] ?: emptySet()
+    override fun getRefinementDependents(module: KtModule): Set<KtModule> = refinementDependentsByKtModule[module].orEmpty()
 }
 
 private inline fun buildDependentsMap(
