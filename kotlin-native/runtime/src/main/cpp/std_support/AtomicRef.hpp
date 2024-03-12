@@ -16,19 +16,6 @@ namespace kotlin::std_support {
 //       if they turn out to be more efficient on these platforms.
 #pragma clang diagnostic ignored "-Watomic-alignment"
 
-namespace internal {
-ALWAYS_INLINE constexpr auto builtinOrder(std::memory_order stdOrder) {
-    switch(stdOrder) {
-        case (std::memory_order_relaxed): return __ATOMIC_RELAXED;
-        case (std::memory_order_consume): return __ATOMIC_CONSUME;
-        case (std::memory_order_acquire): return __ATOMIC_ACQUIRE;
-        case (std::memory_order_release): return __ATOMIC_RELEASE;
-        case (std::memory_order_acq_rel): return __ATOMIC_ACQ_REL;
-        case (std::memory_order_seq_cst): return __ATOMIC_SEQ_CST;
-    }
-}
-}
-
 template<typename T>
 class atomic_ref {
     // TODO current implementation supports only pointer or integral T
@@ -51,11 +38,11 @@ public:
     static constexpr bool is_always_lock_free = __atomic_always_lock_free(sizeof(T), nullptr);
 
     ALWAYS_INLINE void store(T desired, std::memory_order order = std::memory_order_seq_cst) const noexcept {
-        __atomic_store_n(&ref_, desired, internal::builtinOrder(order));
+        __atomic_store_n(&ref_, desired, builtinOrder(order));
     }
 
     ALWAYS_INLINE T load(std::memory_order order = std::memory_order_seq_cst) const noexcept {
-        return __atomic_load_n(&ref_, internal::builtinOrder(order));
+        return __atomic_load_n(&ref_, builtinOrder(order));
     }
 
     ALWAYS_INLINE operator T() const noexcept {
@@ -64,7 +51,7 @@ public:
 
     ALWAYS_INLINE T exchange(T desired, std::memory_order order = std::memory_order_seq_cst) const noexcept {
         static_assert(std::has_unique_object_representations_v<T>); // TODO support types with padding if needed
-        return __atomic_exchange_n(&ref_, desired, internal::builtinOrder(order));
+        return __atomic_exchange_n(&ref_, desired, builtinOrder(order));
     }
 
     ALWAYS_INLINE bool compare_exchange_weak(T& expected, T desired,
@@ -75,8 +62,8 @@ public:
                                            &expected,
                                            desired,
                                            true,
-                                           internal::builtinOrder(success),
-                                           internal::builtinOrder(failure));
+                                           builtinOrder(success),
+                                           builtinOrder(failure));
     }
 
     ALWAYS_INLINE bool compare_exchange_weak(T& expected, T desired,
@@ -93,8 +80,8 @@ public:
                                            &expected,
                                            desired,
                                            false,
-                                           internal::builtinOrder(success),
-                                           internal::builtinOrder(failure));
+                                           builtinOrder(success),
+                                           builtinOrder(failure));
     }
 
     ALWAYS_INLINE bool compare_exchange_strong(T& expected, T desired,
@@ -106,6 +93,17 @@ public:
     // TODO implement fetch_*** functions for appropriate types
 
 private:
+    ALWAYS_INLINE static constexpr auto builtinOrder(std::memory_order stdOrder) {
+        switch(stdOrder) {
+            case (std::memory_order_relaxed): return __ATOMIC_RELAXED;
+            case (std::memory_order_consume): return __ATOMIC_CONSUME;
+            case (std::memory_order_acquire): return __ATOMIC_ACQUIRE;
+            case (std::memory_order_release): return __ATOMIC_RELEASE;
+            case (std::memory_order_acq_rel): return __ATOMIC_ACQ_REL;
+            case (std::memory_order_seq_cst): return __ATOMIC_SEQ_CST;
+        }
+    }
+
     T& ref_;
 };
 

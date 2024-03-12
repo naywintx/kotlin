@@ -38,7 +38,6 @@
 #import "Mutex.hpp"
 #import "Exceptions.h"
 #import "Natives.h"
-#import "std_support/AtomicRef.hpp"
 
 using namespace kotlin;
 
@@ -470,9 +469,6 @@ static ALWAYS_INLINE id Kotlin_ObjCExport_refToObjCImpl(ObjHeader* obj) {
   // TODO: propagate [retainAutorelease] to the code below.
 
   convertReferenceToRetainedObjC convertToRetained = (convertReferenceToRetainedObjC)obj->type_info()->writableInfo_->objCExport.convertToRetained;
-
-  // Ensure that class object is created and properly initialized
-  getOrCreateClass(obj->type_info());
 
   id retainedResult;
   if (convertToRetained != nullptr) {
