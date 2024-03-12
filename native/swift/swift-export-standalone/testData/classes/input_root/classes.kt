@@ -1,6 +1,9 @@
+public class ClassWithNonPublicConstructor internal (public val a: Int)
 
 class Foo (a: Int) {
     constructor(f: Float) : this(f.toInt())
+
+    private constructor(d: Double) : this(d.toInt())
     class INSIDE_CLASS {
         fun my_func(): Boolean = TODO()
 

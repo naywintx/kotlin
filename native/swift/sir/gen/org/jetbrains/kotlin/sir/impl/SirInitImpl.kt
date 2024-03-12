@@ -6,7 +6,7 @@
 // This file was generated automatically. See native/swift/sir/tree-generator/Readme.md.
 // DO NOT MODIFY IT MANUALLY.
 
-@file:Suppress("DuplicatedCode", "unused")
+@file:Suppress("DuplicatedCode")
 
 package org.jetbrains.kotlin.sir.impl
 
@@ -14,15 +14,16 @@ import org.jetbrains.kotlin.sir.*
 import org.jetbrains.kotlin.sir.visitors.SirTransformer
 import org.jetbrains.kotlin.sir.visitors.SirVisitor
 
-internal class SirConstructorImpl(
+internal class SirInitImpl(
     override val origin: SirOrigin,
     override val visibility: SirVisibility,
     override val kind: SirCallableKind,
     override var body: SirFunctionBody?,
-    override val isNullable: Boolean,
+    override val isFailable: Boolean,
     override val parameters: MutableList<SirParameter>,
+    override val initKind: SirInitializerKind,
     override var documentation: String?,
-) : SirConstructor() {
+) : SirInit() {
     override lateinit var parent: SirDeclarationParent
 
     override fun <R, D> acceptChildren(visitor: SirVisitor<R, D>, data: D) {

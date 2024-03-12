@@ -471,11 +471,12 @@ class SirAsSwiftSourcesPrinterTests {
                     name = "Foo"
 
                     declarations.add(
-                        buildConstructor {
+                        buildInit {
                             origin = SirOrigin.Unknown
                             kind = SirCallableKind.INSTANCE_METHOD
+                            initKind = SirInitializerKind.ORDINARY
                             visibility = SirVisibility.PUBLIC
-                            isNullable = true
+                            isFailable = true
                             parameters.addAll(
                                 listOf(
                                     SirParameter(
@@ -512,11 +513,72 @@ class SirAsSwiftSourcesPrinterTests {
                     )
 
                     declarations.add(
-                        buildConstructor {
+                        buildInit {
                             origin = SirOrigin.Unknown
                             kind = SirCallableKind.INSTANCE_METHOD
+                            initKind = SirInitializerKind.ORDINARY
                             visibility = SirVisibility.PUBLIC
-                            isNullable = false
+                            isFailable = false
+                            parameters.addAll(
+                                listOf(
+                                    SirParameter(
+                                        argumentName = "arg1",
+                                        type = SirNominalType(SirSwiftModule.uint8)
+                                    ),
+                                    SirParameter(
+                                        argumentName = "arg2",
+                                        type = SirNominalType(SirSwiftModule.uint16)
+                                    ),
+                                    SirParameter(
+                                        argumentName = "arg3",
+                                        type = SirNominalType(SirSwiftModule.uint32)
+                                    ),
+                                    SirParameter(
+                                        argumentName = "arg4",
+                                        type = SirNominalType(SirSwiftModule.uint64)
+                                    ),
+                                )
+                            )
+                        }
+                    )
+
+                    declarations.add(
+                        buildInit {
+                            origin = SirOrigin.Unknown
+                            kind = SirCallableKind.INSTANCE_METHOD
+                            initKind = SirInitializerKind.REQUIRED
+                            visibility = SirVisibility.PUBLIC
+                            isFailable = false
+                            parameters.addAll(
+                                listOf(
+                                    SirParameter(
+                                        argumentName = "arg1",
+                                        type = SirNominalType(SirSwiftModule.uint8)
+                                    ),
+                                    SirParameter(
+                                        argumentName = "arg2",
+                                        type = SirNominalType(SirSwiftModule.uint16)
+                                    ),
+                                    SirParameter(
+                                        argumentName = "arg3",
+                                        type = SirNominalType(SirSwiftModule.uint32)
+                                    ),
+                                    SirParameter(
+                                        argumentName = "arg4",
+                                        type = SirNominalType(SirSwiftModule.uint64)
+                                    ),
+                                )
+                            )
+                        }
+                    )
+
+                    declarations.add(
+                        buildInit {
+                            origin = SirOrigin.Unknown
+                            kind = SirCallableKind.INSTANCE_METHOD
+                            initKind = SirInitializerKind.CONVENIENCE
+                            visibility = SirVisibility.PUBLIC
+                            isFailable = false
                             parameters.addAll(
                                 listOf(
                                     SirParameter(

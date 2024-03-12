@@ -155,12 +155,13 @@ internal fun buildSirClassFromPsi(classOrObject: KtClassOrObject): SirNamedDecla
         if (constructors.count() == 1 && constructors.first().psi == classOrObject) {
             declarations.add(
                 0,
-                buildConstructor {
+                buildInit {
                     val constructorSymbol = constructors.first()
                     origin = KotlinSource(constructorSymbol)
 
                     kind = constructorSymbol.sirCallableKind
-                    isNullable = false
+                    isFailable = false
+                    initKind = SirInitializerKind.ORDINARY
 
                     constructorSymbol.valueParameters.mapTo(parameters) {
                         SirParameter(
@@ -199,12 +200,13 @@ internal fun buildSirFunctionFromPsi(function: KtNamedFunction): SirFunction = b
 }
 
 context(KtAnalysisSession)
-internal fun buildSirConstructorFromPsi(function: KtConstructor<*>): SirConstructor = buildConstructor {
+internal fun buildSirConstructorFromPsi(function: KtConstructor<*>): SirInit = buildInit {
     val symbol = function.getConstructorSymbol()
     origin = KotlinSource(symbol)
 
     kind = symbol.sirCallableKind
-    isNullable = false
+    isFailable = false
+    initKind = SirInitializerKind.ORDINARY
 
     symbol.valueParameters.mapTo(parameters) {
         SirParameter(

@@ -12,26 +12,28 @@ package org.jetbrains.kotlin.sir.builder
 
 import kotlin.contracts.*
 import org.jetbrains.kotlin.sir.*
-import org.jetbrains.kotlin.sir.impl.SirConstructorImpl
+import org.jetbrains.kotlin.sir.impl.SirInitImpl
 
 @SirBuilderDsl
-class SirConstructorBuilder {
+class SirInitBuilder {
     var origin: SirOrigin = SirOrigin.Unknown
     var visibility: SirVisibility = SirVisibility.PUBLIC
     lateinit var kind: SirCallableKind
     var body: SirFunctionBody? = null
-    var isNullable: Boolean by kotlin.properties.Delegates.notNull<Boolean>()
+    var isFailable: Boolean by kotlin.properties.Delegates.notNull<Boolean>()
     val parameters: MutableList<SirParameter> = mutableListOf()
+    lateinit var initKind: SirInitializerKind
     var documentation: String? = null
 
-    fun build(): SirConstructor {
-        return SirConstructorImpl(
+    fun build(): SirInit {
+        return SirInitImpl(
             origin,
             visibility,
             kind,
             body,
-            isNullable,
+            isFailable,
             parameters,
+            initKind,
             documentation,
         )
     }
@@ -39,25 +41,26 @@ class SirConstructorBuilder {
 }
 
 @OptIn(ExperimentalContracts::class)
-inline fun buildConstructor(init: SirConstructorBuilder.() -> Unit): SirConstructor {
+inline fun buildInit(init: SirInitBuilder.() -> Unit): SirInit {
     contract {
         callsInPlace(init, InvocationKind.EXACTLY_ONCE)
     }
-    return SirConstructorBuilder().apply(init).build()
+    return SirInitBuilder().apply(init).build()
 }
 
 @OptIn(ExperimentalContracts::class)
-inline fun buildConstructorCopy(original: SirConstructor, init: SirConstructorBuilder.() -> Unit): SirConstructor {
+inline fun buildInitCopy(original: SirInit, init: SirInitBuilder.() -> Unit): SirInit {
     contract {
         callsInPlace(init, InvocationKind.EXACTLY_ONCE)
     }
-    val copyBuilder = SirConstructorBuilder()
+    val copyBuilder = SirInitBuilder()
     copyBuilder.origin = original.origin
     copyBuilder.visibility = original.visibility
     copyBuilder.kind = original.kind
     copyBuilder.body = original.body
-    copyBuilder.isNullable = original.isNullable
+    copyBuilder.isFailable = original.isFailable
     copyBuilder.parameters.addAll(original.parameters)
+    copyBuilder.initKind = original.initKind
     copyBuilder.documentation = original.documentation
     return copyBuilder.apply(init).build()
 }

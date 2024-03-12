@@ -18,4 +18,20 @@ public class Foo {
     ) {
         fatalError()
     }
+    public required init(
+        arg1: Swift.UInt8,
+        arg2: Swift.UInt16,
+        arg3: Swift.UInt32,
+        arg4: Swift.UInt64
+    ) {
+        fatalError()
+    }
+    public convenience init(
+        arg1: Swift.UInt8,
+        arg2: Swift.UInt16,
+        arg3: Swift.UInt32,
+        arg4: Swift.UInt64
+    ) {
+        fatalError()
+    }
 }

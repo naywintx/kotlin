@@ -117,11 +117,12 @@ public class SirAsSwiftSourcesPrinter(private val printer: SmartPrinter) : SirVi
         println("}")
     }
 
-    override fun visitConstructor(constructor: SirConstructor): Unit = with(printer) {
+    override fun visitInit(constructor: SirInit): Unit = with(printer) {
         constructor.documentation?.let { println(it) }
         printVisibility(constructor)
+        printInitKind(constructor.initKind)
         print("init")
-        "?".takeIf { constructor.isNullable }?.let { print(it) }
+        "?".takeIf { constructor.isFailable }?.let { print(it) }
         print("(")
         printParameters(constructor.parameters)
         print(
@@ -188,6 +189,16 @@ private val String.swiftIdentifier get() = if (simpleIdentifierRegex.matches(thi
 internal fun SmartPrinter.printVisibility(decl: SirDeclaration) {
     print(
         decl.visibility.takeIf { it != SirVisibility.INTERNAL }?.let { "${it.swift} " } ?: ""
+    )
+}
+
+internal fun SmartPrinter.printInitKind(decl: SirInitializerKind) {
+    print(
+        when (decl) {
+            SirInitializerKind.ORDINARY -> ""
+            SirInitializerKind.REQUIRED -> "required "
+            SirInitializerKind.CONVENIENCE -> "convenience "
+        }
     )
 }
 
