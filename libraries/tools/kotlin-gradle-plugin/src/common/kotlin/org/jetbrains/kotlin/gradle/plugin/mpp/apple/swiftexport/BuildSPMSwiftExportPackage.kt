@@ -81,11 +81,6 @@ internal abstract class BuildSPMSwiftExportPackage : DefaultTask() {
             "TARGET_BUILD_DIR" to syntheticObjectFilesDirectory.canonicalPath,
             // .swiftmodule interface
             "BUILT_PRODUCTS_DIR" to syntheticInterfacesPath.get().asFile.canonicalPath,
-            // Distribution settings
-            "SKIP_INSTALL" to "NO",
-            "BUILD_LIBRARY_FOR_DISTRIBUTION" to "YES",
-            // Disables the verification of the emitted Swift module interface during compilation
-            "OTHER_SWIFT_FLAGS" to "-no-verify-emitted-module-interface"
         )
         val inheritedBuildSettings = inheritedBuildSettingsFromEnvironment.mapValues {
             it.value.get()
@@ -99,7 +94,6 @@ internal abstract class BuildSPMSwiftExportPackage : DefaultTask() {
         runCommand(
             listOf(
                 "xcodebuild",
-                "build",
                 "-derivedDataPath", syntheticBuildIntermediatesPath.get().canonicalPath,
                 "-scheme", swiftApiModuleName.get(),
                 "-destination", destination(),
