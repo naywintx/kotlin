@@ -449,6 +449,7 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
                 val withResolvedExplicitReceiver =
                     if (callResolutionMode == CallResolutionMode.PROVIDE_DELEGATE) functionCall else transformExplicitReceiver(functionCall)
                 withResolvedExplicitReceiver.also {
+                    dataFlowAnalyzer.exitCallExplicitReceiver()
                     it.replaceArgumentList(it.argumentList.transform(this, ResolutionMode.ContextDependent))
                     dataFlowAnalyzer.exitCallArguments()
                 }
