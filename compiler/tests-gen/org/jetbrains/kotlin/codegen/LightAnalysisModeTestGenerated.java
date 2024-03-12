@@ -28409,6 +28409,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/javaInterop/syntheticPropOverriddenGetter.kt");
     }
 
+    @TestMetadata("triangleWithFlexibleTypeAndSubstitution4.kt")
+    public void testTriangleWithFlexibleTypeAndSubstitution4() {
+      runTest("compiler/testData/codegen/box/javaInterop/triangleWithFlexibleTypeAndSubstitution4.kt");
+    }
+
     @TestMetadata("unresolvedJavaClassInDifferentFile.kt")
     public void testUnresolvedJavaClassInDifferentFile() {
       runTest("compiler/testData/codegen/box/javaInterop/unresolvedJavaClassInDifferentFile.kt");
