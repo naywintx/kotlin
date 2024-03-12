@@ -55,16 +55,16 @@ class F2 : JOverridesRegular() {
     }
 }
 
-class <!CONFLICTING_INHERITED_JVM_DECLARATIONS!>F3<!> : JOverridesExtension() {
+<!CONFLICTING_INHERITED_JVM_DECLARATIONS!>class F3 : JOverridesExtension() {
     fun test() {
         a
         "".a
     }
-}
+}<!>
 
-class <!CONFLICTING_INHERITED_JVM_DECLARATIONS!>F4<!> : JOVerridesBoth() {
+<!CONFLICTING_INHERITED_JVM_DECLARATIONS!>class F4 : JOVerridesBoth() {
     fun test() {
         a
         "".a
     }
-}
+}<!>
