@@ -67,7 +67,7 @@ private:
         }
     }
 
-    class IdentedEntryPrinter {
+    class IndentedEntryPrinter {
         static constexpr auto kIdentStep = 2;
     public:
         void incIdent() { baseIdent_ += kIdentStep; }
@@ -84,7 +84,7 @@ private:
             buf << hitsStr << " ";
 
             if (std::holds_alternative<Event>(entry)) {
-                buf << EventTraits::str(std::get<Event>(entry));
+                buf << std::get<Event>(entry).toString();
             } else {
                 std::array backtraceFrames = {std::get<void*>(entry)};
                 auto backtraceLines = GetStackTraceStrings(std_support::span(backtraceFrames));
@@ -116,7 +116,7 @@ private:
     // FIXME padding
 
     const EventCounts& eventCounts_;
-    IdentedEntryPrinter entryPrinter_;
+    IndentedEntryPrinter entryPrinter_;
 };
 
 }

@@ -2821,6 +2821,10 @@ internal class CodeGeneratorVisitor(
         overrideRuntimeGlobal("Kotlin_objcDisposeWithRunLoop", llvm.constInt32(if (context.config.objcDisposeWithRunLoop) 1 else 0))
         overrideRuntimeGlobal("Kotlin_enableSafepointSignposts", llvm.constInt32(if (context.config.enableSafepointSignposts) 1 else 0))
         overrideRuntimeGlobal("Kotlin_globalDataLazyInit", llvm.constInt32(if (context.config.globalDataLazyInit) 1 else 0))
+        val profilersBacktraceDepth = ConstArray(llvm.int32Type, ProfilerEventKind.entries.sortedBy { it.ord }.map {
+            context.config.profilersBacktraceDepth[it]!!.let { llvm.constInt32(it) }
+        })
+        overrideRuntimeGlobal("Kotlin_profilersBacktraceDepth", profilersBacktraceDepth)
     }
 
     //-------------------------------------------------------------------------//
@@ -3032,6 +3036,11 @@ internal fun NativeGenerationState.generateRuntimeConstantsModule() : LLVMModule
         config.runtimeLogs[it]!!.ord.let { llvm.constInt32(it) }
     })
     setRuntimeConstGlobal("Kotlin_runtimeLogs", runtimeLogs)
+    val profilersEnabled = ConstArray(llvm.int32Type, ProfilerEventKind.entries.sortedBy { it.ord }.map {
+        val enabled = it in config.profilers
+        llvm.constInt32(if (enabled) 1 else 0)
+    })
+    setRuntimeConstGlobal("Kotlin_profilersEnabled", profilersEnabled)
     setRuntimeConstGlobal("Kotlin_freezingEnabled", llvm.constInt32(if (config.freezing.enableFreezeAtRuntime) 1 else 0))
     setRuntimeConstGlobal("Kotlin_freezingChecksEnabled", llvm.constInt32(if (config.freezing.enableFreezeChecks) 1 else 0))
     setRuntimeConstGlobal("Kotlin_concurrentWeakSweep", llvm.constInt32(if (context.config.concurrentWeakSweep) 1 else 0))

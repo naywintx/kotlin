@@ -157,6 +157,46 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
         default + configured
     }
 
+    val profilers: Set<ProfilerEventKind> by lazy {
+        val cfgString = configuration.get(BinaryOptions.profilers) ?: return@lazy emptySet()
+
+        val configuredEvents = cfgString.split(",").map {
+            val parsed = ProfilerEventKind.parse(it)
+            if (parsed == null) {
+                configuration.report(CompilerMessageSeverity.STRONG_WARNING, "Failed to parse profiler event kind at \"$it\". All profilers disabled.")
+            }
+            parsed
+        }
+        if (null in configuredEvents) return@lazy emptySet()
+        configuredEvents.filterNotNull().toSet()
+    }
+
+    val profilersBacktraceDepth: Map<ProfilerEventKind, Int> by lazy {
+        // FIXME generalize somehow?
+        val default = ProfilerEventKind.entries.associateWith { it.defaultBacktraceDepth }
+
+        val cfgString = configuration.get(BinaryOptions.profilersBacktraceDepth) ?: return@lazy default
+
+        fun <T> error(message: String): T? {
+            configuration.report(CompilerMessageSeverity.STRONG_WARNING, "$message. All profilers disabled.")
+            return null
+        }
+
+        fun parseSingleKindDepth(kindDepth: String): Pair<ProfilerEventKind, Int>? {
+            val parts = kindDepth.split("=")
+            val tagStr = parts[0]
+            val tag = tagStr.let {
+                ProfilerEventKind.parse(it) ?: error("Failed to profiler event kind at \"$tagStr\"")
+            }
+            val depthStr = parts.getOrNull(1) ?: error("Failed to parse backtrace depth \"$kindDepth\"")
+            val depth = depthStr?.toInt()
+            return tag?.let { t -> depth?.let { l -> Pair(t, l) } }
+        }
+
+        val configured = cfgString.split(",").map { parseSingleKindDepth(it) ?: return@lazy default }
+        default + configured
+    }
+
 
     val suspendFunctionsFromAnyThreadFromObjC: Boolean by lazy { configuration.get(BinaryOptions.objcExportSuspendFunctionLaunchThreadRestriction) == ObjCExportSuspendFunctionLaunchThreadRestriction.NONE }
     val freezing: Freezing get() = configuration.get(BinaryOptions.freezing)?.also {

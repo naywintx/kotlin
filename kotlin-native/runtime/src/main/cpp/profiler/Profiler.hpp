@@ -25,7 +25,7 @@ namespace kotlin::profiler::internal {
 template <typename EventTraits>
 struct EventRecord {
     using Event = typename EventTraits::Event;
-    using Backtrace = StackTrace<EventTraits::kContextBacktraceDepth>;
+    using Backtrace = StackTrace<>;
 
     EventRecord(const Event& event, const Backtrace& backtrace) : event_(event), backtrace_(backtrace) {}
 
@@ -80,23 +80,20 @@ public:
             publish();
         }
 
-        bool enabled() const noexcept {
-            return true; // TODO more sophisticated logic
-        }
-
-        NO_INLINE void hit(Event event, std::size_t skipFrames = 0) {
-            if (enabled()) {
-                EventRecord record{event, EventRecord::Backtrace::current(1 + skipFrames)};
-                ++inThreadEventCounts_[record];
-                RuntimeLogDebug({logging::Tag::kProfiler}, "Hit");
-            }
+        NO_INLINE void hitImpl(Event event, std::size_t skipFrames = 0) {
+            RuntimeAssert(EventTraits::enabled(), "Registered hit with a disabled profiler");
+            // FIXME make it collect exactly the requested amount of frames
+            EventRecord record{event, EventRecord::Backtrace::current(skipFrames + 1, EventTraits::backtraceDepth())};
+            ++inThreadEventCounts_[record];
         }
 
         void publish() {
-            RuntimeLogDebug({logging::Tag::kProfiler}, "Publish profiler data");
-            profiler_.aggregate(inThreadEventCounts_);
-            inThreadEventCounts_.clear();
+            if (EventTraits::enabled()) {
+                profiler_.aggregate(inThreadEventCounts_);
+                inThreadEventCounts_.clear();
+            }
         }
+
     private:
         Profiler& profiler_;
         EventCounts inThreadEventCounts_{};
@@ -114,10 +111,12 @@ public:
     }
 
     void report() const noexcept {
-        std::unique_lock lockGuard(aggregatedStorageMutex_);
+        if (EventTraits::enabled()) {
+            std::unique_lock lockGuard(aggregatedStorageMutex_);
 
-        auto reporter = internal::ProfileReporter<EventTraits>{aggregatedEventCounts_};
-        reporter.report();
+            auto reporter = internal::ProfileReporter<EventTraits>{aggregatedEventCounts_};
+            reporter.report();
+        }
     }
 
 private:
@@ -130,23 +129,37 @@ class Profilers {
 public:
     class ThreadData {
     public:
-        explicit ThreadData(Profilers& profilers) :
-            allocationProfilerData_(profilers.allocationProfiler_) {}
+        explicit ThreadData(Profilers& profilers)
+            : allocationProfilerData_(profilers.allocationProfiler_)
+            , safePointProfilerData_(profilers.safePointProfiler_)
+            {}
 
         auto& allocation() noexcept { return allocationProfilerData_; }
+        auto& safePoint() noexcept { return safePointProfilerData_; }
 
         void publish() {
             allocationProfilerData_.publish();
+            safePointProfilerData_.publish();
         }
     private:
         Profiler<AllocationEventTraits>::ThreadData allocationProfilerData_;
+        Profiler<SafePointEventTraits>::ThreadData safePointProfilerData_;
     };
 
     void report() {
         allocationProfiler_.report();
+        safePointProfiler_.report();
     }
 private:
     Profiler<AllocationEventTraits> allocationProfiler_{};
+    Profiler<SafePointEventTraits> safePointProfiler_{};
 };
 
 } // namespace kotlin::profiler
+
+#define ProfilerHit(EventTraits, profilerThreadData, event, ...) \
+    do { \
+        if (EventTraits::enabled()) { \
+            profilerThreadData.hitImpl(event, ##__VA_ARGS__); \
+        } \
+    } while (false)

@@ -135,7 +135,7 @@ extern "C" void ClearMemoryForTests(MemoryState* state) {
 
 extern "C" ALWAYS_INLINE RUNTIME_NOTHROW OBJ_GETTER(AllocInstance, const TypeInfo* typeInfo) {
     auto* threadData = mm::ThreadRegistry::Instance().CurrentThreadData();
-    threadData->profilers().allocation().hit({typeInfo});
+    ProfilerHit(profiler::AllocationEventTraits, threadData->profilers().allocation(), {typeInfo});
     RETURN_RESULT_OF(mm::AllocateObject, threadData, typeInfo);
 }
 
@@ -144,7 +144,7 @@ extern "C" ALWAYS_INLINE OBJ_GETTER(AllocArrayInstance, const TypeInfo* typeInfo
         ThrowIllegalArgumentException();
     }
     auto* threadData = mm::ThreadRegistry::Instance().CurrentThreadData();
-    threadData->profilers().allocation().hit({typeInfo, static_cast<size_t>(elements)});
+    ProfilerHit(profiler::AllocationEventTraits, threadData->profilers().allocation(), {typeInfo, static_cast<size_t>(elements)});
     RETURN_RESULT_OF(mm::AllocateArray, threadData, typeInfo, static_cast<uint32_t>(elements));
 }
 

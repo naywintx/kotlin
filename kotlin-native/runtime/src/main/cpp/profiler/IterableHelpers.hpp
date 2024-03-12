@@ -78,16 +78,4 @@ auto uniq(const Iterable& iterable) {
     return Iterable(uniqSet.begin(), uniqSet.end());
 }
 
-template<typename Iterable, typename ToStr>
-void dump(const char* name, const Iterable& iterable, ToStr toStr) {
-    fprintf(stderr, "DUMP %s of %zu elems in [%p;%p)\n", name, iterable.size(), &*iterable.begin(), &*iterable.end());
-    int i = 0;
-    for (const auto& x: iterable) {
-        std::string s = toStr(x);
-        fprintf(stderr, "    %d: %p %s\n", i, &x, s.c_str());
-        ++i;
-    }
-    fprintf(stderr, "-------\n");
-}
-
 }
