@@ -42,53 +42,11 @@
 
 using namespace kotlin;
 
-namespace kotlin::std_support {
-
-template<>
-class atomic_ref<Class> {
-public:
-    explicit atomic_ref(Class& ref) : ref_(ref) {}
-    atomic_ref(const atomic_ref& other) noexcept : ref_(other.ref_) {}
-
-    ALWAYS_INLINE void store(Class desired, std::memory_order order = std::memory_order_seq_cst) const noexcept {
-        __atomic_store(&ref_, &desired, internal::builtinOrder(order));
-    }
-
-    ALWAYS_INLINE Class load(std::memory_order order = std::memory_order_seq_cst) const noexcept {
-        Class res;
-        __atomic_load(&ref_, &res, internal::builtinOrder(order));
-        return res;
-    }
-
-private:
-    Class& ref_;
-};
-
-}
-
 namespace {
 
 template <typename T>
 inline T* konanAllocArray(size_t length) {
     return reinterpret_cast<T*>(std::calloc(length, sizeof(T)));
-}
-
-Class getClassAcquireInitialization(const TypeInfo* typeInfo) {
-    auto aRef = std_support::atomic_ref<Class>(typeInfo->writableInfo_->objCExport.objCClass);
-    return aRef.load(std::memory_order_acquire);
-}
-
-void setClassEnsureInitialized(const TypeInfo* typeInfo, Class cls) {
-    RuntimeAssert(cls != nullptr, "");
-
-    if (kotlin::mm::IsCurrentThreadRegistered()) {
-        AssertThreadState(kotlin::ThreadState::kNative);
-    }
-
-    // Calls +initialize on cls if not yet initialized
-    [cls self];
-    auto aRef = std_support::atomic_ref<Class>(typeInfo->writableInfo_->objCExport.objCClass);
-    aRef.store(cls, std::memory_order_release);
 }
 
 }
@@ -565,9 +523,8 @@ extern "C" OBJ_GETTER(Kotlin_ObjCExport_refFromObjC, id obj) {
 }
 
 static id convertKotlinObjectToRetained(ObjHeader* obj) {
-  // actually, the initialization acquisition should already happen by this point
-  // but better safe than data race
-  Class clazz = getClassAcquireInitialization(obj->type_info());
+  Class clazz = obj->type_info()->writableInfo_->objCExport.objCClass;
+  RuntimeAssert(clazz != nullptr, "");
   return [clazz createRetainedWrapper:obj];
 }
 
@@ -963,7 +920,7 @@ static const TypeInfo* createTypeInfo(Class clazz, const TypeInfo* superType, co
                                           superITable, superITableSize, itableEqualsSuper, fieldsInfo);
 
   // TODO: it will probably never be requested, since such a class can't be instantiated in Kotlin.
-  setClassEnsureInitialized(result, clazz);
+  result->writableInfo_->objCExport.objCClass = clazz;
   return result;
 }
 
@@ -1066,31 +1023,32 @@ static Class createClass(const TypeInfo* typeInfo, Class superClass) {
 }
 
 static Class getOrCreateClass(const TypeInfo* typeInfo) {
-  Class result = getClassAcquireInitialization(typeInfo);
+  Class result = typeInfo->writableInfo_->objCExport.objCClass;
   if (result != nullptr) {
     return result;
   }
-  
-  // ObjC runtime calls +initialize under a global lock on the first access to an object.
-  // `setClassEnsureInitialized` below would ensure ahead of time initialization
-  // we only have to ensure that it happens in the native state
-  kotlin::NativeOrUnregisteredThreadGuard threadStateGuard(true);
 
   const ObjCTypeAdapter* typeAdapter = getTypeAdapter(typeInfo);
   if (typeAdapter != nullptr) {
     result = objc_getClass(typeAdapter->objCName);
-    setClassEnsureInitialized(typeInfo, result);
   } else {
     Class superClass = getOrCreateClass(typeInfo->superType_);
 
     std::lock_guard lockGuard(classCreationMutex); // Note: non-recursive
 
-    result = getClassAcquireInitialization(typeInfo);
-    if (result == nullptr) {
-      result = createClass(typeInfo, superClass);
-      setClassEnsureInitialized(typeInfo, result);
-    }
+    result = typeInfo->writableInfo_->objCExport.objCClass; // double-checking.
+    if (result != nullptr) return result;
+
+    result = createClass(typeInfo, superClass);
   }
+
+  // ObjC runtime calls +initialize under a global lock on the first access to an object.
+  // `[result self]` below will ensure ahead of time initialization
+  // we only have to make it happen in the native state
+  kotlin::NativeOrUnregisteredThreadGuard threadStateGuard(true);
+  RuntimeAssert(result != nullptr, "");
+  [result self];
+  typeInfo->writableInfo_->objCExport.objCClass = result;
 
   return result;
 }
