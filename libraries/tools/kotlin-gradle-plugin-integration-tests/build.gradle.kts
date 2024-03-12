@@ -188,16 +188,15 @@ tasks.register<Task>("createProvisionedOkFiles") {
 
     description = "This task creates `provisioned.ok` file for each preconfigured k/n native bundle."
 
-    val konanDataDirTree = File(konanDataDir).walkTopDown().maxDepth(1)
+    val konanDistributions = File(konanDataDir).walkTopDown().maxDepth(1)
+        .filter { file -> file != File(konanDataDir) }
+        .filter { file -> file.isDirectory }
+        .toSet()
 
     doLast {
-        konanDataDirTree
-            .filter { file -> file != File(konanDataDir) }
+        konanDistributions
             .forEach {
-                if (it.isDirectory) {
-                    println("I'M SUBDIRRECTORY $it")
-                    File(it, "provisioned.ok").createNewFile()
-                }
+                File(it, "provisioned.ok").createNewFile()
             }
     }
 
