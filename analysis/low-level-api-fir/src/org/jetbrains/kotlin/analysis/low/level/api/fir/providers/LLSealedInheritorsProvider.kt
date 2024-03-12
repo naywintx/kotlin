@@ -33,7 +33,7 @@ import kotlin.let
  * [LLSealedInheritorsProvider] is the LL FIR implementation of [SealedClassInheritorsProvider] for both the IDE and Standalone mode.
  */
 @OptIn(SealedClassInheritorsProviderInternals::class)
-class LLSealedInheritorsProvider(private val project: Project) : SealedClassInheritorsProvider() {
+internal class LLSealedInheritorsProvider(private val project: Project) : SealedClassInheritorsProvider() {
     val cache = ConcurrentHashMap<ClassId, List<ClassId>>()
 
     override fun getSealedClassInheritors(firClass: FirRegularClass): List<ClassId> {
@@ -71,7 +71,6 @@ class LLSealedInheritorsProvider(private val project: Project) : SealedClassInhe
      */
     private fun searchInheritors(firClass: FirClass): List<ClassId> {
         val ktClass = firClass.psi as? KtClass ?: return emptyList()
-        check(ktClass.isSealed())
 
         val ktModule = when (val classKtModule = firClass.llFirModuleData.ktModule) {
             is KtDanglingFileModule -> classKtModule.contextModule
