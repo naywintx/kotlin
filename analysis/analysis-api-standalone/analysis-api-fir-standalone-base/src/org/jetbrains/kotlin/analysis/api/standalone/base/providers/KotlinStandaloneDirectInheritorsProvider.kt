@@ -17,11 +17,9 @@ import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderFactory
 import org.jetbrains.kotlin.analysis.providers.KotlinDirectInheritorsProvider
 import org.jetbrains.kotlin.analysis.providers.impl.KotlinStaticDeclarationProviderFactory
 import org.jetbrains.kotlin.fir.declarations.FirClass
-import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
-import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtClass
@@ -102,13 +100,8 @@ class KotlinStandaloneDirectInheritorsProvider(private val project: Project) : K
         val candidateFirClass = candidateFirSymbol.fir as? FirClass ?: return false
 
         // `KotlinDirectInheritorsProvider`'s interface guarantees that `getDirectKotlinInheritors` is only called from lazy resolution to
-        // `SEALED_CLASS_INHERITORS` or later, so resolving to `SUPER_TYPES` is legal.
-        candidateFirSymbol.lazyResolveToPhase(FirResolvePhase.SUPER_TYPES)
-
-        // We need to pass the candidate's session as the use-site session because its supertypes need to be resolved in the context of the
-        // candidate. The candidate might actually extend a class with the same simple name from a different module. This can only be
-        // untangled with proper dependencies.
-        return isSubClassOf(candidateFirClass, baseFirClass, candidateFirSymbol.moduleData.session, allowIndirectSubtyping = false)
+        // `SEALED_CLASS_INHERITORS` or later, so `isSubClassOf` resolving to `SUPER_TYPES` is legal.
+        return isSubClassOf(candidateFirClass, baseFirClass, allowIndirectSubtyping = false)
     }
 
     private fun KtClassOrObject.toFirSymbol(classId: ClassId, ktModule: KtModule): FirClassLikeSymbol<*>? {

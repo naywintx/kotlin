@@ -167,24 +167,22 @@ internal class KtFirSymbolDeclarationOverridesProvider(
     }
 
     override fun isSubClassOf(subClass: KtClassOrObjectSymbol, superClass: KtClassOrObjectSymbol): Boolean {
-        return isSubClassOf(subClass, superClass, checkDeep = true)
+        return isSubClassOf(subClass, superClass, allowIndirectSubtyping = true)
     }
 
     override fun isDirectSubClassOf(subClass: KtClassOrObjectSymbol, superClass: KtClassOrObjectSymbol): Boolean {
-        return isSubClassOf(subClass, superClass, checkDeep = false)
+        return isSubClassOf(subClass, superClass, allowIndirectSubtyping = false)
     }
 
-    private fun isSubClassOf(subClass: KtClassOrObjectSymbol, superClass: KtClassOrObjectSymbol, checkDeep: Boolean): Boolean {
+    private fun isSubClassOf(subClass: KtClassOrObjectSymbol, superClass: KtClassOrObjectSymbol, allowIndirectSubtyping: Boolean): Boolean {
         require(subClass is KtFirSymbol<*>)
         require(superClass is KtFirSymbol<*>)
 
         if (subClass == superClass) return false
-        subClass.firSymbol.lazyResolveToPhase(FirResolvePhase.SUPER_TYPES)
         return isSubClassOf(
             subClass = subClass.firSymbol.fir as FirClass,
             superClass = superClass.firSymbol.fir as FirClass,
-            rootModuleSession,
-            checkDeep,
+            allowIndirectSubtyping,
         )
     }
 
