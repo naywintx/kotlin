@@ -8,11 +8,10 @@ package org.jetbrains.kotlin.fir.resolve.transformers
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.declarations.utils.isLocal
-import org.jetbrains.kotlin.fir.resolve.ResolutionMode
+import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
-import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirBodyResolveTransformer
 import org.jetbrains.kotlin.fir.visitors.FirTransformer
+import org.jetbrains.kotlin.fir.visitors.transformSingle
 import org.jetbrains.kotlin.fir.withFileAnalysisExceptionWrapping
 
 @OptIn(AdapterForResolveProcessor::class)
@@ -20,12 +19,12 @@ class FirConstantEvaluationProcessor(
     session: FirSession,
     scopeSession: ScopeSession
 ) : FirTransformerBasedResolveProcessor(session, scopeSession, FirResolvePhase.CONSTANT_EVALUATION) {
-    override val transformer = FirConstantEvaluationTransformerAdapter(session, scopeSession)
+    override val transformer = FirConstantEvaluationTransformerAdapter(session)
 }
 
 @AdapterForResolveProcessor
-class FirConstantEvaluationTransformerAdapter(session: FirSession, scopeSession: ScopeSession) : FirTransformer<Any?>() {
-    private val transformer = FirConstantEvaluationBodyResolveTransformer(session, scopeSession)
+class FirConstantEvaluationTransformerAdapter(session: FirSession) : FirTransformer<Any?>() {
+    private val transformer = FirConstantEvaluationBodyResolveTransformer(session)
 
     override fun <E : FirElement> transformElement(element: E, data: Any?): E {
         error("Should only be called via transformFile()")
@@ -33,39 +32,28 @@ class FirConstantEvaluationTransformerAdapter(session: FirSession, scopeSession:
 
     override fun transformFile(file: FirFile, data: Any?): FirFile {
         return withFileAnalysisExceptionWrapping(file) {
-            file.transform(transformer, ResolutionMode.ContextIndependent)
+            file.transform(transformer, null)
         }
     }
 }
 
-class FirConstantEvaluationBodyResolveTransformer(
-    session: FirSession,
-    scopeSession: ScopeSession,
-) : FirBodyResolveTransformer(
-    session,
-    FirResolvePhase.CONSTANT_EVALUATION,
-    implicitTypeOnly = true,
-    scopeSession,
-) {
+class FirConstantEvaluationBodyResolveTransformer(private val session: FirSession) : FirTransformer<Nothing?>() {
     private val firCompileTimeConstantEvaluator = FirCompileTimeConstantEvaluator(session)
 
-    // This is required to avoid unnecessary transformation. For example, avoid visiting lambdas in annotation arguments.
-    override fun transformDeclarationContent(
-        declaration: FirDeclaration,
-        data: ResolutionMode,
-    ): FirDeclaration = if (declaration is FirRegularClass && !declaration.isLocal) {
-        declaration.transformDeclarations(this, data)
-    } else {
-        super.transformDeclarationContent(declaration, data)
+    override fun <E : FirElement> transformElement(element: E, data: Nothing?): E {
+        return element
     }
 
-    override fun transformProperty(property: FirProperty, data: ResolutionMode): FirProperty {
+    override fun transformFile(file: FirFile, data: Nothing?): FirFile {
+        return file.transformDeclarations(this, data)
+    }
+
+    override fun transformClass(klass: FirClass, data: Nothing?): FirStatement {
+        return klass.transformDeclarations(this, data)
+    }
+
+    override fun transformProperty(property: FirProperty, data: Nothing?): FirStatement {
         property.accept(firCompileTimeConstantEvaluator, null)
         return property
-    }
-
-    override fun transformConstructor(constructor: FirConstructor, data: ResolutionMode): FirConstructor {
-        constructor.accept(firCompileTimeConstantEvaluator, null)
-        return constructor
     }
 }
