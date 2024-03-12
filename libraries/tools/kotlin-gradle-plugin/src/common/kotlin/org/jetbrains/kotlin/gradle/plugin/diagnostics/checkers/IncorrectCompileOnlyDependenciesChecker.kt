@@ -14,8 +14,6 @@ import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
 internal object IncorrectCompileOnlyDependenciesChecker : KotlinGradleProjectChecker {
 
     override suspend fun KotlinGradleProjectCheckerContext.runChecks(collector: KotlinToolingDiagnosticsCollector) {
-        KotlinPluginLifecycle.Stage.AfterFinaliseDsl.await()
-
         KotlinPluginLifecycle.Stage.ReadyForExecution.await()
 
         val multiplatform = multiplatformExtension ?: return
