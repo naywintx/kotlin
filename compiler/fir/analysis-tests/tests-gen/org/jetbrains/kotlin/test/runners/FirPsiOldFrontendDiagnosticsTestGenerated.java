@@ -30327,6 +30327,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("operatorAndInfixResolve.kt")
+      public void testOperatorAndInfixResolve() {
+        runTest("compiler/testData/diagnostics/tests/resolve/operatorAndInfixResolve.kt");
+      }
+
+      @Test
       @TestMetadata("parameterAsDefaultValueInLocalFunction.kt")
       public void testParameterAsDefaultValueInLocalFunction() {
         runTest("compiler/testData/diagnostics/tests/resolve/parameterAsDefaultValueInLocalFunction.kt");
