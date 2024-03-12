@@ -736,10 +736,18 @@ object KotlinToolingDiagnostics {
                 |    }
                 |
                 |To suppress this warning, put the following in your gradle.properties:
-                |    ${KOTLIN_SUPPRESS_GRADLE_PLUGIN_WARNINGS_PROPERTY}=${IncorrectCompileOnlyDependencyWarning::class.simpleName}
+                |    ${KOTLIN_SUPPRESS_GRADLE_PLUGIN_WARNINGS_PROPERTY}=${INCORRECT_COMPILE_ONLY_DEPENDENCY_WARNING_NAME}
                 |
                 """.trimMargin()
             )
+        }
+
+        internal const val INCORRECT_COMPILE_ONLY_DEPENDENCY_WARNING_NAME = "IncorrectCompileOnlyDependencyWarning"
+
+        init {
+            require(INCORRECT_COMPILE_ONLY_DEPENDENCY_WARNING_NAME == IncorrectCompileOnlyDependencyWarning::class.simpleName) {
+                "warning name must match name of class"
+            }
         }
     }
 

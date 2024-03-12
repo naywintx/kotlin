@@ -52,6 +52,7 @@ import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLI
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_STDLIB_JDK_VARIANTS_VERSION_ALIGNMENT
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.MPP_13X_FLAGS_SET_BY_PLUGIN
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnostics
+import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnostics.IncorrectCompileOnlyDependencyWarning.INCORRECT_COMPILE_ONLY_DEPENDENCY_WARNING_NAME
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.reportDiagnosticOncePerBuild
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinIrJsGeneratedTSValidationStrategy
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrOutputGranularity
@@ -226,9 +227,10 @@ internal class PropertiesProvider private constructor(private val project: Proje
     val ignoreDisabledCInteropCommonization: Boolean
         get() = booleanProperty("$KOTLIN_MPP_ENABLE_CINTEROP_COMMONIZATION.nowarn") ?: false
 
-    // TODO deprecate old property?
+    // TODO how to print deprecation warning when property is defined in gradle.properties?
+    @Deprecated("Please set \"$KOTLIN_SUPPRESS_GRADLE_PLUGIN_WARNINGS_PROPERTY=${INCORRECT_COMPILE_ONLY_DEPENDENCY_WARNING_NAME}\" in gradle.properties instead")
     val ignoreIncorrectNativeDependencies: Boolean?
-        get() = booleanProperty(KOTLIN_NATIVE_IGNORE_INCORRECT_DEPENDENCIES)
+        get() = booleanProperty("kotlin.native.ignoreIncorrectDependencies")
 
     val publishJvmEnvironmentAttribute: Boolean
         get() = booleanProperty(KOTLIN_PUBLISH_JVM_ENVIRONMENT_ATTRIBUTE) ?: false
@@ -691,9 +693,6 @@ internal class PropertiesProvider private constructor(private val project: Proje
         private const val CACHED_PROVIDER_EXT_NAME = "kotlin.properties.provider"
 
         internal const val KOTLIN_SUPPRESS_GRADLE_PLUGIN_WARNINGS_PROPERTY = "kotlin.suppressGradlePluginWarnings"
-
-        // TODO deprecate old property?
-        internal const val KOTLIN_NATIVE_IGNORE_INCORRECT_DEPENDENCIES = "kotlin.native.ignoreIncorrectDependencies"
 
         private const val KOTLIN_NATIVE_BINARY_OPTION_PREFIX = "kotlin.native.binary."
 
