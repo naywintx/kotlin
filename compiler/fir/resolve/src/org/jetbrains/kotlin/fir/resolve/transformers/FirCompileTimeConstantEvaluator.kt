@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.contracts.description.LogicOperationKind
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.*
-import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.declarations.FirValueParameter
 import org.jetbrains.kotlin.fir.declarations.isAnnotationConstructor
@@ -30,6 +29,7 @@ import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.visitors.FirVisitor
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.resolve.constants.evaluate.CompileTimeType
 import org.jetbrains.kotlin.resolve.constants.evaluate.evalBinaryOp
@@ -37,20 +37,13 @@ import org.jetbrains.kotlin.resolve.constants.evaluate.evalUnaryOp
 import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
-private sealed class EvaluationResult
-private class Evaluated(val result: FirElement) : EvaluationResult()
-private object NotEvaluated : EvaluationResult()
-private abstract class CompileTimeException : EvaluationResult()
-private object DivisionByZero : CompileTimeException()
-private object StackOverflow : CompileTimeException()
-
 private fun FirElement?.wrap() = if (this != null) Evaluated(this) else NotEvaluated
 
-private inline fun <reified T> EvaluationResult.unwrapOr(action: (CompileTimeException) -> Unit): T? {
+inline fun <reified T> FirEvaluatorResult.unwrapOr(action: (CompileTimeException) -> Unit): T? {
     when (this) {
         is CompileTimeException -> action(this)
         is Evaluated -> return this.result as? T
-        else -> return null
+        NotEvaluated -> return null
     }
     return null
 }
@@ -64,36 +57,32 @@ private fun FirExpression?.canBeEvaluated(session: FirSession, expectedType: Con
     return canBeEvaluatedAtCompileTime(this, session, allowErrors = false)
 }
 
-private fun FirExpression.tryToEvaluate(session: FirSession): FirExpression {
+private fun FirExpression.tryToEvaluate(session: FirSession): FirEvaluatorResult {
     return when (val result = FirExpressionEvaluator(session).evaluate(this)) {
-        is Evaluated -> result.result as FirExpression
-        is CompileTimeException -> this
         is NotEvaluated -> error("Couldn't evaluate FIR expression: ${render()}")
-        else -> error("Unexpected evaluation result of type ${result::class.java}")
+        else -> result
     }
 }
 
-fun evaluatePropertyInitializer(property: FirProperty, session: FirSession) {
+fun evaluatePropertyInitializer(property: FirProperty, session: FirSession): FirEvaluatorResult? {
     if (!property.isConst) {
-        return
+        return null
     }
 
     val type = property.returnTypeRef.coneTypeOrNull?.fullyExpandedType(session)
     if (type == null || type is ConeErrorType || !type.canBeUsedForConstVal()) {
-        return
+        return null
     }
 
     val initializer = property.initializer
     if (initializer == null || !initializer.canBeEvaluated(session, type)) {
-        return
+        return null
     }
 
-    (initializer.tryToEvaluate(session) as? FirLiteralExpression<*>)?.let {
-        property.evaluatedInitializer = it
-    }
+    return initializer.tryToEvaluate(session)
 }
 
-fun evaluateAnnotationArguments(annotationCall: FirAnnotationCall, session: FirSession): FirAnnotationArgumentMapping? {
+fun evaluateAnnotationArguments(annotationCall: FirAnnotationCall, session: FirSession): Map<Name, FirEvaluatorResult>? {
     if (annotationCall.annotationTypeRef is FirErrorTypeRef) {
         return null
     }
@@ -104,30 +93,25 @@ fun evaluateAnnotationArguments(annotationCall: FirAnnotationCall, session: FirS
         return null
     }
 
-    return buildAnnotationArgumentMapping {
-        source = annotationCall.argumentMapping.source
-        mapping.putAll(
-            argumentList.mapping.map { (expression, parameter) -> parameter.name to expression.tryToEvaluate(session).unwrapArgument() }
-        )
-    }
+    return argumentList.mapping.map { (expression, parameter) -> parameter.name to expression.tryToEvaluate(session) }.toMap()
 }
 
-fun evaluateDefault(valueParameter: FirValueParameter, session: FirSession) {
+fun evaluateDefault(valueParameter: FirValueParameter, session: FirSession): FirEvaluatorResult? {
     // We should evaluate default arguments for the primary constructor of an annotation
-    if (!valueParameter.containingFunctionSymbol.isAnnotationConstructor(session)) return
+    if (!valueParameter.containingFunctionSymbol.isAnnotationConstructor(session)) return null
 
-    val defaultValueToEvaluate = valueParameter.defaultValue ?: return
+    val defaultValueToEvaluate = valueParameter.defaultValue ?: return null
     if (!defaultValueToEvaluate.canBeEvaluated(session, valueParameter.returnTypeRef.coneTypeOrNull)) {
-        return
+        return null
     }
-    valueParameter.evaluatedDefaultValue = defaultValueToEvaluate.tryToEvaluate(session)
+    return defaultValueToEvaluate.tryToEvaluate(session)
 }
 
 
-private class FirExpressionEvaluator(private val session: FirSession) : FirVisitor<EvaluationResult, Nothing?>() {
+private class FirExpressionEvaluator(private val session: FirSession) : FirVisitor<FirEvaluatorResult, Nothing?>() {
     private val propertyStack = mutableSetOf<FirCallableSymbol<*>>()
 
-    fun evaluate(expression: FirExpression?): EvaluationResult {
+    fun evaluate(expression: FirExpression?): FirEvaluatorResult {
         return expression?.accept(this, null) ?: NotEvaluated
     }
 
@@ -140,27 +124,27 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
         }
     }
 
-    override fun visitElement(element: FirElement, data: Nothing?): EvaluationResult {
+    override fun visitElement(element: FirElement, data: Nothing?): FirEvaluatorResult {
         error("FIR element \"${element::class}\" is not supported in constant evaluation")
     }
 
-    override fun <T> visitLiteralExpression(literalExpression: FirLiteralExpression<T>, data: Nothing?): EvaluationResult {
+    override fun <T> visitLiteralExpression(literalExpression: FirLiteralExpression<T>, data: Nothing?): FirEvaluatorResult {
         return literalExpression.wrap()
     }
 
-    override fun visitResolvedNamedReference(resolvedNamedReference: FirResolvedNamedReference, data: Nothing?): EvaluationResult {
+    override fun visitResolvedNamedReference(resolvedNamedReference: FirResolvedNamedReference, data: Nothing?): FirEvaluatorResult {
         return resolvedNamedReference.wrap()
     }
 
-    override fun visitResolvedQualifier(resolvedQualifier: FirResolvedQualifier, data: Nothing?): EvaluationResult {
+    override fun visitResolvedQualifier(resolvedQualifier: FirResolvedQualifier, data: Nothing?): FirEvaluatorResult {
         return resolvedQualifier.wrap()
     }
 
-    override fun visitGetClassCall(getClassCall: FirGetClassCall, data: Nothing?): EvaluationResult {
+    override fun visitGetClassCall(getClassCall: FirGetClassCall, data: Nothing?): FirEvaluatorResult {
         return getClassCall.wrap()
     }
 
-    override fun visitArgumentList(argumentList: FirArgumentList, data: Nothing?): EvaluationResult {
+    override fun visitArgumentList(argumentList: FirArgumentList, data: Nothing?): FirEvaluatorResult {
         return when (argumentList) {
             is FirResolvedArgumentList -> buildResolvedArgumentList(
                 argumentList.originalArgumentList,
@@ -173,7 +157,7 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
         }.wrap()
     }
 
-    override fun visitNamedArgumentExpression(namedArgumentExpression: FirNamedArgumentExpression, data: Nothing?): EvaluationResult {
+    override fun visitNamedArgumentExpression(namedArgumentExpression: FirNamedArgumentExpression, data: Nothing?): FirEvaluatorResult {
         return buildNamedArgumentExpression {
             source = namedArgumentExpression.source
             annotations.addAll(namedArgumentExpression.annotations)
@@ -184,7 +168,7 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
     }
 
     @OptIn(UnresolvedExpressionTypeAccess::class)
-    override fun visitArrayLiteral(arrayLiteral: FirArrayLiteral, data: Nothing?): EvaluationResult {
+    override fun visitArrayLiteral(arrayLiteral: FirArrayLiteral, data: Nothing?): FirEvaluatorResult {
         return buildArrayLiteral {
             source = arrayLiteral.source
             coneTypeOrNull = arrayLiteral.coneTypeOrNull
@@ -194,7 +178,7 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
     }
 
     @OptIn(UnresolvedExpressionTypeAccess::class)
-    override fun visitVarargArgumentsExpression(varargArgumentsExpression: FirVarargArgumentsExpression, data: Nothing?): EvaluationResult {
+    override fun visitVarargArgumentsExpression(varargArgumentsExpression: FirVarargArgumentsExpression, data: Nothing?): FirEvaluatorResult {
         return buildVarargArgumentsExpression {
             source = varargArgumentsExpression.source
             coneTypeOrNull = varargArgumentsExpression.coneTypeOrNull
@@ -204,7 +188,7 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
         }.wrap()
     }
 
-    override fun visitSpreadArgumentExpression(spreadArgumentExpression: FirSpreadArgumentExpression, data: Nothing?): EvaluationResult {
+    override fun visitSpreadArgumentExpression(spreadArgumentExpression: FirSpreadArgumentExpression, data: Nothing?): FirEvaluatorResult {
         return buildSpreadArgumentExpression {
             source = spreadArgumentExpression.source
             annotations.addAll(spreadArgumentExpression.annotations)
@@ -212,7 +196,7 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
         }.wrap()
     }
 
-    override fun visitPropertyAccessExpression(propertyAccessExpression: FirPropertyAccessExpression, data: Nothing?): EvaluationResult {
+    override fun visitPropertyAccessExpression(propertyAccessExpression: FirPropertyAccessExpression, data: Nothing?): FirEvaluatorResult {
         val propertySymbol = propertyAccessExpression.toReference(session)?.toResolvedCallableSymbol(discardErrorReference = true)
             ?: return NotEvaluated
 
@@ -220,7 +204,7 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
             return StackOverflow
         }
 
-        fun evaluateOrCopy(initializer: FirExpression?): EvaluationResult = propertySymbol.visit {
+        fun evaluateOrCopy(initializer: FirExpression?): FirEvaluatorResult = propertySymbol.visit {
             if (initializer is FirLiteralExpression<*>) {
                 // We need a copy here to copy a source of the original expression
                 initializer.copy(propertyAccessExpression).wrap()
@@ -248,7 +232,7 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
         }
     }
 
-    override fun visitFunctionCall(functionCall: FirFunctionCall, data: Nothing?): EvaluationResult {
+    override fun visitFunctionCall(functionCall: FirFunctionCall, data: Nothing?): FirEvaluatorResult {
         val calleeReference = functionCall.calleeReference
         if (calleeReference !is FirResolvedNamedReference) return NotEvaluated
 
@@ -259,7 +243,7 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
         }
     }
 
-    private fun visitNamedFunction(functionCall: FirFunctionCall, symbol: FirNamedFunctionSymbol): EvaluationResult {
+    private fun visitNamedFunction(functionCall: FirFunctionCall, symbol: FirNamedFunctionSymbol): FirEvaluatorResult {
         val receivers = listOfNotNull(functionCall.dispatchReceiver, functionCall.extensionReceiver)
         val evaluatedArgs = receivers.plus(functionCall.arguments).map {
             evaluate(it).unwrapOr<FirLiteralExpression<*>> { return it } ?: return NotEvaluated
@@ -279,7 +263,7 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
     }
 
     @OptIn(UnresolvedExpressionTypeAccess::class)
-    private fun visitConstructorCall(constructorCall: FirFunctionCall): EvaluationResult {
+    private fun visitConstructorCall(constructorCall: FirFunctionCall): FirEvaluatorResult {
         val type = constructorCall.resolvedType.fullyExpandedType(session).lowerBoundIfFlexible()
         when {
             type.toRegularClassSymbol(session)?.classKind == ClassKind.ANNOTATION_CLASS -> {
@@ -308,11 +292,11 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
     override fun visitIntegerLiteralOperatorCall(
         integerLiteralOperatorCall: FirIntegerLiteralOperatorCall,
         data: Nothing?
-    ): EvaluationResult {
+    ): FirEvaluatorResult {
         return visitFunctionCall(integerLiteralOperatorCall, data)
     }
 
-    override fun visitComparisonExpression(comparisonExpression: FirComparisonExpression, data: Nothing?): EvaluationResult {
+    override fun visitComparisonExpression(comparisonExpression: FirComparisonExpression, data: Nothing?): FirEvaluatorResult {
         return visitFunctionCall(comparisonExpression.compareToCall, data).let {
             val intResult = it.unwrapOr<FirLiteralExpression<*>> { return it }?.value as? Int ?: return NotEvaluated
             val compareToResult = when (comparisonExpression.operation) {
@@ -326,7 +310,7 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
         }
     }
 
-    override fun visitEqualityOperatorCall(equalityOperatorCall: FirEqualityOperatorCall, data: Nothing?): EvaluationResult {
+    override fun visitEqualityOperatorCall(equalityOperatorCall: FirEqualityOperatorCall, data: Nothing?): FirEvaluatorResult {
         val evaluatedArgs = equalityOperatorCall.arguments.map {
             evaluate(it).unwrapOr<FirLiteralExpression<*>> { return it } ?: return NotEvaluated
         }
@@ -341,7 +325,7 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
         return result.toConstExpression(ConstantValueKind.Boolean, equalityOperatorCall).wrap()
     }
 
-    override fun visitBinaryLogicExpression(binaryLogicExpression: FirBinaryLogicExpression, data: Nothing?): EvaluationResult {
+    override fun visitBinaryLogicExpression(binaryLogicExpression: FirBinaryLogicExpression, data: Nothing?): FirEvaluatorResult {
         val left = evaluate(binaryLogicExpression.leftOperand)
         val right = evaluate(binaryLogicExpression.rightOperand)
 
@@ -356,7 +340,7 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
         return result.toConstExpression(ConstantValueKind.Boolean, binaryLogicExpression).wrap()
     }
 
-    override fun visitStringConcatenationCall(stringConcatenationCall: FirStringConcatenationCall, data: Nothing?): EvaluationResult {
+    override fun visitStringConcatenationCall(stringConcatenationCall: FirStringConcatenationCall, data: Nothing?): FirEvaluatorResult {
         val strings = stringConcatenationCall.argumentList.arguments.map {
             evaluate(it).unwrapOr<FirLiteralExpression<*>> { return it } ?: return NotEvaluated
         }
@@ -364,7 +348,7 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
         return result.toConstExpression(ConstantValueKind.String, stringConcatenationCall).wrap()
     }
 
-    override fun visitTypeOperatorCall(typeOperatorCall: FirTypeOperatorCall, data: Nothing?): EvaluationResult {
+    override fun visitTypeOperatorCall(typeOperatorCall: FirTypeOperatorCall, data: Nothing?): FirEvaluatorResult {
         if (typeOperatorCall.operation != FirOperation.AS) return NotEvaluated
         val result = evaluate(typeOperatorCall.argument).unwrapOr<FirLiteralExpression<*>> { return it } ?: return NotEvaluated
         if (result.resolvedType.isSubtypeOf(typeOperatorCall.resolvedType, session)) {
@@ -439,9 +423,9 @@ private fun evaluateBinary(
     )
 }
 
-private fun Any?.adjustTypeAndConvertToLiteral(original: FirExpression): EvaluationResult {
+private fun Any?.adjustTypeAndConvertToLiteral(original: FirExpression): FirEvaluatorResult {
     if (this == null) return NotEvaluated
-    if (this is EvaluationResult) return this
+    if (this is FirEvaluatorResult) return this
     val expectedType = original.resolvedType
     val expectedKind = expectedType.toConstantValueKind() ?: return NotEvaluated
     val typeAdjustedValue = expectedKind.convertToGivenKind(this) ?: return NotEvaluated

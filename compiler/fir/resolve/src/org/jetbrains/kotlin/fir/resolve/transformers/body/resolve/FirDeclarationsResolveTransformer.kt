@@ -19,10 +19,7 @@ import org.jetbrains.kotlin.fir.declarations.builder.buildValueParameter
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyBackingField
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
-import org.jetbrains.kotlin.fir.declarations.utils.hasExplicitBackingField
-import org.jetbrains.kotlin.fir.declarations.utils.isConst
-import org.jetbrains.kotlin.fir.declarations.utils.isInline
-import org.jetbrains.kotlin.fir.declarations.utils.isLocal
+import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
 import org.jetbrains.kotlin.fir.expressions.*
@@ -985,7 +982,7 @@ open class FirDeclarationsResolveTransformer(
             ) as FirValueParameter
         }
 
-        evaluateDefault(valueParameter, session)
+        valueParameter.evaluatedDefaultValue = evaluateDefault(valueParameter, session)
 
         dataFlowAnalyzer.exitValueParameter(result)?.let { graph ->
             result.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(graph))

@@ -21,9 +21,11 @@ import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.declarations.utils.evaluatedDefaultValue
 import org.jetbrains.kotlin.fir.declarations.utils.evaluatedInitializer
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
+import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirLiteralExpression
 import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.resolve.transformers.evaluateAnnotationArguments
+import org.jetbrains.kotlin.fir.resolve.transformers.unwrapOr
 import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
 import org.jetbrains.kotlin.fir.visitors.FirVisitor
 import org.jetbrains.kotlin.ir.declarations.IrFile
@@ -129,8 +131,9 @@ interface FirEvaluatorDumpHandler : EvaluatorHandler {
         val resultMap = mutableMapOf<TestFile, MutableList<ParsedCodeMetaInfo>>()
         val rangesThatAreNotSupposedToBeRendered = testFile.extractRangesWithoutRender()
 
-        fun render(result: FirLiteralExpression<*>, start: Int, end: Int) {
+        fun render(result: FirElement, start: Int, end: Int) {
             if (rangesThatAreNotSupposedToBeRendered.any { start >= it.first && start <= it.second }) return
+            if (result !is FirLiteralExpression<*>) return
 
             val message = result.value.toString()
             val metaInfo = ParsedCodeMetaInfo(
@@ -169,7 +172,7 @@ interface FirEvaluatorDumpHandler : EvaluatorHandler {
                 visitedElements.add(property)
 
                 super.visitProperty(property, data)
-                property.evaluatedInitializer?.let { result ->
+                property.evaluatedInitializer?.unwrapOr<FirExpression> { }?.let { result ->
                     with(ConstValueProviderImpl) {
                         val (start, end) = property.initializer?.getCorrespondingIrOffset() ?: return
                         render(result, start, end)
@@ -182,8 +185,8 @@ interface FirEvaluatorDumpHandler : EvaluatorHandler {
                 visitedElements.add(annotationCall)
 
                 super.visitAnnotationCall(annotationCall, data)
-                evaluateAnnotationArguments(annotationCall, session)?.mapping?.values?.forEach { evaluated ->
-                    evaluated.accept(this, data.copy(renderLiterals = true))
+                evaluateAnnotationArguments(annotationCall, session)?.values?.forEach { evaluated ->
+                    evaluated.unwrapOr<FirExpression> { }?.accept(this, data.copy(renderLiterals = true))
                 }
             }
 
@@ -193,7 +196,7 @@ interface FirEvaluatorDumpHandler : EvaluatorHandler {
 
                 super.visitConstructor(constructor, data)
                 constructor.valueParameters.forEach { parameter ->
-                    parameter.evaluatedDefaultValue?.accept(this, data.copy(renderLiterals = true))
+                    parameter.evaluatedDefaultValue?.unwrapOr<FirExpression> { }?.accept(this, data.copy(renderLiterals = true))
                 }
             }
 

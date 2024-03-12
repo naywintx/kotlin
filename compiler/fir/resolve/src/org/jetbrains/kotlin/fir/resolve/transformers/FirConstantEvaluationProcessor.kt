@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.resolve.transformers
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.evaluatedInitializer
 import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.visitors.FirTransformer
@@ -54,7 +55,7 @@ class FirConstantEvaluationBodyResolveTransformer(private val session: FirSessio
     }
 
     override fun transformProperty(property: FirProperty, data: Nothing?): FirStatement {
-        evaluatePropertyInitializer(property, session)
+        property.evaluatedInitializer = evaluatePropertyInitializer(property, session)
         return property
     }
 }

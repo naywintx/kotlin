@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.api.targets.LLFirResolveT
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.throwUnexpectedFirElementError
 import org.jetbrains.kotlin.fir.FirElementWithResolveState
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.evaluatedInitializer
 import org.jetbrains.kotlin.fir.declarations.utils.isConst
 import org.jetbrains.kotlin.fir.resolve.ResolutionMode
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirBodyResolveTransformer
@@ -36,7 +37,7 @@ private class LLFirConstantEvaluationTargetResolver(resolveTarget: LLFirResolveT
         scopeSession = resolveTargetScopeSession,
     ) {
         override fun transformProperty(property: FirProperty, data: ResolutionMode): FirProperty {
-            evaluatePropertyInitializer(property, session)
+            property.evaluatedInitializer = evaluatePropertyInitializer(property, session)
             return property
         }
     }

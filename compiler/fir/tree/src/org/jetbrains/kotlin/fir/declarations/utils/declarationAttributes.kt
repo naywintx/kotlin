@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.fir.declarations.utils
 
 import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.descriptors.SourceElement
+import org.jetbrains.kotlin.fir.FirEvaluatorResult
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyBackingField
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyGetter
@@ -41,8 +42,8 @@ val FirClassLikeSymbol<*>.sourceElement: SourceElement?
 val FirPropertySymbol.fromPrimaryConstructor: Boolean
     get() = fir.fromPrimaryConstructor ?: false
 
-var FirProperty.evaluatedInitializer: FirLiteralExpression<*>? by FirDeclarationDataRegistry.data(EvaluatedValue)
-var FirValueParameter.evaluatedDefaultValue: FirExpression? by FirDeclarationDataRegistry.data(EvaluatedValue)
+var FirProperty.evaluatedInitializer: FirEvaluatorResult? by FirDeclarationDataRegistry.data(EvaluatedValue)
+var FirValueParameter.evaluatedDefaultValue: FirEvaluatorResult? by FirDeclarationDataRegistry.data(EvaluatedValue)
 
 /**
  * Constraint without corresponding type argument

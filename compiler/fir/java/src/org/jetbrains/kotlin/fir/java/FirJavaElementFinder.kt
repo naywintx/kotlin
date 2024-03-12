@@ -236,8 +236,7 @@ class FirJavaElementFinder(
                     }
                 }
 
-                evaluatePropertyInitializer(firProperty, session)
-                return firProperty.evaluatedInitializer?.asString()
+                return evaluatePropertyInitializer(firProperty, session)?.unwrapOr<FirLiteralExpression<*>> {}?.asString()
             }
 
             override fun getName(): String = firProperty.name.identifier
