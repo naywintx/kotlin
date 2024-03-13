@@ -9,12 +9,17 @@ package org.jetbrains.kotlin.gradle.unitTests
 
 import org.gradle.api.NamedDomainObjectCollection
 import org.gradle.api.file.ProjectLayout
+import org.gradle.kotlin.dsl.get
+import org.jetbrains.kotlin.gradle.dsl.KotlinNativeCompileTask
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
+import org.jetbrains.kotlin.gradle.dsl.multiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.extraProperties
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XcodeEnvironment.Companion.XCODE_ENVIRONMENT_KEY
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompileTool
+import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
 import org.jetbrains.kotlin.gradle.util.*
 import org.jetbrains.kotlin.gradle.utils.getFile
 import org.jetbrains.kotlin.gradle.utils.targets
@@ -48,14 +53,12 @@ class SwiftExportUnitTests {
 
         project.evaluate()
 
-        val compilations = project.kotlinExtension
-            .targets
-            .filter { it.name.contains("ios") }
-            .map { it.compilations }
-            .single()
-
+        val compilations = project.multiplatformExtension.iosSimulatorArm64().compilations
         val mainCompilation = compilations.main
         val swiftExportCompilation = compilations.swiftExport
+
+        val mainCompileTask = mainCompilation.compileTaskProvider.get() as KotlinNativeCompile
+        val swiftExportCompileTask = swiftExportCompilation.compileTaskProvider.get() as KotlinNativeCompile
 
         // Main compilation exist
         assertNotNull(mainCompilation)
