@@ -106,7 +106,7 @@ internal fun Collection<ToolingDiagnostic>.assertDiagnostics(vararg diagnostics:
     if (expectedDiagnostics == actualDiagnostic) return
 
     val missingDiagnostics = this - expectedDiagnostics
-    val unexpectedDiagnostics = expectedDiagnostics - this
+    val unexpectedDiagnostics = expectedDiagnostics - actualDiagnostic
 
     val errorMessage = buildString {
         if (missingDiagnostics.isNotEmpty()) {

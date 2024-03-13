@@ -308,3 +308,13 @@ if (!kotlinBuildProperties.isInJpsBuildIdeaSync) {
         dependsOn("functionalTest")
     }
 }
+
+kotlin {
+    compilerOptions {
+        allWarningsAsErrors = false
+    }
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    compilerOptions.allWarningsAsErrors = false
+}

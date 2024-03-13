@@ -22,6 +22,7 @@ internal object IncorrectCompileOnlyDependenciesChecker : KotlinGradleProjectChe
             when (target) {
                 is KotlinJsIrTarget -> checkIncorrectDependencies(target)
                 is KotlinNativeTarget -> {
+                    @Suppress("DEPRECATION")
                     if (PropertiesProvider(project).ignoreIncorrectNativeDependencies != true) {
                         checkIncorrectDependencies(target)
                     }
@@ -49,6 +50,7 @@ internal object IncorrectCompileOnlyDependenciesChecker : KotlinGradleProjectChe
                 }
             }
 
+        // TODO aggregate multiple warnings, so the console log doesn't get spammed with messages if there are multiple triggers.
         compileOnlyDependencies.forEach { (compilation, dependencies) ->
             project.reportDiagnostic(
                 KotlinToolingDiagnostics.IncorrectCompileOnlyDependencyWarning(

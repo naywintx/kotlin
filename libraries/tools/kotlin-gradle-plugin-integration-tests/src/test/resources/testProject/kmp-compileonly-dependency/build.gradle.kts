@@ -7,6 +7,8 @@ repositories {
     mavenCentral()
 }
 
+// TODO delete this dir, tests were converted to functional tests
+
 kotlin {
     jvm()
 
@@ -29,10 +31,6 @@ kotlin {
         commonTest {
             dependencies {
                 //commonTest-compileOnly: compileOnly("org.jetbrains.kotlinx:atomicfu:latest.release")
-                /*
-                 * api() is not defined here, to verify that compileOnly() + api() is not necessary
-                 * for test compilations, because they are not published
-                 */
             }
         }
         jvmMain {
