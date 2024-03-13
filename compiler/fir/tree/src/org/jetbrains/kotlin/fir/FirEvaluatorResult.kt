@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir
 sealed class FirEvaluatorResult
 class Evaluated(val result: FirElement) : FirEvaluatorResult()
 object NotEvaluated : FirEvaluatorResult()
+object DuringEvaluation : FirEvaluatorResult()
 abstract class CompileTimeException : FirEvaluatorResult()
 object DivisionByZero : CompileTimeException()
 object StackOverflow : CompileTimeException()

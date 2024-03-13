@@ -43,7 +43,7 @@ inline fun <reified T> FirEvaluatorResult.unwrapOr(action: (CompileTimeException
     when (this) {
         is CompileTimeException -> action(this)
         is Evaluated -> return this.result as? T
-        NotEvaluated -> return null
+        else -> return null
     }
     return null
 }
@@ -109,19 +109,25 @@ fun evaluateDefault(valueParameter: FirValueParameter, session: FirSession): Fir
 
 
 private class FirExpressionEvaluator(private val session: FirSession) : FirVisitor<FirEvaluatorResult, Nothing?>() {
-    private val propertyStack = mutableSetOf<FirCallableSymbol<*>>()
-
     fun evaluate(expression: FirExpression?): FirEvaluatorResult {
         return expression?.accept(this, null) ?: NotEvaluated
     }
 
     private fun <T> FirCallableSymbol<*>.visit(block: () -> T): T {
-        propertyStack += this
+        val firProperty = this.fir as? FirProperty ?: return block()
+
+        val oldEvaluatedResult = firProperty.evaluatedInitializer
+        firProperty.evaluatedInitializer = DuringEvaluation
         try {
             return block()
         } finally {
-            propertyStack.remove(this)
+            firProperty.evaluatedInitializer = oldEvaluatedResult
         }
+    }
+
+    private fun FirCallableSymbol<*>.wasVisited(): Boolean {
+        val firProperty = this.fir as? FirProperty ?: return false
+        return firProperty.evaluatedInitializer == DuringEvaluation
     }
 
     override fun visitElement(element: FirElement, data: Nothing?): FirEvaluatorResult {
@@ -200,7 +206,7 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
         val propertySymbol = propertyAccessExpression.toReference(session)?.toResolvedCallableSymbol(discardErrorReference = true)
             ?: return NotEvaluated
 
-        if (propertySymbol in propertyStack) {
+        if (propertySymbol.wasVisited()) {
             return StackOverflow
         }
 
