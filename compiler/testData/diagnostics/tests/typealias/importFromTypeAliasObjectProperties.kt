@@ -8,3 +8,4 @@ object A {
 }
 
 // FILE: 2.kt
+import objectProperties.ObjectWithProps.a
