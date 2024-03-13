@@ -352,8 +352,16 @@ fun createKotlinLibraryComponents(
 ): List<KotlinLibrary> {
     val baseAccess = BaseLibraryAccess<KotlinLibraryLayout>(libraryFile, null, zipAccessor)
     val base = BaseKotlinLibraryImpl(baseAccess, isDefault)
+    return createKotlinLibraryComponents(base, isDefault, zipAccessor)
+}
+
+fun createKotlinLibraryComponents(
+    base: BaseKotlinLibrary,
+    isDefault: Boolean = true,
+    zipAccessor: ZipFileSystemAccessor? = null,
+): List<KotlinLibrary> {
     return base.componentList.map {
-        createKotlinLibrary(libraryFile, it, isDefault, zipAccessor = zipAccessor)
+        createKotlinLibrary(base.libraryFile, it, isDefault, zipAccessor = zipAccessor)
     }
 }
 
@@ -385,10 +393,3 @@ fun isKotlinLibrary(libraryFile: File): Boolean = try {
 
 fun isKotlinLibrary(libraryFile: java.io.File): Boolean =
     isKotlinLibrary(File(libraryFile.absolutePath))
-
-val File.isPre_1_4_Library: Boolean
-    get() {
-        val baseAccess = BaseLibraryAccess<KotlinLibraryLayout>(this, null)
-        val base = BaseKotlinLibraryImpl(baseAccess, false)
-        return base.has_pre_1_4_manifest
-    }

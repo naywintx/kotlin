@@ -110,7 +110,14 @@ fun createKonanLibraryComponents(
 ) : List<KonanLibrary> {
     val baseAccess = BaseLibraryAccess<KotlinLibraryLayout>(libraryFile, null)
     val base = BaseKotlinLibraryImpl(baseAccess, isDefault)
+    return createKonanLibraryComponents(base, target, isDefault)
+}
+fun createKonanLibraryComponents(
+    base: BaseKotlinLibrary,
+    target: KonanTarget? = null,
+    isDefault: Boolean = true
+) : List<KonanLibrary> {
     return base.componentList.map {
-        createKonanLibrary(libraryFile, it, target, isDefault)
+        createKonanLibrary(base.libraryFile, it, target, isDefault)
     }
 }

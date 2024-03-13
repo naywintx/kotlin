@@ -3,8 +3,9 @@ package org.jetbrains.kotlin.library
 import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.library.SearchPathResolver.LookupResult
 import org.jetbrains.kotlin.library.SearchPathResolver.SearchRoot
+import org.jetbrains.kotlin.library.impl.BaseKotlinLibraryImpl
+import org.jetbrains.kotlin.library.impl.BaseLibraryAccess
 import org.jetbrains.kotlin.library.impl.createKotlinLibraryComponents
-import org.jetbrains.kotlin.library.impl.isPre_1_4_Library
 import org.jetbrains.kotlin.util.Logger
 import org.jetbrains.kotlin.util.WithLogger
 import org.jetbrains.kotlin.util.removeSuffixIfPresent
@@ -144,6 +145,7 @@ abstract class KotlinLibrarySearchPathResolver<L : KotlinLibrary>(
     private val repoRoots: List<File> by lazy { repositories.map { File(it) } }
 
     abstract fun libraryComponentBuilder(file: File, isDefault: Boolean): List<L>
+    abstract fun libraryComponentBuilder(base: BaseKotlinLibrary, isDefault: Boolean): List<L>
 
     private val directLibraries: List<KotlinLibrary> by lazy {
         directLibs.mapNotNull { SearchRoot.lookUpByAbsolutePath(File(it)) }.flatMap { libraryComponentBuilder(it, false) }
@@ -229,8 +231,14 @@ abstract class KotlinLibrarySearchPathResolver<L : KotlinLibrary>(
         return sequence.filterNotNull()
     }
 
-    private fun Sequence<File>.filterOutPre_1_4_libraries(): Sequence<File> = this.filter {
-        if (it.isPre_1_4_Library) {
+    private fun Sequence<File>.createBaseLibraries(): Sequence<BaseKotlinLibrary> =
+        this.map {
+            val baseAccess = BaseLibraryAccess<KotlinLibraryLayout>(it, null)
+            BaseKotlinLibraryImpl(baseAccess, false)
+        }
+
+    private fun Sequence<BaseKotlinLibrary>.filterOutPre_1_4_libraries(): Sequence<BaseKotlinLibrary> = this.filter {
+        if (it.has_pre_1_4_manifest) {
             logger.warning("KLIB resolver: Skipping '$it'. This is a pre 1.4 library.")
             false
         } else {
@@ -249,6 +257,7 @@ abstract class KotlinLibrarySearchPathResolver<L : KotlinLibrary>(
             val givenPath = unresolved.path
             try {
                 resolutionSequence(givenPath)
+                    .createBaseLibraries()
                     .filterOutPre_1_4_libraries()
                     .flatMap { libraryComponentBuilder(it, isDefaultLink).asSequence() }
                     .map { it.takeIf { libraryMatch(it, unresolved) } }
@@ -385,6 +394,7 @@ class SingleKlibComponentResolver(
     null, null, false, logger, knownIrProviders
 ) {
     override fun libraryComponentBuilder(file: File, isDefault: Boolean) = createKotlinLibraryComponents(file, isDefault)
+    override fun libraryComponentBuilder(base: BaseKotlinLibrary, isDefault: Boolean) = createKotlinLibraryComponents(base, isDefault)
 }
 
 /**

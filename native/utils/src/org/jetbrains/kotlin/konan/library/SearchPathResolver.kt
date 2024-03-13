@@ -46,6 +46,7 @@ fun resolverByName(
         logger
     ) {
         override fun libraryComponentBuilder(file: File, isDefault: Boolean) = createKonanLibraryComponents(file, null, isDefault)
+        override fun libraryComponentBuilder(base: BaseKotlinLibrary, isDefault: Boolean) = createKonanLibraryComponents(base, null, isDefault)
     }
 
 internal class KonanLibraryProperResolver(
@@ -66,6 +67,7 @@ internal class KonanLibraryProperResolver(
 ),  SearchPathResolverWithTarget<KonanLibrary>
 {
     override fun libraryComponentBuilder(file: File, isDefault: Boolean) = createKonanLibraryComponents(file, target, isDefault)
+    override fun libraryComponentBuilder(base: BaseKotlinLibrary, isDefault: Boolean) = createKonanLibraryComponents(base, target, isDefault)
 
     override val distPlatformHead: File?
         get() = distributionKlib?.File()?.child("platform")?.child(target.visibleName)

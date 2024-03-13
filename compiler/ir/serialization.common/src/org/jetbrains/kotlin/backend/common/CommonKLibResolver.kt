@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.backend.common
 
 import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.konan.file.ZipFileSystemAccessor
+import org.jetbrains.kotlin.library.BaseKotlinLibrary
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.library.KotlinLibraryProperResolverWithAttributes
 import org.jetbrains.kotlin.library.UnresolvedLibrary
@@ -96,4 +97,5 @@ private class KLibResolverHelper(
 ) {
     // Stick with the default KotlinLibrary for now.
     override fun libraryComponentBuilder(file: File, isDefault: Boolean) = createKotlinLibraryComponents(file, isDefault, zipAccessor)
+    override fun libraryComponentBuilder(base: BaseKotlinLibrary, isDefault: Boolean) = createKotlinLibraryComponents(base, isDefault, zipAccessor)
 }

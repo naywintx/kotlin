@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.ir.backend.jvm
 
 import org.jetbrains.kotlin.konan.file.File
+import org.jetbrains.kotlin.library.BaseKotlinLibrary
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.library.KotlinLibraryProperResolverWithAttributes
 import org.jetbrains.kotlin.library.UnresolvedLibrary
@@ -34,6 +35,8 @@ class JvmLibraryResolver(
 ) {
     // Stick with the default KotlinLibrary for now.
     override fun libraryComponentBuilder(file: File, isDefault: Boolean) = createKotlinLibraryComponents(file, isDefault)
+
+    override fun libraryComponentBuilder(base: BaseKotlinLibrary, isDefault: Boolean) = createKotlinLibraryComponents(base, isDefault)
 
     // We do not need stdlib in klib form.
     override fun isProvidedByDefault(unresolved: UnresolvedLibrary): Boolean =
