@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.fir.FirElementWithResolveState
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isConst
 import org.jetbrains.kotlin.fir.resolve.ResolutionMode
+import org.jetbrains.kotlin.fir.resolve.transformers.FirEvaluationMode
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirBodyResolveTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.compileTimeEvaluator
 import org.jetbrains.kotlin.fir.visitors.transformSingle
@@ -37,7 +38,7 @@ private class LLFirConstantEvaluationTargetResolver(resolveTarget: LLFirResolveT
         scopeSession = resolveTargetScopeSession,
     ) {
         override fun transformProperty(property: FirProperty, data: ResolutionMode): FirProperty {
-            return property.transformSingle(session.compileTimeEvaluator, null)
+            return property.transformSingle(session.compileTimeEvaluator, FirEvaluationMode.ONLY_NECESSARY)
         }
     }
 
