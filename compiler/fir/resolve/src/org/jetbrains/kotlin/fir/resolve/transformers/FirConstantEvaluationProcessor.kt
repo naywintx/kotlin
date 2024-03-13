@@ -48,6 +48,10 @@ class FirConstantEvaluationBodyResolveTransformer(private val session: FirSessio
         return file.transformDeclarations(this, data)
     }
 
+    override fun transformRegularClass(regularClass: FirRegularClass, data: Nothing?): FirStatement {
+        return regularClass.transformDeclarations(this, data)
+    }
+
     override fun transformClass(klass: FirClass, data: Nothing?): FirStatement {
         return klass.transformDeclarations(this, data)
     }
