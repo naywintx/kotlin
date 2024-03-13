@@ -11,8 +11,9 @@ import org.jetbrains.kotlin.fir.FirElementWithResolveState
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isConst
 import org.jetbrains.kotlin.fir.resolve.ResolutionMode
-import org.jetbrains.kotlin.fir.resolve.transformers.FirCompileTimeConstantEvaluator
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirBodyResolveTransformer
+import org.jetbrains.kotlin.fir.resolve.transformers.compileTimeEvaluator
+import org.jetbrains.kotlin.fir.visitors.transformSingle
 
 internal object LLFirConstantEvaluationLazyResolver : LLFirLazyResolver(FirResolvePhase.CONSTANT_EVALUATION) {
     override fun createTargetResolver(target: LLFirResolveTarget): LLFirTargetResolver = LLFirConstantEvaluationTargetResolver(target)
@@ -35,11 +36,8 @@ private class LLFirConstantEvaluationTargetResolver(resolveTarget: LLFirResolveT
         implicitTypeOnly = true,
         scopeSession = resolveTargetScopeSession,
     ) {
-        private val firCompileTimeConstantEvaluator = FirCompileTimeConstantEvaluator(session)
-
         override fun transformProperty(property: FirProperty, data: ResolutionMode): FirProperty {
-            property.accept(firCompileTimeConstantEvaluator, null)
-            return property
+            return property.transformSingle(session.compileTimeEvaluator, null)
         }
     }
 
