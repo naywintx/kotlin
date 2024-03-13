@@ -245,7 +245,7 @@ fun FirResolvePhase.isItAllowedToCallLazyResolveTo(requestedPhase: FirResolvePha
     this > requestedPhase -> true
 
     // It is legal only in specific cases
-    this == requestedPhase -> requestedPhase.isItAllowedToCallLazyResolveToTheSamePhase
+    this == requestedPhase -> isItAllowedToCallLazyResolveToTheSamePhase
 
     else -> false
 }
