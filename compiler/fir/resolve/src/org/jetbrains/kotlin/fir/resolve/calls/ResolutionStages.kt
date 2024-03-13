@@ -78,6 +78,11 @@ object CheckExtensionReceiver : ResolutionStage() {
     override suspend fun check(candidate: Candidate, callInfo: CallInfo, sink: CheckerSink, context: ResolutionContext) {
         val callSite = callInfo.callSite
 
+        if (callInfo.explicitReceiver?.resolvedType is ConeErrorType) {
+            sink.yieldDiagnostic(InapplicableWrongReceiver())
+            return
+        }
+
         if (callSite is FirImplicitInvokeCall) {
             val isInvokeFromExtensionFunctionType = candidate.isInvokeFromExtensionFunctionType
             val isImplicitInvokeCallWithExplicitReceiver = callSite.isCallWithExplicitReceiver
