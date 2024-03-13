@@ -14,6 +14,15 @@ interface FieldContainer<out Field : AbstractField<*>> {
 
     operator fun get(fieldName: String): Field?
 
+    fun getRequired(fieldName: String): Field {
+        val result = this[fieldName]
+        requireNotNull(result) {
+            "Field \"$fieldName\" not found in fields of $this\nExisting fields:\n" +
+                    allFields.joinToString(separator = "\n  ", prefix = "  ") { it.name }
+        }
+        return result
+    }
+
     val hasAcceptMethod: Boolean
         get() = false
 
