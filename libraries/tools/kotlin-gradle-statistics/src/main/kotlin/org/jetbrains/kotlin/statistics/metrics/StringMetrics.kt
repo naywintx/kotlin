@@ -49,7 +49,9 @@ enum class StringMetrics(val type: StringOverridePolicy, val anonymization: Stri
                 "macos_x64",
                 "macos_arm64",
                 "mingw_x64",
-                "wasm"
+                "wasm",
+                "wasmJs",
+                "wasmWasi",
             )
         )
     ),
@@ -86,6 +88,7 @@ enum class StringMetrics(val type: StringOverridePolicy, val anonymization: Stri
 
     companion object {
         // Version 2: removed deprecated K/N targets from MPP_PLATFORMS
-        const val VERSION = 2
+        // Version 3: added wasmJs and wasmWasi targets to MPP_PLATFORMS
+        const val VERSION = 3
     }
 }
