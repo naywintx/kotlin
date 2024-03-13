@@ -1,8 +1,10 @@
 // TARGET_BACKEND: JVM_IR
 // !LANGUAGE: +MultiPlatformProjects
 // WITH_STDLIB
-// DIAGNOSTICS: -NOTHING_TO_OVERRIDE -NO_PARCELABLE_SUPERTYPE
-// IGNORE_FIR_DIAGNOSTICS
+
+// Metadata compilations do not see through the expect/actuals and therefore,
+// there are parcelize errors in metadata compilations.
+// IGNORE_FIR_DIAGNOSTICS_DIFF
 
 // MODULE: m1-common
 // FILE: common.kt
