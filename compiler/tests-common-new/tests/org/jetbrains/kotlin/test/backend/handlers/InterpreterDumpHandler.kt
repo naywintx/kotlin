@@ -215,8 +215,8 @@ interface FirEvaluatorDumpHandler : EvaluatorHandler {
 interface FirAndIrDumpHandler: FirEvaluatorDumpHandler, IrInterpreterDumpHandler {
     fun processModule(module: TestModule) {
         val firArtifact = testServices.dependencyProvider.getArtifactSafe(module, FrontendKinds.FIR)
-        val firMetaInfo = firArtifact?.let { processFirModule(module, it) } ?: emptyMap() // TODO do we really need empty map?
         val irMetaInfo = processIrModule(module)
+        val firMetaInfo = firArtifact?.let { processFirModule(module, it) } ?: irMetaInfo
 
         val commonMetaInfo = irMetaInfo.map { (irTestFile, irTestData) ->
             val firTestData = firMetaInfo[irTestFile] ?: return@map irTestFile to emptyList()
