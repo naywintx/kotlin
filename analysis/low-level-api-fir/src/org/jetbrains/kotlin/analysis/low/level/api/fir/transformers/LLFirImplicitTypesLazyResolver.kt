@@ -143,7 +143,7 @@ internal class LLFirImplicitBodyTargetResolver(
     target,
     FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE,
     llImplicitBodyResolveComputationSession = llImplicitBodyResolveComputationSessionParameter ?: LLImplicitBodyResolveComputationSession(),
-    isJumpingPhase = true,
+    withJumpingLock = true,
 ) {
     override val transformer = object : FirImplicitAwareBodyResolveTransformer(
         resolveTargetSession,
