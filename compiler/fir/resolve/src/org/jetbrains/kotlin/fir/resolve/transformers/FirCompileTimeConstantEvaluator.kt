@@ -120,8 +120,8 @@ private class FirExpressionEvaluator(private val session: FirSession) : FirVisit
     override fun visitArgumentList(argumentList: FirArgumentList, data: Nothing?): FirArgumentList? {
         when (argumentList) {
             is FirResolvedArgumentList -> return buildResolvedArgumentList(
+                argumentList.originalArgumentList,
                 argumentList.mapping.mapKeysTo(LinkedHashMap()) { evaluate(it.key) ?: return null },
-                argumentList.source
             )
             else -> return buildArgumentList {
                 source = argumentList.source
