@@ -1,4 +1,4 @@
-public class ClassWithNonPublicConstructor internal (public val a: Int)
+public class ClassWithNonPublicConstructor internal constructor(public val a: Int)
 
 class Foo (a: Int) {
     constructor(f: Float) : this(f.toInt())
