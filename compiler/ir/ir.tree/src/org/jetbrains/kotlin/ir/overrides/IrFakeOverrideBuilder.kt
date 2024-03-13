@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.declarations.lazy.IrLazyFunctionBase
 import org.jetbrains.kotlin.ir.symbols.IrPropertySymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
@@ -107,7 +108,10 @@ class IrFakeOverrideBuilder(
             val isIntersectionOverrideForbiddenByGenericClash: Boolean = when {
                 superMembers.size <= 1 -> false // fast-path. Not important in that case
                 !strategy.isGenericClashFromSameSupertypeAllowed -> false // workaround is disabled
-                else -> superMembers.all { it.original.parent == superMembers[0].original.parent }
+                else -> superMembers.all {
+                    (it.original as? IrLazyFunctionBase)?.initialSignatureFunction == null &&
+                            it.original.parent == superMembers[0].original.parent
+                }
             }
             val isIntersectionOverrideForbidden = isStaticMembers || isIntersectionOverrideForbiddenByGenericClash
             generateOverridesInFunctionGroup(
