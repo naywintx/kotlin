@@ -21,6 +21,14 @@ import org.jetbrains.kotlin.gradle.tasks.withType
 import org.jetbrains.kotlin.gradle.utils.SingleActionPerProject
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import java.io.File
+import java.io.IOException
+import java.math.BigInteger
+import java.nio.file.FileVisitResult
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.attribute.BasicFileAttributes
+import java.security.MessageDigest
 import javax.inject.Inject
 
 private const val KONAN_DIRECTORY_NAME_TO_CHECK_EXISTENCE = "konan"
@@ -67,9 +75,23 @@ internal abstract class KotlinNativeBundleBuildService : BuildService<BuildServi
         val lock =
             NativeDistributionCommonizerLock(bundleDir) { message -> project.logger.info("Kotlin Native Bundle: $message") }
 
-        lock.withLock {
+        val checkSum = if (kotlinNativeVersion.endsWith("SNAPSHOT")) {
+            kotlinNativeCompilerConfiguration
+                .singleOrNull()
+                ?.resolve(kotlinNativeVersion)
+                ?.let { getCheckSum(it) }
+        } else null
 
-            removeBundleIfNeeded(reinstallFlag, bundleDir)
+        lock.withLock {
+            val checkSumFile = bundleDir.resolve("checksum")
+            val currentCheckSum = if (checkSumFile.exists()) checkSumFile.readText() else null
+
+            val needToReinstall = (checkSum != null && checkSum != currentCheckSum)
+            if (needToReinstall) {
+                project.logger.info("Delete existed Kotlin/Native ($currentCheckSum) because snapshot version was updated to $it")
+            }
+
+            removeBundleIfNeeded(reinstallFlag || needToReinstall, bundleDir)
 
             if (!bundleDir.resolve(KONAN_DIRECTORY_NAME_TO_CHECK_EXISTENCE).exists()) {
                 val gradleCachesKotlinNativeDir =
@@ -79,6 +101,9 @@ internal abstract class KotlinNativeBundleBuildService : BuildService<BuildServi
                 fso.copy {
                     it.from(gradleCachesKotlinNativeDir)
                     it.into(bundleDir)
+                }
+                checkSum?.also {
+                    bundleDir.resolve("checksum").writeText(it)
                 }
                 project.logger.info("Moved Kotlin/Native bundle from $gradleCachesKotlinNativeDir to ${bundleDir.absolutePath}")
             }
@@ -123,4 +148,35 @@ internal abstract class KotlinNativeBundleBuildService : BuildService<BuildServi
             }
         }
     }
+
+
+    private fun getCheckSum(directory: File): String? {
+        if (!directory.exists()) return null
+
+        val md5 = MessageDigest.getInstance("MD5")
+
+        Files.walkFileTree(directory.toPath(), object : SimpleFileVisitor<Path>() {
+            override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes) =
+                if (dir.endsWith("cache")) {
+                    FileVisitResult.SKIP_SUBTREE
+                } else {
+                    FileVisitResult.CONTINUE
+                }
+
+            override fun visitFile(file: Path?, attrs: BasicFileAttributes?): FileVisitResult {
+                file?.toFile()?.inputStream()?.buffered()?.use { fileStream -> md5.update(fileStream.readAllBytes()) }
+                return super.visitFile(file, attrs)
+            }
+
+
+            override fun postVisitDirectory(dir: Path?, exc: IOException?): FileVisitResult {
+                val hash = md5.digest()
+                md5.update(hash)
+                return super.postVisitDirectory(dir, exc)
+            }
+        })
+
+        return "%032x".format(BigInteger(1, md5.digest()))
+    }
+
 }
