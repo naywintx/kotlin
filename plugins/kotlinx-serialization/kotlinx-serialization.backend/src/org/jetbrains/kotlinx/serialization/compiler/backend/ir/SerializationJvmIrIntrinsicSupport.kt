@@ -164,8 +164,9 @@ class SerializationJvmIrIntrinsicSupport(
     private val hasNewContextSerializerSignature: Boolean
         get() = currentVersion != null && currentVersion!! >= ApiVersion.parse("1.2.0")!!
 
+    // Here: strip annotations
     private fun findTypeSerializerOrContext(argType: IrType): IrClassSymbol? =
-        emptyGenerator.findTypeSerializerOrContextUnchecked(this, argType)
+        emptyGenerator.findTypeSerializerOrContextUnchecked(this, argType, useTypeAnnotations = false)
 
     private fun instantiateObject(iv: InstructionAdapter, objectSymbol: IrClassSymbol) {
         val originalIrClass = objectSymbol.owner
