@@ -34,7 +34,7 @@ class FirCorrespondingSupertypesCache(private val session: FirSession) : FirSess
     fun getCorrespondingSupertypes(
         type: ConeKotlinType,
         supertypeConstructor: TypeConstructorMarker,
-        mapPlatformTypesToKotlin: Boolean = false,
+        mapPlatformTypesToKotlin: Boolean,
     ): List<ConeClassLikeType>? {
         if (type !is ConeClassLikeType || supertypeConstructor !is ConeClassLikeLookupTag) return null
 
