@@ -26,7 +26,6 @@ import java.io.File
  * It doesn't check whether the resulting klib is same across all hosts or even valid
  * (i.e. compiler can emit empty klib and the test will still pass)
  */
-@EnforcedProperty(ClassLevelProperty.TEST_TARGET, "ios_arm64")
 abstract class CompilerKlibCrossCompileOutputTest : AbstractNativeSimpleTest() {
     @Test
     fun testKlibCrossCompilation() {
@@ -40,12 +39,14 @@ abstract class CompilerKlibCrossCompileOutputTest : AbstractNativeSimpleTest() {
 
 @TestDataPath("\$PROJECT_ROOT")
 @EnforcedProperty(ClassLevelProperty.COMPILER_OUTPUT_INTERCEPTOR, "NONE")
+@EnforcedProperty(ClassLevelProperty.TEST_TARGET, "ios_arm64")
 class ClassicCompilerOutputTest : CompilerKlibCrossCompileOutputTest()
 
 @FirPipeline
 @Tag("frontend-fir")
 @TestDataPath("\$PROJECT_ROOT")
 @EnforcedProperty(ClassLevelProperty.COMPILER_OUTPUT_INTERCEPTOR, "NONE")
+@EnforcedProperty(ClassLevelProperty.TEST_TARGET, "ios_arm64")
 class FirCompilerOutputTest : CompilerKlibCrossCompileOutputTest() {
 
     @Test
