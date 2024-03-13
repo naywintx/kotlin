@@ -11,11 +11,8 @@ import org.jetbrains.kotlin.fir.FirElementWithResolveState
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isConst
 import org.jetbrains.kotlin.fir.resolve.ResolutionMode
-import org.jetbrains.kotlin.fir.resolve.transformers.FirConstantEvaluationBodyResolveTransformer
-import org.jetbrains.kotlin.fir.resolve.transformers.FirEvaluationMode
+import org.jetbrains.kotlin.fir.resolve.transformers.FirCompileTimeConstantEvaluator
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirBodyResolveTransformer
-import org.jetbrains.kotlin.fir.resolve.transformers.compileTimeEvaluator
-import org.jetbrains.kotlin.fir.visitors.transformSingle
 
 internal object LLFirConstantEvaluationLazyResolver : LLFirLazyResolver(FirResolvePhase.CONSTANT_EVALUATION) {
     override fun createTargetResolver(target: LLFirResolveTarget): LLFirTargetResolver = LLFirConstantEvaluationTargetResolver(target)
@@ -25,8 +22,6 @@ internal object LLFirConstantEvaluationLazyResolver : LLFirLazyResolver(FirResol
 
 /**
  * This resolver is responsible for [CONSTANT_EVALUATION][FirResolvePhase.CONSTANT_EVALUATION] phase.
- *
- * This resolver doesn't do anything yet (see KT-64151).
  *
  * @see FirResolvePhase.CONSTANT_EVALUATION
  */
@@ -40,8 +35,11 @@ private class LLFirConstantEvaluationTargetResolver(resolveTarget: LLFirResolveT
         implicitTypeOnly = true,
         scopeSession = resolveTargetScopeSession,
     ) {
+        private val firCompileTimeConstantEvaluator = FirCompileTimeConstantEvaluator(session)
+
         override fun transformProperty(property: FirProperty, data: ResolutionMode): FirProperty {
-            return property.transformSingle(session.compileTimeEvaluator, FirEvaluationMode.ONLY_NECESSARY)
+            property.accept(firCompileTimeConstantEvaluator, null)
+            return property
         }
     }
 
@@ -50,11 +48,6 @@ private class LLFirConstantEvaluationTargetResolver(resolveTarget: LLFirResolveT
             is FirProperty -> {
                 if (target.isConst) {
                     resolve(target, BodyStateKeepers.PROPERTY)
-                }
-            }
-            is FirConstructor -> {
-                if (target.symbol.isAnnotationConstructor(resolveTargetSession)) {
-                    resolve(target, BodyStateKeepers.CONSTRUCTOR)
                 }
             }
             is FirRegularClass, is FirTypeAlias, is FirFile, is FirCodeFragment, is FirAnonymousInitializer, is FirDanglingModifierList,
