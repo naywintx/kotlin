@@ -117,20 +117,20 @@ public class SirAsSwiftSourcesPrinter(private val printer: SmartPrinter) : SirVi
         println("}")
     }
 
-    override fun visitInit(constructor: SirInit): Unit = with(printer) {
-        constructor.documentation?.let { println(it) }
-        printVisibility(constructor)
-        printInitKind(constructor.initKind)
+    override fun visitInit(init: SirInit): Unit = with(printer) {
+        init.documentation?.let { println(it) }
+        printVisibility(init)
+        printInitKind(init.initKind)
         print("init")
-        "?".takeIf { constructor.isFailable }?.let { print(it) }
+        "?".takeIf { init.isFailable }?.let { print(it) }
         print("(")
-        printParameters(constructor.parameters)
+        printParameters(init.parameters)
         print(
             ")"
         )
         println(" {")
         withIndent {
-            printFunctionBody(constructor.body).forEach {
+            printFunctionBody(init.body).forEach {
                 println(it)
             }
         }
